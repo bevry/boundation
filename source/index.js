@@ -404,12 +404,18 @@ async function getQuestions () {
 		*/
 
 		{
+			name: 'travis',
+			type: 'confirm',
+			message: 'Would you like to update travis configuration?',
+			default: true
+		},
+		{
 			name: 'npmUsername',
 			message: 'What will be the npm username for releasing on travis?',
 			default: 'bevry',
 			validate: isSpecified,
 			filter: trim,
-			when ({ publish }) { return publish && !defaults.npmUsername }
+			when ({ travis, publish }) { return travis && publish && !defaults.npmUsername }
 		},
 		{
 			name: 'npmEmail',
@@ -417,7 +423,7 @@ async function getQuestions () {
 			default: 'us@bevry.me',
 			validate: isSpecified,
 			filter: trim,
-			when ({ publish }) { return publish && !defaults.npmEmail }
+			when ({ travis, publish }) { return travis && publish && !defaults.npmEmail }
 		},
 		{
 			name: 'npmPassword',
@@ -425,14 +431,14 @@ async function getQuestions () {
 			message: 'What will be the npm password for releasing on travis?',
 			validate: isSpecified,
 			filter: trim,
-			when ({ publish }) { return publish && !defaults.npmPassword }
+			when ({ travis, publish }) { return travis && publish && !defaults.npmPassword }
 		},
 		{
 			name: 'surgeLogin',
 			message: 'For deploying the documentation, what is your surge username?',
 			validate: isSpecified,
 			filter: trim,
-			when ({ docs }) { return docs && !defaults.surgeLogin }
+			when ({ travis, docs }) { return travis && docs && !defaults.surgeLogin }
 		},
 		{
 			name: 'surgeToken',
@@ -440,7 +446,7 @@ async function getQuestions () {
 			message: 'For deploying the documentation, what is your surge token?',
 			validate: isSpecified,
 			filter: trim,
-			when ({ docs }) { return docs && !defaults.surgeToken }
+			when ({ travis, docs }) { return travis && docs && !defaults.surgeToken }
 		},
 		{
 			name: 'travisEmail',
@@ -448,7 +454,7 @@ async function getQuestions () {
 			default: 'travisci@bevry.me',
 			validate: isSpecified,
 			filter: trim,
-			when () { return !defaults.travisEmail }
+			when ({ travis }) { return travis && !defaults.travisEmail }
 		},
 		{
 			name: 'slackSubdomain',
@@ -456,7 +462,7 @@ async function getQuestions () {
 			default: 'bevry',
 			validate: isSpecified,
 			filter: trim,
-			when () { return !defaults.slackSubdomain }
+			when ({ travis }) { return travis && !defaults.slackSubdomain }
 		},
 		{
 			name: 'slackToken',
@@ -464,7 +470,7 @@ async function getQuestions () {
 			message: 'What will be the slack token for travis notifications?',
 			validate: isSpecified,
 			filter: trim,
-			when () { return !defaults.slackToken }
+			when ({ travis }) { return travis && !defaults.slackToken }
 		}
 	]
 }
@@ -747,71 +753,73 @@ async function init () {
 	}
 
 	// customise travis
-	console.log('customising travis')
-	const travis = {
-		sudo: false,
-		language: 'node_js',
-		node_js: [
-			'0.8',
-			'0.10',
-			'0.12',
-			'4',
-			'6',
-			'7'
-		],
-		matrix: {
-			fast_finish: true /* ,
-			allow_failures: [] */
-		},
-		cache: {
-			directories: [
-				'$HOME/.npm',
-				'$HOME/.yarn-cache'
-			]
-		},
-		install: [
-			'eval "$(curl -s https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/node-install.bash)"'
-		],
-		before_script: [
-			'eval "$(curl -s https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/node-verify.bash)"'
-		],
-		after_success: []
-	}
-	travis.node_js = travis.node_js.filter((version) => semver(version, answers.nodeVersion) !== -1)
+	if (answers.travis) {
+		console.log('customising travis')
+		const travis = {
+			sudo: false,
+			language: 'node_js',
+			node_js: [
+				'0.8',
+				'0.10',
+				'0.12',
+				'4',
+				'6',
+				'7'
+			],
+			matrix: {
+				fast_finish: true /* ,
+				allow_failures: [] */
+			},
+			cache: {
+				directories: [
+					'$HOME/.npm',
+					'$HOME/.yarn-cache'
+				]
+			},
+			install: [
+				'eval "$(curl -s https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/node-install.bash)"'
+			],
+			before_script: [
+				'eval "$(curl -s https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/node-verify.bash)"'
+			],
+			after_success: []
+		}
+		travis.node_js = travis.node_js.filter((version) => semver(version, answers.nodeVersion) !== -1)
 
-	/*
-	travis.matrix.allow_failures = travis.node_js
-		.filter((version) => semver(version, answers.nodeVersion) === -1)
-		.map((node_js) => ({ node_js }))
-	*/
+		/*
+		travis.matrix.allow_failures = travis.node_js
+			.filter((version) => semver(version, answers.nodeVersion) === -1)
+			.map((node_js) => ({ node_js }))
+		*/
 
-	// travis env variables
-	// these spawns must be run serially, as otherwise not all variables may be written, which is annoying
-	console.log('travis environment variables')
-	await util.spawn(['travis', 'enable'])
-	await util.spawn(['travis', 'env', 'set', 'DESIRED_NODE_VERSION', travis.node_js[travis.node_js.length - 1], '--public'])
-	if (answers.docs) {
-		await util.spawn(['travis', 'env', 'set', 'SURGE_LOGIN', answers.surgeLogin, '--public'])
-		await util.spawn(['travis', 'env', 'set', 'SURGE_TOKEN', answers.surgeToken])
-		travis.after_success.push(
-			'eval "$(curl -s https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/surge.bash)"'
-		)
-	}
-	if (answers.publish) {
-		await util.spawn(['travis', 'env', 'set', 'NPM_USERNAME', answers.npmUsername, '--public'])
-		await util.spawn(['travis', 'env', 'set', 'NPM_PASSWORD', answers.npmPassword])
-		await util.spawn(['travis', 'env', 'set', 'NPM_EMAIL', answers.npmEmail])
-		travis.after_success.push(
-			'eval "$(curl -s https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/node-publish.bash)"'
-		)
-	}
+		// travis env variables
+		// these spawns must be run serially, as otherwise not all variables may be written, which is annoying
+		console.log('travis environment variables')
+		await util.spawn(['travis', 'enable'])
+		await util.spawn(['travis', 'env', 'set', 'DESIRED_NODE_VERSION', travis.node_js[travis.node_js.length - 1], '--public'])
+		if (answers.docs) {
+			await util.spawn(['travis', 'env', 'set', 'SURGE_LOGIN', answers.surgeLogin, '--public'])
+			await util.spawn(['travis', 'env', 'set', 'SURGE_TOKEN', answers.surgeToken])
+			travis.after_success.push(
+				'eval "$(curl -s https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/surge.bash)"'
+			)
+		}
+		if (answers.publish) {
+			await util.spawn(['travis', 'env', 'set', 'NPM_USERNAME', answers.npmUsername, '--public'])
+			await util.spawn(['travis', 'env', 'set', 'NPM_PASSWORD', answers.npmPassword])
+			await util.spawn(['travis', 'env', 'set', 'NPM_EMAIL', answers.npmEmail])
+			travis.after_success.push(
+				'eval "$(curl -s https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/node-publish.bash)"'
+			)
+		}
 
-	// write the .travis.yml file
-	// these spawns must be run serially, as otherwise not all variables may be written, which is annoying
-	console.log('write the .travis.yml file')
-	await util.write('.travis.yml',  yaml.dump(travis))
-	await util.spawn(['travis', 'encrypt', `${answers.slackSubdomain}:${answers.slackToken}#updates`, '--add', 'notifications.slack'])
-	await util.spawn(['travis', 'encrypt', answers.travisEmail, '--add', 'notifications.email.recipients'])
+		// write the .travis.yml file
+		// these spawns must be run serially, as otherwise not all variables may be written, which is annoying
+		console.log('write the .travis.yml file')
+		await util.write('.travis.yml', yaml.dump(travis))
+		await util.spawn(['travis', 'encrypt', `${answers.slackSubdomain}:${answers.slackToken}#updates`, '--add', 'notifications.slack'])
+		await util.spawn(['travis', 'encrypt', answers.travisEmail, '--add', 'notifications.email.recipients'])
+	}
 
 	// customise scripts
 	console.log('customise scripts')

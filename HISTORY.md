@@ -1,5 +1,8 @@
 # History
 
+## v1.2.0 2017 March 31
+- Put travis customisation behind a flag
+
 ## v1.1.3 2017 March 31
 - Don't install testing deps if DocPad provides them
 
