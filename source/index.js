@@ -691,11 +691,11 @@ async function init () {
 			]
 		},
 		install: [
-			'curl https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/npm-upgrade.bash | bash -l',
-			'curl https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/npm-install.bash | bash -l'
+			'curl https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/node-install.bash | bash -l',
+			'curl https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/node-upgrade-npm.bash | bash -l'
 		],
 		before_script: [
-			'curl https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/npm-verify.bash | bash -l'
+			'curl https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/node-verify.bash | bash -l'
 		],
 		after_success: []
 	}
@@ -726,7 +726,7 @@ async function init () {
 			util.exec(`travis env set NPM_EMAIL "${answers.npmEmail}"`)
 		])
 		travis.after_success.push(
-			'curl https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/npm-publish.bash | bash -l'
+			'curl https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/node-publish.bash | bash -l'
 		)
 	}
 
