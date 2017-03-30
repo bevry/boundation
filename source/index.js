@@ -285,7 +285,7 @@ function mergeScript (packageData, script) {
 }
 
 function arrangePackage (packageData) {
-	return arrangekeys(packageData, 'title name version private description homepage license keywords badges author maintainers contributors bugs repository engines editions bin preferGlobal main browser dependencies devDependencies peerDependencies scripts')
+	return arrangekeys(packageData, 'title name version private description homepage license keywords badges author sponsors maintainers contributors bugs repository engines editions bin preferGlobal main browser dependencies devDependencies optionalDependencies peerDependencies scripts')
 }
 
 const defaults = {
@@ -690,7 +690,7 @@ async function init () {
 		'https://raw.githubusercontent.com/bevry/base/master/LICENSE.md',
 		'https://raw.githubusercontent.com/bevry/base/master/CONTRIBUTING.md'
 	]
-	if (packageData.editions.length > 1) {
+	if (useEditionAutoloader) {
 		downloads.push(
 			'https://raw.githubusercontent.com/bevry/base/master/index.js',
 			'https://raw.githubusercontent.com/bevry/base/master/test.js'
@@ -786,32 +786,25 @@ async function init () {
 	*/
 
 	// travis env variables
+	// they must be run serially, as otherwise not all variables may be written, which is annoying
 	console.log('travis environment variables')
 	await util.spawn(['travis', 'enable'])
-	const travisCommands = [
-		// at some point, we may want to make this the latest lts version, instead of just the latest version
-		['travis', 'env', 'set', 'DESIRED_NODE_VERSION', travis.node_js[travis.node_js.length - 1], '--public']
-	]
+	await util.spawn(['travis', 'env', 'set', 'DESIRED_NODE_VERSION', travis.node_js[travis.node_js.length - 1], '--public'])
 	if (answers.docs) {
-		travisCommands.push(
-			['travis', 'env', 'set', 'SURGE_LOGIN', answers.surgeLogin, '--public'],
-			['travis', 'env', 'set', 'SURGE_TOKEN', answers.surgeToken]
-		)
+		await util.spawn(['travis', 'env', 'set', 'SURGE_LOGIN', answers.surgeLogin, '--public'])
+		await util.spawn(['travis', 'env', 'set', 'SURGE_TOKEN', answers.surgeToken])
 		travis.after_success.push(
 			'eval "$(curl -s https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/surge.bash)"'
 		)
 	}
 	if (answers.publish) {
-		travisCommands.push(
-			['travis', 'env', 'set', 'NPM_USERNAME', answers.npmUsername, '--public'],
-			['travis', 'env', 'set', 'NPM_PASSWORD', answers.npmPassword],
-			['travis', 'env', 'set', 'NPM_EMAIL', answers.npmEmail]
-		)
+		await util.spawn(['travis', 'env', 'set', 'NPM_USERNAME', answers.npmUsername, '--public'])
+		await util.spawn(['travis', 'env', 'set', 'NPM_PASSWORD', answers.npmPassword])
+		await util.spawn(['travis', 'env', 'set', 'NPM_EMAIL', answers.npmEmail])
 		travis.after_success.push(
 			'eval "$(curl -s https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/node-publish.bash)"'
 		)
 	}
-	await Promise.all(travisCommands.map((command) => util.spawn(command)))
 
 	// write the .travis.yml file
 	console.log('write the .travis.yml file')
@@ -888,6 +881,10 @@ async function init () {
 	else if (answers.language === 'coffeescript') {
 		packages['coffee-script'] = packages.coffeelint = 'dev'
 		if (answers.docs) packages.yuidoc = 'dev'
+	}
+	// upgrade docpad
+	if (packageData.devDependencies.docpad) {
+		packages.docpad = 'dev'
 	}
 
 	// install the development dependencies
