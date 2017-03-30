@@ -65,6 +65,11 @@ It will ask you questions about the project, and then perform the base file init
 
 Currently it is catered towards Bevry projects only, but open to issues and pull-requests to make it more powerful.
 
+Source files pulled down from:
+
+- [`bevry/base`](https://github.com/bevry/base)
+- [`balupton/awesome-travis`](https://github.com/balupton/awesome-travis)
+
 
 <!-- HISTORY/ -->
 
