@@ -9,17 +9,17 @@ cache:
   - "$HOME/.npm"
   - "$HOME/.yarn-cache"
 install:
-- curl https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/node-install.bash
+- curl -s https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/node-install.bash
   | bash -l
-- curl https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/node-upgrade-npm.bash
+- curl -s https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/node-upgrade-npm.bash
   | bash -l
 before_script:
-- curl https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/node-verify.bash
+- curl -s https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/node-verify.bash
   | bash -l
 after_success:
-- curl https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/node-publish.bash
+- curl -s https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/node-publish.bash
   | bash -l
 notifications:
   email:
     recipients:
-      secure: wf1Divhfsrb0vfLnfQn/SH8faaGOVd3MVHF8kzEcRyKSyJpSsonr84s9nKV4nIDyBlC1wuOwK3tHXl7g2B/lzdL5gHXl6+smOpAY6FdnmM1eBbUmFnhNjPjbIJ+jqJVMEy10RV1rNa5UPJWpljCWmk5QXFlv38ym5nmEqODwTT0H07+elgYnciXB/iL0CH62CclgN6X5++xRIr9NI0uaaRciJiMgXsyXrgRTTHL1pl5b1l/YEe8+FnF6azFaGlycdB7dH0TxXXYJ7S1a02mNaba9n6zADTz4jL4cb/Dc49wQ5mKaZjDNiemPQP51Hq8eIUhNZFe4V7m+nB70QxY/WFf/IgmAdykyiItV4jojjNNEcvwJ/GXo6v5fF3mNr0yB78jZA2FSk9PXbO6c+0WFh02uC3bRbYkCKaxBIcx26v8oa5hqMLWIF8hebKdoJnCFnbD2XPMd67WLGO/+IokIaPwiVz8Lf0Pz81JJtef1d/LJBgfPkCZgw2Oasx0KUy0zvBGJ/E76fSxQ/FqISAwgIyfgpq7rZ9RcyR+0br5Lb0N9nhY5jvLjTnSrn/+67vLifzbhAiF4krYqEQ0uRWbQjzjaXUiJRuKbaEQ4otRo/85gOtAQ5KHihO9ZBJ32Z/nuKwWHOcbyCH95psfwfBrpOhtd2FqAyMBWCZrY9sBEBL0=
+      secure: TR+lMFxVddPHSTUV7zTCxJHLfXQXxWktJa2kTey7b7erACMAhB75ZAfPDr0Xn39Zfvqz+mTbi9xLS4f8yBn/f8ySBX1EVdTK2/CIsbr8Z1xdC8vihxjlmNs6Xf4GPYkpG0T1p38VCRULGjfnXFAEzEzldsFRJqzw+3dPTPdFXhQRR5wtUmuwDjPUM4zohS9VJqykNZHGrgD3c5y+haCgz9Cr3QpE104Z2v/TJcGiciZw3o/KjmUOMllhAJzdEFsZhgg4zw7/97On9CrqS+2KR2nJuZND/KDy6sq6n/6Avs37tYT1Whfn3yzbcFV6GDvj+cgBzRvCJI8pWbkKhaBJXQFV5OjXIncRDg51LueNLpgPpx0dPmqLaCdkDJURR7XZputdocLly53NZyWGjI7oVQ4F6A4RqAKnQFVCJo68Xr4MnFw64Qqty3F/PyB8VA+SIZX1dgC3vmPRCXZQLMdkKNU+yF/n4dN20XnW4XJ1qBoYkCHDqgRzV2H7m6ruCJgPkphLDMsuIlfxGLLazUWULuWgy1OXIKAlQN3wibVz3g4KtVnjHICX6tQpS7ml/rpPV7vCOXG60g582xzm6e7e1VaOsKDzccHUigp1cBP8p/40rKiYPJfmUvzKK3QyXkD8FwpE1DRKS4OEQrj2PSrUQ6ogGcUjLWZ5nb1v5Ho6X2g=
