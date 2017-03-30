@@ -681,8 +681,8 @@ async function init () {
 			'7'
 		],
 		matrix: {
-			fast_finish: true,
-			allow_failures: []
+			fast_finish: true /* ,
+			allow_failures: [] */
 		},
 		cache: {
 			directories: [
@@ -691,17 +691,21 @@ async function init () {
 			]
 		},
 		install: [
-			'curl https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/npm-upgrade.bash | bash',
-			'curl https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/npm-install.bash | bash'
+			'curl https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/npm-upgrade.bash | bash -l',
+			'curl https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/npm-install.bash | bash -l'
 		],
 		before_script: [
-			'curl https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/npm-verify.bash | bash'
+			'curl https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/npm-verify.bash | bash -l'
 		],
 		after_success: []
 	}
+	travis.node_js = travis.node_js.filter((version) => semver(version, answers.nodeVersion) !== -1)
+
+	/*
 	travis.matrix.allow_failures = travis.node_js
 		.filter((version) => semver(version, answers.nodeVersion) === -1)
 		.map((node_js) => ({ node_js }))
+	*/
 
 	// travis env variables
 	console.log('travis environment variables')
@@ -712,7 +716,7 @@ async function init () {
 			util.exec(`travis env set SURGE_TOKEN "${answers.surgeToken}"`)
 		])
 		travis.after_success.push(
-			'curl https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/surge.bash | bash'
+			'curl https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/surge.bash | bash -l'
 		)
 	}
 	if (answers.publish) {
@@ -722,7 +726,7 @@ async function init () {
 			util.exec(`travis env set NPM_EMAIL "${answers.npmEmail}"`)
 		])
 		travis.after_success.push(
-			'curl https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/npm-publish.bash | bash'
+			'curl https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/npm-publish.bash | bash -l'
 		)
 	}
 
