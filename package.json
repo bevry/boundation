@@ -105,7 +105,8 @@
     "inquirer": "^3.0.6",
     "js-yaml": "^3.8.2",
     "node-fetch": "^1.6.3",
-    "safeps": "^6.3.0"
+    "safeps": "^6.3.0",
+    "semver": "^5.3.0"
   },
   "devDependencies": {
     "assert-helpers": "^4.5.0",
