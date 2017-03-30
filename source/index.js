@@ -1,15 +1,26 @@
 /* eslint no-sync:0, camelcase:0, no-console:0 */
 'use strict'
 
+function stackOrMessage (error) {
+	return error.stack ? `\n${error.stack}` : error.toString()
+}
+
+process.on('unhandledRejection', function (reason) {
+	console.error(`\nA promise FAILED with: ${stackOrMessage(reason)}`)
+	process.exit(-1)
+})
+
+const inquirer = require('inquirer')
 const fsUtil = require('fs')
 const pathUtil = require('path')
-const safeps = require('safeps')
 const fetch = require('node-fetch')
 const arrangekeys = require('arrangekeys')
-const semver = require('semver')
 const yaml = require('js-yaml')
+const urlUtil = require('url')
+const { semver } = require('./util')
 const cwd = process.cwd()
 
+const NO_NEED_SCRIPT = 'echo no need for this project'
 const defaults = {
 	npmEmail: process.env.NPM_EMAIL,
 	npmUsername: process.env.NPM_EMAIL,
@@ -65,38 +76,28 @@ const util = {
 
 	read (file) {
 		return new Promise(function (resolve, reject) {
-			fsUtil.readFile(file, 'utf8', function (error) {
+			fsUtil.readFile(file, function (error, data) {
 				if (error) return reject(error)
-				return resolve()
+				return resolve(data)
 			})
 		})
 	},
 
-	write (data, file) {
+	write (file, data) {
 		return new Promise(function (resolve, reject) {
-			fsUtil.writeFile(data, file, function (error) {
+			fsUtil.writeFile(file, data, function (error) {
 				if (error) return reject(error)
 				return resolve()
-			})
-		})
-	},
-
-	spawn (command, opts = {}) {
-		opts.cwd = opts.cwd || cwd
-		opts.stdio = opts.stdio || ['ignore', 'pipe', 'ignore']
-		return new Promise(function (resolve, reject) {
-			safeps.spawn(command, opts, function (err, stdout) {
-				if (err) return reject(err)
-				return resolve(stdout)
 			})
 		})
 	},
 
 	exec (command, opts = {}) {
 		opts.cwd = opts.cwd || cwd
-		opts.stdio = opts.stdio || ['ignore', 'pipe', 'ignore']
+		// .exec actually doesn't support stdio, only .spawn does
+		opts.stdio = opts.stdio || 'inherit'
 		return new Promise(function (resolve, reject) {
-			safeps.exec(command, opts, function (err, stdout) {
+			require('child_process').exec(command, opts, function (err, stdout) {
 				if (err) return reject(err)
 				return resolve(stdout)
 			})
@@ -106,29 +107,34 @@ const util = {
 }
 
 async function download (opts) {
-	if (typeof opts === 'string') opts = { url: opts }
-	const response = await fetch(opts.url)
-	let data = await response.text()
-	const file = pathUtil.join(cwd, pathUtil.basename(new URL(opts.url)))
-	const exists = await util.exists(file)
-	if (opts.overwrite === false) {
-		return Promise.resolve()
-	}
-	if (exists) {
-		const read = await util.read(file)
-		const lines = read.split('\n')
-		const customIndex = lines.findIndex((line) => (/^# CUSTOM/i).test(line))
-		if (customIndex !== -1) {
-			data += lines.slice(customIndex).join('\n')
+	try {
+		if (typeof opts === 'string') opts = { url: opts }
+		const response = await fetch(opts.url)
+		let data = await response.text()
+		const file = pathUtil.join(cwd, pathUtil.basename(urlUtil.parse(opts.url).pathname))
+		const exists = await util.exists(file)
+		if (opts.overwrite === false) {
+			return Promise.resolve()
 		}
+		if (exists) {
+			const localData = await util.read(file).toString()
+			const lines = localData.split('\n')
+			const customIndex = lines.findIndex((line) => (/^# CUSTOM/i).test(line))
+			if (customIndex !== -1) {
+				data += lines.slice(customIndex).join('\n')
+			}
+		}
+		return util.write(file, data)
 	}
-	return util.write(data, file)
+	catch (err) {
+		throw new Error(`Download of ${opts.url} FAILED due to: ${stackOrMessage(err)}`)
+	}
 }
 
 async function getGitOriginUrl () {
 	if (state.gitOriginUrl) return state.gitOriginUrl
 	try {
-		const stdout = await util.exec('git remote get-url origin')
+		const stdout = await util.exec('git remote get-url origin', { stdio: ['ignore', 'pipe', 'ignore'] })
 		state.gitOriginUrl = (stdout && stdout.toString().trim()) || null
 		return state.gitOriginUrl
 	}
@@ -141,7 +147,7 @@ async function getGitOriginUrl () {
 async function getGitUserName () {
 	if (state.gitUserName) return state.gitUserName
 	try {
-		const stdout = await util.exec('git config --global user.name')
+		const stdout = await util.exec('git config --global user.name', { stdio: ['ignore', 'pipe', 'ignore'] })
 		state.gitUserName = (stdout && stdout.toString()) || null
 		return state.gitUserName
 	}
@@ -153,7 +159,7 @@ async function getGitUserName () {
 async function getGitUserEmail () {
 	if (state.gitUserEmail) return state.gitUserEmail
 	try {
-		const stdout = await util.exec('git config --global user.email')
+		const stdout = await util.exec('git config --global user.email', { stdio: ['ignore', 'pipe', 'ignore'] })
 		state.gitUserEmail = (stdout && stdout.toString()) || null
 		return state.gitUserEmail
 	}
@@ -220,6 +226,10 @@ function getPackageBabel () {
 	return (getPackage() && state.package.devDependencies && Boolean(state.package.devDependencies.babel)) || null
 }
 
+function getPackageCompile () {
+	return (getPackage() && state.package.scripts && state.package.scripts['our:compile'] !== NO_NEED_SCRIPT)
+}
+
 /*
 function getPackageAuthor () {
 	return (getPackage() && state.package.author) || null
@@ -227,7 +237,10 @@ function getPackageAuthor () {
 */
 
 function mergeScript (packageData, script) {
-	packageData.scripts[script] = Object.keys(packageData.scripts).filter((key) => key.indexOf(`${script}:`) === 0).map((key) => `npm run ${key}`).join('&&')
+	packageData.scripts[script] = Object.keys(packageData.scripts)
+		.filter((key) => key.indexOf(`${script}:`) === 0 && packageData.scripts[key])
+		.map((key) => `npm run ${key}`)
+		.join(' && ') || NO_NEED_SCRIPT
 }
 
 function arrangePackage (packageData) {
@@ -241,14 +254,14 @@ async function getQuestions () {
 			message: 'What will be the package name?',
 			default: getPackageName(),
 			validate: isSpecified,
-			filter: slugit
+			filter: trim
 		},
 		{
 			name: 'description',
 			message: 'and the package description?',
 			default: getPackageDescription(),
 			validate: isSpecified,
-			filter: slugit
+			filter: trim
 		},
 		{
 			name: 'keywords',
@@ -297,7 +310,7 @@ async function getQuestions () {
 			message: 'Will you use babel to support earlier node versions?',
 			default: otherwise(getPackageBabel(), true),
 			when ({ language }) {
-				return language === 'esnext'
+				return getPackageCompile() && language === 'esnext'
 			}
 		},
 		{
@@ -405,9 +418,17 @@ async function getQuestions () {
 // ================================================
 // Do the magic
 
+async function getAnswers () {
+	try {
+		return await inquirer.prompt(await getQuestions())
+	}
+	catch (err) {
+		throw new Error(`Failed to fetch the answers from the user: ${stackOrMessage(err)}`)
+	}
+}
+
 async function init () {
-	const inquirer = require('inquirer')
-	const answers = Object.assign(defaults, await inquirer.prompt(await getQuestions()))
+	const answers = Object.assign(defaults, await getAnswers())
 
 	// setup the package data variables
 	const packageDataLocal = getPackage()
@@ -438,16 +459,19 @@ async function init () {
 					'daviddm',
 					'daviddmdev',
 					'---',
-					'slackin',
 					'patreon',
+					'opencollective',
 					'gratipay',
 					'flattr',
 					'paypal',
 					'bitcoin',
-					'wishlist'
+					'wishlist',
+					'---',
+					'slackin'
 				],
 				config: {
 					patreonUsername: 'bevry',
+					opencollectiveUsername: 'bevry',
 					gratipayUsername: 'bevry',
 					flattrUsername: 'balupton',
 					paypalURL: 'https://bevry.me/paypal',
@@ -459,19 +483,19 @@ async function init () {
 			scripts: {
 				'our:setup': '',
 				'our:setup:npm': 'npm install',
-				'our:setup:docpad': 'bash ./docpad-setup.sh',
+				'our:setup:docpad': '',
 				'our:clean': 'rm -Rf ./docs ./es2015 ./es5 ./out',
 				'our:compile': '',
-				'our:compile:coffee': 'coffee -bco ./es5 ./source',
-				'our:compile:es2015': 'babel ./source --out-dir ./es2015 --presets es2015',
+				'our:compile:coffee': '',
+				'our:compile:es2015': '',
 				'our:meta': '',
-				'our:meta:docs': 'documentation build -f html -o ./docs -g --shallow ./source/**.js',
-				'our:meta:yuidoc': 'yuidoc -o ./docs --syntaxtype coffee -e .coffee ./source',
+				'our:meta:docs': '',
+				'our:meta:yuidoc': '',
 				'our:meta:projectz': 'projectz compile',
 				'our:verify': '',
-				'our:verify:coffeelint': 'coffeelint ./source',
-				'our:verify:eslint': 'eslint --fix ./source',
-				'our:verify:flow': 'flow check',
+				'our:verify:coffeelint': '',
+				'our:verify:eslint': '',
+				'our:verify:flow': '',
 				'our:test': 'npm run our:verify && npm test',
 				'our:release': 'npm run our:release:prepare && npm run our:release:check && npm run our:release:tag && npm run our:release:push',
 				'our:release:prepare': 'npm run our:clean && npm run our:compile && npm run our:test && npm run our:meta',
@@ -486,6 +510,7 @@ async function init () {
 	))
 
 	// customise editions
+	console.log('customising editions')
 	if (!packageData.editions) {
 		const editions = []
 		if (answers.language === 'esnext') {
@@ -550,6 +575,7 @@ async function init () {
 	}
 
 	// customise engines, private, and browser
+	console.log('customising package data')
 	packageData.engines.node = `>=${answers.nodeVersion}`
 	if (answers.publish != null) {
 		if (answers.publish) {
@@ -570,6 +596,7 @@ async function init () {
 	}
 
 	// customise badges
+	console.log('customising badges')
 	if (packageData.private) {
 		const removeList = [
 			'npmversion',
@@ -581,6 +608,7 @@ async function init () {
 	}
 
 	// download files
+	console.log('downloading files')
 	const downloads = [
 		'https://rawgit.com/bevry/base/master/.editorconfig',
 		{ url: 'https://rawgit.com/bevry/base/master/HISTORY.md', overwrite: false },
@@ -608,9 +636,10 @@ async function init () {
 	await Promise.all(downloads.map((i) => download(i)))
 
 	// write the readme file
+	console.log('writing readme file')
 	const readme = pathUtil.join(cwd, 'README.md')
 	if ( (await util.exists(readme)) === false ) {
-		await util.write([
+		await util.write(readme, [
 			'<!--TITLE -->',
 			'',
 			'<!--BADGES -->',
@@ -625,11 +654,13 @@ async function init () {
 			'<!--CONTRIBUTE -->',
 			'<!--BACKERS -->',
 			'<!--LICENSE -->'
-		].join('\n'), readme)
+		].join('\n'))
 	}
 
 	// customise travis
+	console.log('customising travis')
 	const travis = {
+		sudo: false,
 		language: 'node_js',
 		node_js: [
 			'0.8',
@@ -659,69 +690,81 @@ async function init () {
 		after_success: []
 	}
 	travis.matrix.allow_failures = travis.node_js
-		.filter((version) => semver.satisfies(version, packageData.engines.node) === false)
+		.filter((version) => semver(version, answers.nodeVersion) === -1)
 		.map((node_js) => ({ node_js }))
 
+	// travis env variables
+	console.log('travis environment variables')
+	await util.exec('travis enable')
 	if (answers.docs) {
-		await Promise.all(
-			util.exec(`travis env set SURGE_LOGIN "${answers.surgeLogin}"`, {stdio: 'inherit'}),
-			util.exec(`travis env set SURGE_TOKEN "${answers.surgeToken}"`, { stdio: 'inherit' })
-		)
+		await Promise.all([
+			util.exec(`travis env set SURGE_LOGIN "${answers.surgeLogin}"`),
+			util.exec(`travis env set SURGE_TOKEN "${answers.surgeToken}"`)
+		])
 		travis.after_success.push(
 			'curl https://rawgit.com/balupton/awesome-travis/master/scripts/surge.bash | bash'
 		)
 	}
-	if (answers.public) {
-		await Promise.all(
-			util.exec(`travis env set NPM_USERNAME "${answers.npmUsername}"`, { stdio: 'inherit' }),
-			util.exec(`travis env set NPM_PASSWORD "${answers.npmPassword}"`, { stdio: 'inherit' }),
-			util.exec(`travis env set NPM_EMAIL "${answers.npmEmail}"`, { stdio: 'inherit' })
-		)
+	if (answers.publish) {
+		await Promise.all([
+			util.exec(`travis env set NPM_USERNAME "${answers.npmUsername}"`),
+			util.exec(`travis env set NPM_PASSWORD "${answers.npmPassword}"`),
+			util.exec(`travis env set NPM_EMAIL "${answers.npmEmail}"`)
+		])
 		travis.after_success.push(
 			'curl https://rawgit.com/balupton/awesome-travis/master/scripts/npm-publish.bash | bash'
 		)
 	}
 
 	// write the .travis.yml file
+	console.log('write the .travis.yml file')
 	await util.write(
-		'# THIS FILE IS AUTO-GENERATED BY BEVRY/BASED DO NOT MODIFY\n' + yaml.dump(travis) + '\n# THIS FILE IS AUTO-GENERATED BY BEVRY/BASED DO NOT MODIFY\n',
-		pathUtil.join(cwd, '.travis.yml')
+		pathUtil.join(cwd, '.travis.yml'),
+		'# THIS FILE IS AUTO-GENERATED BY BEVRY/BASED DO NOT MODIFY\n' + yaml.dump(travis) + '\n# THIS FILE IS AUTO-GENERATED BY BEVRY/BASED DO NOT MODIFY\n'
 	)
-	await Promise.all(
-		util.exec(`travis encrypt "${answers.slackSubdomain}:${answers.slackToken}#updates" --add notifications.slack`, { stdio: 'inherit' }),
-		util.exec(`travis encrypt "${answers.travisEmail}" --add notifications.email.recipients`, { stdio: 'inherit' })
-	)
+	await Promise.all([
+		util.exec(`travis encrypt "${answers.slackSubdomain}:${answers.slackToken}#updates" --add notifications.slack`),
+		util.exec(`travis encrypt "${answers.travisEmail}" --add notifications.email.recipients`)
+	])
 
 	// customise scripts
-	if (!packageData.devDependencies.docpad) {
-		delete packageData.scripts['our:setup:docpad']
+	console.log('customise scripts')
+	if (packageData.devDependencies.docpad) {
+		packageData.scripts['our:setup:docpad'] = 'bash ./docpad-setup.sh'
 	}
 	if (answers.language === 'coffeescript') {
-		delete packageData.scripts['our:compile:es2015']
-		delete packageData.scripts['our:verify:eslint']
-		delete packageData.scripts['our:verify:flow']
-		delete packageData.scripts['our:meta:docs']
+		packageData.scripts['our:compile:coffee'] = 'coffee -bco ./es5 ./source'
+		packageData.scripts['our:verify:coffeelint'] = 'coffeelint ./source'
+		if (answers.docs) {
+			packageData.scripts['our:meta:yudoc'] = 'yuidoc -o ./docs --syntaxtype coffee -e .coffee ./source'
+		}
 	}
 	else if (answers.language === 'esnext') {
-		if (!answers.babel) {
-			delete packageData.scripts['our:compile:es2015']
+		packageData.scripts['our:verify:eslint'] = 'eslint --fix ./source'
+		if (answers.babel) {
+			packageData.scripts['our:compile:es2015'] = 'babel ./source --out-dir ./es2015 --presets es2015'
 		}
-		delete packageData.scripts['our:compile:coffee']
-		delete packageData.scripts['our:meta:yuidoc']
-		delete packageData.scripts['our:verify:coffeelint']
-		if (!answers.flowtype) {
-			delete packageData.scripts['our:verify:flow']
+		if (answers.docs) {
+			packageData.scripts['out:meta:docs'] = 'documentation build -f html -o ./docs -g --shallow ./source/**.js'
+		}
+		if (answers.flowtype) {
+			packageData.scripts['our:verify:flow'] = 'flow check'
 		}
 	}
 	mergeScript(packageData, 'our:setup')
 	mergeScript(packageData, 'our:compile')
 	mergeScript(packageData, 'our:meta')
 	mergeScript(packageData, 'our:verify')
+	Object.keys(packageData.scripts).forEach(function (key) {
+		if (packageData.scripts[key] === '') {
+			delete packageData.scripts[key]
+		}
+	})
 
 	// write the package.json file
 	await util.write(
-		JSON.stringify(packageData, null, '  '),
-		pathUtil.join(cwd, 'package.json')
+		pathUtil.join(cwd, 'package.json'),
+		JSON.stringify(packageData, null, '  ')
 	)
 
 	// prepare the development dependencies
@@ -742,18 +785,18 @@ async function init () {
 	// install the development dependencies
 	if (packages.length) {
 		console.log('installing the dependencies...')
-		await util.exec(`yarn add --dev ${packages.join(' ')}`, { stdio: 'inherit' })
+		await util.exec(`yarn add ${packages.join(' ')}`)
 		console.log('...installed the dependencies')
 	}
 	if (devPackages.length) {
 		console.log('installing the development dependencies...')
-		await util.exec(`yarn add --dev ${devPackages.join(' ')}`, { stdio: 'inherit' })
+		await util.exec(`yarn add --dev ${devPackages.join(' ')}`)
 		console.log('...installed the development dependencies')
 	}
 
 	// test everything
 	console.log('all finished, testing with release preparation...')
-	await util.exec('npm run our:release:prepare', {stdio: 'inherit'})
+	await util.exec('npm run our:release:prepare')
 	console.log('...all done')
 }
 
