@@ -22,16 +22,6 @@ const { semver } = require('./util')
 const cwd = process.cwd()
 
 const NO_NEED_SCRIPT = 'echo no need for this project'
-const defaults = {
-	npmEmail: process.env.NPM_EMAIL,
-	npmUsername: process.env.NPM_USERNAME,
-	npmPassword: process.env.NPM_PASSWORD,
-	travisEmail: process.env.TRAVIS_NOTIFICATION_EMAIL,
-	slackSubdomain: process.env.SLACK_SUBDOMAIN,
-	slackToken: process.env.SLACK_TRAVIS_TOKEN,
-	surgeLogin: process.env.SURGE_LOGIN,
-	surgeToken: process.env.SURGE_TOKEN
-}
 const state = {}
 
 function trim (input) {
@@ -95,6 +85,17 @@ const util = {
 			fsUtil.readFile(file, function (error, data) {
 				if (error) return reject(error)
 				return resolve(data)
+			})
+		})
+	},
+
+	rename (source, target) {
+		source = pathUtil.resolve(cwd, source)
+		target = pathUtil.resolve(cwd, target)
+		return new Promise(function (resolve, reject) {
+			fsUtil.rename(source, target, function (error) {
+				if (error) return reject(error)
+				return resolve()
 			})
 		})
 	},
@@ -213,52 +214,66 @@ function getPackage () {
 }
 
 function getPackageName () {
-	return (getPackage() && state.package.name) || null
+	const packageData = getPackage()
+	return (packageData && packageData.name) || null
 }
 
 function getPackageDescription () {
-	return (getPackage() && state.package.description) || null
+	const packageData = getPackage()
+	return (packageData && packageData.description) || null
 }
 
 function getPackageKeywords () {
-	return (getPackage() && state.package.keywords && state.package.keywords.join(', ')) || null
+	const packageData = getPackage()
+	return (packageData && packageData.keywords && packageData.keywords.join(', ')) || null
 }
 
 function getPackageNodeVersion () {
-	return (getPackage() && state.package.engines && state.package.engines.node && state.package.engines.node.replace(/[^0-9]+/, '')) || null
+	const packageData = getPackage()
+	return (packageData && packageData.engines && packageData.engines.node && packageData.engines.node.replace(/[^0-9]+/, '')) || null
 }
 
 function getPackageDocumentationDependency () {
-	return (getPackage() && state.package.devDependencies && state.package.devDependencies.documentation) || null
+	const packageData = getPackage()
+	return (packageData && packageData.devDependencies && Boolean(packageData.devDependencies.documentation)) || null
 }
 
 function getPackageFlowtypeDependency () {
-	return (getPackage() && state.package.devDependencies && state.package.devDependencies['flow-bin']) || null
+	const packageData = getPackage()
+	return (packageData && packageData.devDependencies && Boolean(packageData.devDependencies['flow-bin'])) || null
 }
 
 function getPackageModules () {
-	return (getPackage() && state.package.editions && state.package.editions[0] && state.package.editions.syntaxes && state.package.editions.syntaxes.indexOf('import') !== -1) || null
+	const packageData = getPackage()
+	const edition = (packageData && packageData.editions && packageData.editions[0])
+	if (edition == null || edition.syntaxes == null)  return null
+	return edition.syntaxes.indexOf('import') !== -1
 }
 
 function getPackageRepoUrl () {
-	return (getPackage() && state.package.repository && state.package.repository.url) || null
+	const packageData = getPackage()
+	return (packageData && packageData.repository && packageData.repository.url) || null
 }
 
-function getPackageLanguage () {
-	return (getPackage() && state.package.devDependencies && state.package.devDependencies['coffee-script'] && 'coffeescript') || null
+function getPackageCoffee () {
+	const packageData = getPackage()
+	return (packageData && packageData.devDependencies && Boolean(packageData.devDependencies['coffee-script'])) || null
 }
 
 function getPackageBabel () {
-	return (getPackage() && state.package.devDependencies && Boolean(state.package.devDependencies.babel)) || null
+	const packageData = getPackage()
+	return (packageData && packageData.devDependencies && Boolean(packageData.devDependencies.babel)) || null
 }
 
 function getPackageCompile () {
-	return (getPackage() && state.package.scripts && state.package.scripts['our:compile'] !== NO_NEED_SCRIPT)
+	const packageData = getPackage()
+	return (packageData && packageData.scripts && packageData.scripts['our:compile'] !== NO_NEED_SCRIPT)
 }
 
 /*
 function getPackageAuthor () {
-	return (getPackage() && state.package.author) || null
+	const packageData = getPackage()
+	return (packageData && state.package.author) || null
 }
 */
 
@@ -270,7 +285,18 @@ function mergeScript (packageData, script) {
 }
 
 function arrangePackage (packageData) {
-	return arrangekeys(packageData, 'title name version private description homepage license keywords badges author maintainers contributors bugs repository engines editions bin preferGlobal main browser scripts dependencies devDependencies peerDependencies')
+	return arrangekeys(packageData, 'title name version private description homepage license keywords badges author maintainers contributors bugs repository engines editions bin preferGlobal main browser dependencies devDependencies peerDependencies scripts')
+}
+
+const defaults = {
+	npmEmail: process.env.NPM_EMAIL,
+	npmUsername: process.env.NPM_USERNAME,
+	npmPassword: process.env.NPM_PASSWORD,
+	travisEmail: process.env.TRAVIS_NOTIFICATION_EMAIL,
+	slackSubdomain: process.env.SLACK_SUBDOMAIN,
+	slackToken: process.env.SLACK_TRAVIS_TOKEN,
+	surgeLogin: process.env.SURGE_LOGIN,
+	surgeToken: process.env.SURGE_TOKEN
 }
 
 async function getQuestions () {
@@ -307,22 +333,25 @@ async function getQuestions () {
 			name: 'publish',
 			type: 'confirm',
 			message: 'Will it be published to npm?',
-			default: true,
-			when () { return getPackage().private == null }
+			default: getPackage().private != null ? !getPackage().private : null
 		},
 		{
 			name: 'browser',
 			type: 'confirm',
 			message: 'Will it be used on the client-side inside web browsers?',
-			default: false,
-			when () { return getPackage().browser == null }
+			default: Boolean(getPackage().browser)
 		},
 		{
 			name: 'language',
 			type: 'list',
 			choices: ['coffeescript', 'esnext'],
 			message: 'What language will it use?',
-			default: getPackageLanguage() || 'esnext'
+			default: (getPackageCoffee() && 'coffeescript') || 'esnext'
+		},
+		{
+			name: 'entry',
+			message: 'What is the entry filename (without extension)?',
+			default: (getPackage().main && getPackage().main.replace(/^.+\//, '').replace(/\.[^.]+?$/, '')) || 'index'
 		},
 		{
 			name: 'nodeVersion',
@@ -454,15 +483,15 @@ async function getAnswers () {
 }
 
 async function init () {
-	// Prepare
-	const unlinkFiles = ['esnextguardian.js', 'nakefile.js', 'Cakefile', 'coffeelint.json', 'cyclic.js', '.jshintrc', '.jscrc']
-
 	// Fetch
 	const answers = Object.assign(defaults, await getAnswers())
 
+	// Prepare
+	const unlinkFiles = ['esnextguardian.js', 'nakefile.js', 'Cakefile', 'cyclic.js', '.jshintrc', '.jscrc']
+
 	// setup the package data variables
 	const packageDataLocal = getPackage()
-	const packageData = arrangePackage(Object.assign(
+	const packageData = Object.assign(
 		{
 			license: 'MIT',
 			author: `${new Date().getFullYear()}+ Bevry <us@bevry.me> (http://bevry.me)`,
@@ -537,7 +566,7 @@ async function init () {
 				'test': 'node --harmony ./test.js --joe-reporter=console'
 			}
 		}
-	))
+	)
 
 	// customise editions
 	console.log('customising editions')
@@ -547,7 +576,7 @@ async function init () {
 			editions.push({
 				description: 'Source + ESNext',
 				directory: 'source',
-				entry: 'index.js',
+				entry: `${answers.entry}.js`,
 				syntaxes: [
 					'javascript',
 					'esnext'
@@ -569,7 +598,7 @@ async function init () {
 				editions.push({
 					description: 'Babel Compiled + ES2015 + Require',
 					directory: 'es2015',
-					entry: 'index.js',
+					entry: `${answers.entry}.js`,
 					syntaxes: [
 						'javascript',
 						'es2015',
@@ -583,7 +612,7 @@ async function init () {
 				{
 					description: 'Source + CoffeeScript + Require',
 					directory: 'source',
-					entry: 'index.js',
+					entry: `${answers.entry}.coffee`,
 					syntaxes: [
 						'coffeescript',
 						'require'
@@ -592,7 +621,7 @@ async function init () {
 				{
 					description: 'CoffeeScript Compiled + ES5 + Require',
 					directory: 'es5',
-					entry: 'index.js',
+					entry: `${answers.entry}.js`,
 					syntaxes: [
 						'javascript',
 						'es5',
@@ -603,10 +632,15 @@ async function init () {
 		}
 		packageData.editions = editions
 	}
+	const useEditionAutoloader = answers.language === 'esnext' && packageData.editions.length > 1
+	const lastEdition = packageData.editions[packageData.editions.length - 1]
 
 	// customise engines, private, and browser
 	console.log('customising package data')
 	packageData.engines.node = `>=${answers.nodeVersion}`
+	if (packageData.license && packageData.license.type) {
+		packageData.license = packageData.license.type
+	}
 	if (answers.publish != null) {
 		if (answers.publish) {
 			delete packageData.private
@@ -615,20 +649,25 @@ async function init () {
 			packageData.private = true
 		}
 	}
-	if (packageData.editions.length === 1) {
-		packageData.main = pathUtil.join(packageData.editions[0].directory, packageData.editions[0].entry)
-		const testPath = pathUtil.join('.', packageData.editions[0].directory, 'test.js')
+	if (!useEditionAutoloader) {
+		const extension = pathUtil.extname(lastEdition.entry)
+		packageData.main = pathUtil.join(lastEdition.directory, lastEdition.entry)
+		const testPath = (lastEdition.entry.indexOf('.plugin.') !== -1)
+			? pathUtil.join('.', lastEdition.directory, lastEdition.entry.replace('.plugin.', '.test.'))
+			: pathUtil.join('.', lastEdition.directory, `test${extension}`)
 		packageData.scripts.test = `node --harmony ${testPath} --joe-reporter=console`
 	}
 	if (answers.browser) {
 		if (answers.publish) {
-			const lastEdition = packageData.editions[packageData.editions.length - 1]
 			packageData.browser = lastEdition.directory + '/' + lastEdition.entry
 		}
 		else {
 			delete packageData.browser
 		}
 	}
+
+	// remove old fields
+	delete packageData.cakeConfiguration
 
 	// customise badges
 	console.log('customising badges')
@@ -821,37 +860,54 @@ async function init () {
 	// write the package.json file
 	console.log('writing the package.json file...')
 	await util.write('package.json',
-		JSON.stringify(packageData, null, '  ')
+		JSON.stringify(arrangePackage(packageData), null, '  ')
 	)
 	console.log('..wrote the package.json file')
 
 	// prepare the development dependencies
-	const packages = []
-	const devPackages = ['projectz', 'assert-helpers', 'joe', 'joe-reporter-console']
-	if (packageData.editions.length > 1) {
-		packages.push('editions')
+	const packages = {
+		'projectz': 'dev',
+		'assert-helpers': 'dev',
+		'joe': 'dev',
+		'joe-reporter-console': 'dev',
+		'editions': useEditionAutoloader,
+		'eslint': false,
+		'babel-cli': false,
+		'babel-preset-es2015': false,
+		'documentation': false,
+		'flow-bin': false,
+		'coffee-script': false,
+		'yuidoc': false
 	}
 	if (answers.language === 'esnext') {
-		devPackages.push('eslint')
-		if (answers.babel) devPackages.push('babel-cli', 'babel-preset-es2015')
-		if (answers.docs) devPackages.push('documentation')
-		if (answers.flowtype) devPackages.push('flow-bin')
+		packages.eslint = 'dev'
+		if (answers.babel) packages['babel-cli'] = packages['babel-preset-es2015'] = 'dev'
+		if (answers.docs) packages.documentation = 'dev'
+		if (answers.flowtype) packages['flow-bin'] = 'dev'
 	}
 	else if (answers.language === 'coffeescript') {
-		devPackages.push('coffee-script', 'coffeelint')
-		if (answers.docs) devPackages.push('yuidoc')
+		packages['coffee-script'] = packages.coffeelint = 'dev'
+		if (answers.docs) packages.yuidoc = 'dev'
 	}
 
 	// install the development dependencies
-	if (packages.length) {
+	const addDependencies = Object.keys(packages).filter((key) => packages[key] === true)
+	const addDevDependencies = Object.keys(packages).filter((key) => packages[key] === 'dev')
+	const removeDependencies = Object.keys(packages).filter((key) => packages[key] === false && (packageData.dependencies[key] || packageData.devDependencies[key]))
+	if (addDependencies.length) {
 		console.log('adding the dependencies...\n')
-		await util.spawn(['yarn', 'add'].concat(packages))
+		await util.spawn(['yarn', 'add'].concat(addDependencies))
 		console.log('\n...added the dependencies')
 	}
-	if (devPackages.length) {
+	if (addDevDependencies.length) {
 		console.log('adding the development dependencies...\n')
-		await util.spawn(['yarn', 'add', '--dev'].concat(devPackages))
+		await util.spawn(['yarn', 'add', '--dev'].concat(addDevDependencies))
 		console.log('\n...added the development dependencies')
+	}
+	if (removeDependencies.length) {
+		console.log('remove old dependencies...\n')
+		await util.spawn(['yarn', 'remove'].concat(removeDependencies))
+		console.log('\n...removed old dependencies')
 	}
 	console.log('installing the dependencies...\n')
 	await util.spawn('yarn')
@@ -861,6 +917,14 @@ async function init () {
 	console.log('removing old files...')
 	await Promise.all(unlinkFiles.map((file) => util.unlink(file)))
 	console.log('...removed old files')
+
+	// renaming old files
+	console.log('renaming old files...')
+	try {
+		await util.rename('src', 'source')
+	}
+	catch (err) {}
+	console.log('...renaming old files')
 
 	// test everything
 	console.log('all finished, testing with release preparation...\n')
