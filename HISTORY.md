@@ -1,5 +1,8 @@
 # History
 
+## v1.1.3 2017 March 31
+- Don't install testing deps if DocPad provides them
+
 ## v1.1.2 2017 March 31
 - Fixed travis yaml writing risking curruption
 

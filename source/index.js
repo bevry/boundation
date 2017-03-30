@@ -857,9 +857,9 @@ async function init () {
 	// prepare the development dependencies
 	const packages = {
 		'projectz': 'dev',
-		'assert-helpers': 'dev',
-		'joe': 'dev',
-		'joe-reporter-console': 'dev',
+		'assert-helpers': false,
+		'joe': false,
+		'joe-reporter-console': false,
 		'editions': useEditionAutoloader,
 		'eslint': false,
 		'babel-cli': false,
@@ -868,6 +868,12 @@ async function init () {
 		'flow-bin': false,
 		'coffee-script': false,
 		'yuidoc': false
+	}
+	if (packageData.devDependencies.docpad) {
+		packages.docpad = 'dev'
+	}
+	else {
+		packages.joe = packages['joe-reporter-console'] = packages['assert-helpers'] = 'dev'
 	}
 	if (answers.language === 'esnext') {
 		packages.eslint = 'dev'
@@ -878,10 +884,6 @@ async function init () {
 	else if (answers.language === 'coffeescript') {
 		packages['coffee-script'] = packages.coffeelint = 'dev'
 		if (answers.docs) packages.yuidoc = 'dev'
-	}
-	// upgrade docpad
-	if (packageData.devDependencies.docpad) {
-		packages.docpad = 'dev'
 	}
 
 	// install the development dependencies
