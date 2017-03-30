@@ -1,5 +1,8 @@
 # History
 
+## v1.1.2 2017 March 31
+- Fixed travis yaml writing risking curruption
+
 ## v1.1.1 2017 March 31
 - Fixed travis env vars risking undoing the progress of others
 - Fixed `test.js` and `index.js` still being downloaded under circumstances when they shouldn't
