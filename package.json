@@ -110,7 +110,7 @@
   "devDependencies": {
     "assert-helpers": "^4.5.0",
     "eslint": "^3.18.0",
-    "joe": "^1.6.1",
+    "joe": "^2.0.2",
     "joe-reporter-console": "^2.0.1",
     "projectz": "^1.3.2"
   }
