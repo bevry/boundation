@@ -691,11 +691,10 @@ async function init () {
 			]
 		},
 		install: [
-			'curl -s https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/node-install.bash | bash -l',
-			'curl -s https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/node-upgrade-npm.bash | bash -l'
+			'eval "$(curl -s https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/node-install.bash)"'
 		],
 		before_script: [
-			'curl -s https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/node-verify.bash | bash -l'
+			'eval "$(curl -s https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/node-verify.bash)"'
 		],
 		after_success: []
 	}
@@ -716,7 +715,7 @@ async function init () {
 			util.exec(`travis env set SURGE_TOKEN "${answers.surgeToken}"`)
 		])
 		travis.after_success.push(
-			'curl -s https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/surge.bash | bash -l'
+			'eval "$(curl -s https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/surge.bash)"'
 		)
 	}
 	if (answers.publish) {
@@ -726,7 +725,7 @@ async function init () {
 			util.exec(`travis env set NPM_EMAIL "${answers.npmEmail}"`)
 		])
 		travis.after_success.push(
-			'curl -s https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/node-publish.bash | bash -l'
+			'eval "$(curl -s https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/node-publish.bash)"'
 		)
 	}
 
