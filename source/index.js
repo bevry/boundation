@@ -129,7 +129,7 @@ async function getGitOriginUrl () {
 	if (state.gitOriginUrl) return state.gitOriginUrl
 	try {
 		const stdout = await util.exec('git remote get-url origin')
-		state.gitOriginUrl = (stdout && stdout.toString()) || null
+		state.gitOriginUrl = (stdout && stdout.toString().trim()) || null
 		return state.gitOriginUrl
 	}
 	catch (error) {
