@@ -38,16 +38,8 @@ Automatic application of the Bevry base files /bevry/base
 <h2>Install</h2>
 
 <a href="https://npmjs.com" title="npm is a package manager for javascript"><h3>NPM</h3></a><ul>
-<li>Install: <code>npm install --global @bevry/based</code></li></ul>
-
-<a href="http://browserify.org" title="Browserify lets you require('modules') in the browser by bundling up all of your dependencies"><h3>Browserify</h3></a><ul>
-<li>Install: <code>npm install --save @bevry/based</code></li>
-<li>Module: <code>require('@bevry/based')</code></li>
-<li>CDN URL: <code>//wzrd.in/bundle/@bevry/based@1.0.0</code></li></ul>
-
-<a href="http://enderjs.com" title="Ender is a full featured package manager for your browser"><h3>Ender</h3></a><ul>
-<li>Install: <code>ender add @bevry/based</code></li>
-<li>Module: <code>require('@bevry/based')</code></li></ul>
+<li>Install: <code>npm install --global @bevry/based</code></li>
+<li>Executable: <code>@bevry/based</code></li></ul>
 
 <h3><a href="https://github.com/bevry/editions" title="Editions are the best way to produce and consume packages you care about.">Editions</a></h3>
 

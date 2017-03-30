@@ -615,7 +615,12 @@ async function init () {
 			packageData.private = true
 		}
 	}
-	if (answers.browser != null) {
+	if (packageData.editions.length === 1) {
+		packageData.main = pathUtil.join(packageData.editions[0].directory, packageData.editions[0].entry)
+		const testPath = pathUtil.join('.', packageData.editions[0].directory, 'test.js')
+		packageData.scripts.test = `node --harmony ${testPath} --joe-reporter=console`
+	}
+	if (answers.browser) {
 		if (answers.publish) {
 			const lastEdition = packageData.editions[packageData.editions.length - 1]
 			packageData.browser = lastEdition.directory + '/' + lastEdition.entry
@@ -644,10 +649,14 @@ async function init () {
 		{ url: 'https://raw.githubusercontent.com/bevry/base/master/HISTORY.md', overwrite: false },
 		{ url: 'https://raw.githubusercontent.com/bevry/base/master/.gitignore', custom: true },
 		'https://raw.githubusercontent.com/bevry/base/master/LICENSE.md',
-		'https://raw.githubusercontent.com/bevry/base/master/CONTRIBUTING.md',
-		'https://raw.githubusercontent.com/bevry/base/master/index.js',
-		'https://raw.githubusercontent.com/bevry/base/master/test.js'
+		'https://raw.githubusercontent.com/bevry/base/master/CONTRIBUTING.md'
 	]
+	if (packageData.editions.length > 1) {
+		downloads.push(
+			'https://raw.githubusercontent.com/bevry/base/master/index.js',
+			'https://raw.githubusercontent.com/bevry/base/master/test.js'
+		)
+	}
 	if (answers.publish) {
 		downloads.push({ url: 'https://raw.githubusercontent.com/bevry/base/master/.npmignore', custom: true })
 	}
@@ -810,13 +819,18 @@ async function init () {
 	})
 
 	// write the package.json file
+	console.log('writing the package.json file...')
 	await util.write('package.json',
 		JSON.stringify(packageData, null, '  ')
 	)
+	console.log('..wrote the package.json file')
 
 	// prepare the development dependencies
-	const packages = ['editions']  // if this becomes optional, also consider index.js and test.js
+	const packages = []
 	const devPackages = ['projectz', 'assert-helpers', 'joe', 'joe-reporter-console']
+	if (packageData.editions.length > 1) {
+		packages.push('editions')
+	}
 	if (answers.language === 'esnext') {
 		devPackages.push('eslint')
 		if (answers.babel) devPackages.push('babel-cli', 'babel-preset-es2015')
