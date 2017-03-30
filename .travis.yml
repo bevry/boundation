@@ -21,15 +21,15 @@ cache:
   - "$HOME/.yarn-cache"
 install:
 - curl https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/npm-upgrade.bash
-  | bash
+  | bash -l
 - curl https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/npm-install.bash
-  | bash
+  | bash -l
 before_script:
 - curl https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/npm-verify.bash
-  | bash
+  | bash -l
 after_success:
 - curl https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/npm-publish.bash
-  | bash
+  | bash -l
 notifications:
   slack:
     secure: BHuxZnP28Px6/Rk0OvFU5nX0VN80X9N8bOllYcoOzwmobYHzXpuSZWO0Jpm5MCIIf567zMX/wnNeoy/wHUxwGN5XuLPkq0PXMgFO5vuJtmbMB1wQw3GRoh86oDsR7cgjL+11ggDOX1XB5JF+srSPDEkeniQk9fuioLhhHVYPiis4bPnAsdXpLkKU5+UhU4ksuYZGECvuVX41b/Lg+se+Mgeo82JW+x2Yw56l56edKOTMWaBbACLhlXJ/v3BbDBEBEIRLZ+RQhQisVNj+KVAK9ubZckjbRqMVf3n9vmXnVswWGvZncm2SL15PIE8qUjWHUMhzGTXyAvHm33Oj/IDbD4WnYt11g/vaQDRvBOS9q0MVRDuY6T1X2OQnFtYjTLOLZLzjTKxCg9xIKgnJb2h8uxEUjO7WsFwPZvgBs3hpx4bpfd+mYDC2Afs4svs4l+ODv1U1fKEZxLbggiRrbYSiff93eHODWnRxHIkE8PrGTkVNWaV3Z4J6tLHv/7tmAzLElLX1pHhfyiAjoTFGCuLeBTGJ6CbY2a/p8X52s1i7gtMCaNdXliGVGoBaBXFfOtIROyZh12Qd0DK9aQw33wT6RBxVIze4cKcnNywSn+FTf56pBVxpmRf86gaRw6VjI9Ps8knMgR5johfnSwKctQfQdeY4Qn+QNPxZ87vL7okm6dE=
