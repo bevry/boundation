@@ -80,7 +80,10 @@ const util = {
 		file = pathUtil.resolve(cwd, file)
 		return new Promise(function (resolve, reject) {
 			fsUtil.unlink(file, function (error) {
-				if (error) return reject(error)
+				if (error) {
+					if (error.message.indexOf('ENOENT') !== -1) return resolve()
+					return reject(error)
+				}
 				return resolve()
 			})
 		})
@@ -827,21 +830,23 @@ async function init () {
 
 	// install the development dependencies
 	if (packages.length) {
-		console.log('adding the dependencies...')
+		console.log('adding the dependencies...\n')
 		await util.spawn(['yarn', 'add'].concat(packages))
-		console.log('...added the dependencies')
+		console.log('\n...added the dependencies')
 	}
 	if (devPackages.length) {
-		console.log('adding the development dependencies...')
+		console.log('adding the development dependencies...\n')
 		await util.spawn(['yarn', 'add', '--dev'].concat(devPackages))
-		console.log('...added the development dependencies')
+		console.log('\n...added the development dependencies')
 	}
 	console.log('installing the dependencies...\n')
 	await util.spawn('yarn')
 	console.log('\n...installed all the dependencies')
 
 	// remove old files
+	console.log('removing old files...')
 	await Promise.all(unlinkFiles.map((file) => util.unlink(file)))
+	console.log('...removed old files')
 
 	// test everything
 	console.log('all finished, testing with release preparation...\n')
