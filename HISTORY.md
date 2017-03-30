@@ -1,5 +1,8 @@
 # History
 
+## v1.2.1 2017 March 31
+- Perform a `yarn upgrade` after the `yarn`
+
 ## v1.2.0 2017 March 31
 - Put travis customisation behind a flag
 

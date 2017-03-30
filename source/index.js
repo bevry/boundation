@@ -917,6 +917,10 @@ async function init () {
 	await util.spawn('yarn')
 	console.log('\n...installed all the dependencies')
 
+	console.log('upgrading the installed dependencies...\n')
+	await util.spawn('yarn upgrade')
+	console.log('\n...upgrading all the installed dependencies')
+
 	// remove old files
 	console.log('removing old files...')
 	await Promise.all(unlinkFiles.map((file) => util.unlink(file)))
