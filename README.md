@@ -1,6 +1,6 @@
 <!-- TITLE/ -->
 
-<h1>@bevry/based</h1>
+<h1>bevry-base</h1>
 
 <!-- /TITLE -->
 
@@ -8,8 +8,8 @@
 <!-- BADGES/ -->
 
 <span class="badge-travisci"><a href="http://travis-ci.org/bevry/based" title="Check this project's build status on TravisCI"><img src="https://img.shields.io/travis/bevry/based/master.svg" alt="Travis CI Build Status" /></a></span>
-<span class="badge-npmversion"><a href="https://npmjs.org/package/@bevry/based" title="View this project on NPM"><img src="https://img.shields.io/npm/v/@bevry/based.svg" alt="NPM version" /></a></span>
-<span class="badge-npmdownloads"><a href="https://npmjs.org/package/@bevry/based" title="View this project on NPM"><img src="https://img.shields.io/npm/dm/@bevry/based.svg" alt="NPM downloads" /></a></span>
+<span class="badge-npmversion"><a href="https://npmjs.org/package/bevry-base" title="View this project on NPM"><img src="https://img.shields.io/npm/v/bevry-base.svg" alt="NPM version" /></a></span>
+<span class="badge-npmdownloads"><a href="https://npmjs.org/package/bevry-base" title="View this project on NPM"><img src="https://img.shields.io/npm/dm/bevry-base.svg" alt="NPM downloads" /></a></span>
 <span class="badge-daviddm"><a href="https://david-dm.org/bevry/based" title="View the status of this project's dependencies on DavidDM"><img src="https://img.shields.io/david/bevry/based.svg" alt="Dependency Status" /></a></span>
 <span class="badge-daviddmdev"><a href="https://david-dm.org/bevry/based#info=devDependencies" title="View the status of this project's development dependencies on DavidDM"><img src="https://img.shields.io/david/dev/bevry/based.svg" alt="Dev Dependency Status" /></a></span>
 <br class="badge-separator" />
@@ -38,15 +38,15 @@ Automatic application of the Bevry base files /bevry/base
 <h2>Install</h2>
 
 <a href="https://npmjs.com" title="npm is a package manager for javascript"><h3>NPM</h3></a><ul>
-<li>Install: <code>npm install --global @bevry/based</code></li>
-<li>Executable: <code>@bevry/based</code></li></ul>
+<li>Install: <code>npm install --global bevry-base</code></li>
+<li>Executable: <code>bevry-base</code></li></ul>
 
 <h3><a href="https://github.com/bevry/editions" title="Editions are the best way to produce and consume packages you care about.">Editions</a></h3>
 
 <p>This package is published with the following editions:</p>
 
-<ul><li><code>@bevry/based</code> aliases <code>@bevry/based/source/index.js</code></li>
-<li><code>@bevry/based/source/index.js</code> is Source + <a href="https://babeljs.io/docs/learn-es2015/" title="ECMAScript Next">ESNext</a> + <a href="https://nodejs.org/dist/latest-v5.x/docs/api/modules.html" title="Node/CJS Modules">Require</a></li></ul>
+<ul><li><code>bevry-base</code> aliases <code>bevry-base/source/index.js</code></li>
+<li><code>bevry-base/source/index.js</code> is Source + <a href="https://babeljs.io/docs/learn-es2015/" title="ECMAScript Next">ESNext</a> + <a href="https://nodejs.org/dist/latest-v5.x/docs/api/modules.html" title="Node/CJS Modules">Require</a></li></ul>
 
 <p>Older environments may need <a href="https://babeljs.io/docs/usage/polyfill/" title="A polyfill that emulates missing ECMAScript environment features">Babel's Polyfill</a> or something similar.</p>
 

@@ -1,5 +1,5 @@
 {
-  "name": "@bevry/based",
+  "name": "bevry-base",
   "version": "1.0.0",
   "description": "Automatic application of the Bevry base files /bevry/base",
   "homepage": "https://github.com/bevry/based",
@@ -77,7 +77,9 @@
       ]
     }
   ],
-  "bin": "source/index.js",
+  "bin": {
+    "bevry-base": "bin.js"
+  },
   "preferGlobal": true,
   "main": "source/index.js",
   "scripts": {
