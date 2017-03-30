@@ -1,0 +1,36 @@
+sudo: false
+language: node_js
+node_js:
+- '0.8'
+- '0.10'
+- '0.12'
+- '4'
+- '6'
+- '7'
+matrix:
+  fast_finish: true
+  allow_failures:
+  - node_js: '0.8'
+  - node_js: '0.10'
+  - node_js: '0.12'
+  - node_js: '4'
+  - node_js: '6'
+cache:
+  directories:
+  - "$HOME/.npm"
+  - "$HOME/.yarn-cache"
+install:
+- curl https://rawgit.com/balupton/awesome-travis/master/scripts/npm-upgrade.bash
+  | bash
+- curl https://rawgit.com/balupton/awesome-travis/master/scripts/npm-install.bash
+  | bash
+before_script:
+- curl https://rawgit.com/balupton/awesome-travis/master/scripts/npm-verify.bash |
+  bash
+after_success:
+- curl https://rawgit.com/balupton/awesome-travis/master/scripts/npm-publish.bash
+  | bash
+notifications:
+  email:
+    recipients:
+      secure: OSSxMNLTsvqS5BKjTWu1CUOhlqyv5DhImFobRoIoHQFnkJ956Wb8+0tTZZl3EwibzpSZhJhuPHHz7RL5aupmRNvPsejOcqUwjOKBKShMk4qOk/8u/wQ8uu2DkDp2utI6kZgfnXIIOdG/gCsRnsbM6FAQZH6D+ZwEZ3PzDjUkZpPS1BkOauML5LkgjfbIq4/FY2X67s6pHUqGXaEgpqeccXLOXKc0kSWK4S+vsiUaqePQoulVjVpE7vJwoumagXsdZcQTMkHRJvKma6YzsPyVPfrwnoYaD9eRDobtGtoBVR5KiHhbXkiNAqAOOw3VmP5EKDJYTqrtxCW0B73dhT12WN2j7WJI6tn9kD705QL5Gz5tiic+8SKBGsYO53D0KZmUAlU2WZ8l6BYKhnSPZ72BiBrmyG8yLBgR5jk4KBJL8WAIHJvfbOI0NemWSTzC2iOYUNBOc6DygFM03/QvvtWRDz9e479C/Tci36O21N1l9g66RcmwMyfUlHCgDsTCXJ/BA9RKbdW8CZBLU/clNi+vINqOiOGP2ZG2iYRi3ogHBz9UQvXqd6sqaq8QYg6kM6WvQEp2rX/Pl/WmtrDj5Se0ufpL9Ye9jbThtI/vHBT2EzwhLBgLSWYvD5GfBLj0y90aCGxo1c9jlVlJN2tcV+6lwunQTUChiKry38gvzWnoCFI=

@@ -17,6 +17,7 @@ const fetch = require('node-fetch')
 const arrangekeys = require('arrangekeys')
 const yaml = require('js-yaml')
 const urlUtil = require('url')
+const safeps = require('safeps')
 const { semver } = require('./util')
 const cwd = process.cwd()
 
@@ -92,12 +93,21 @@ const util = {
 		})
 	},
 
-	exec (command, opts = {}) {
+	spawn (command, opts = {}) {
 		opts.cwd = opts.cwd || cwd
-		// .exec actually doesn't support stdio, only .spawn does
 		opts.stdio = opts.stdio || 'inherit'
 		return new Promise(function (resolve, reject) {
-			require('child_process').exec(command, opts, function (err, stdout) {
+			safeps.spawn(command, opts, function (err, stdout) {
+				if (err) return reject(err)
+				return resolve(stdout)
+			})
+		})
+	},
+
+	exec (command, opts = {}) {
+		opts.cwd = opts.cwd || cwd
+		return new Promise(function (resolve, reject) {
+			safeps.exec(command, opts, function (err, stdout) {
 				if (err) return reject(err)
 				return resolve(stdout)
 			})
@@ -244,7 +254,7 @@ function mergeScript (packageData, script) {
 }
 
 function arrangePackage (packageData) {
-	return arrangekeys(packageData, 'title name version description homepage license keywords badges author maintainers contributors bugs repository engines editions main browser bin scripts dependencies devDependencies peerDependencies')
+	return arrangekeys(packageData, 'title name version private description homepage license keywords badges author maintainers contributors bugs repository engines editions bin preferGlobal main browser scripts dependencies devDependencies peerDependencies')
 }
 
 async function getQuestions () {
@@ -650,7 +660,7 @@ async function init () {
 			'',
 			'## Usage',
 			'',
-			'< !--HISTORY -->',
+			'<!--HISTORY -->',
 			'<!--CONTRIBUTE -->',
 			'<!--BACKERS -->',
 			'<!--LICENSE -->'
@@ -784,20 +794,23 @@ async function init () {
 
 	// install the development dependencies
 	if (packages.length) {
-		console.log('installing the dependencies...')
+		console.log('adding the dependencies...')
 		await util.exec(`yarn add ${packages.join(' ')}`)
-		console.log('...installed the dependencies')
+		console.log('...added the dependencies')
 	}
 	if (devPackages.length) {
-		console.log('installing the development dependencies...')
+		console.log('adding the development dependencies...')
 		await util.exec(`yarn add --dev ${devPackages.join(' ')}`)
-		console.log('...installed the development dependencies')
+		console.log('...added the development dependencies')
 	}
+	console.log('installing the dependencies...\n')
+	await util.spawn('yarn')
+	console.log('\n...installed all the dependencies')
 
 	// test everything
-	console.log('all finished, testing with release preparation...')
-	await util.exec('npm run our:release:prepare')
-	console.log('...all done')
+	console.log('all finished, testing with release preparation...\n')
+	await util.spawn('npm run our:release:prepare')
+	console.log('\n...all done')
 }
 
 
