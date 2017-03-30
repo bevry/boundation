@@ -1,7 +1,7 @@
 {
   "name": "@bevry/based",
   "version": "1.0.0",
-  "description": "description",
+  "description": "Automatic application of the Bevry base files /bevry/base",
   "homepage": "https://github.com/bevry/based",
   "license": "MIT",
   "keywords": [
