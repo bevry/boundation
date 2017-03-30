@@ -55,7 +55,7 @@
     "url": "https://github.com/bevry/based.git"
   },
   "engines": {
-    "node": ">=7.7.4"
+    "node": ">=7.6"
   },
   "editions": [
     {
