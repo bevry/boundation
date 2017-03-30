@@ -179,7 +179,7 @@ async function getGitUserEmail () {
 }
 
 async function getRemotePackage () {
-	const response = await fetch('https://rawgit.com/bevry/base/master/package.json')
+	const response = await fetch('https://raw.githubusercontent.com/bevry/base/master/package.json')
 	const data = await response.json()
 	return data
 }
@@ -620,28 +620,28 @@ async function init () {
 	// download files
 	console.log('downloading files')
 	const downloads = [
-		'https://rawgit.com/bevry/base/master/.editorconfig',
-		{ url: 'https://rawgit.com/bevry/base/master/HISTORY.md', overwrite: false },
-		{ url: 'https://rawgit.com/bevry/base/master/.gitignore', custom: true },
-		'https://rawgit.com/bevry/base/master/LICENSE.md',
-		'https://rawgit.com/bevry/base/master/CONTRIBUTING.md',
-		'https://rawgit.com/bevry/base/master/index.js',
-		'https://rawgit.com/bevry/base/master/test.js'
+		'https://raw.githubusercontent.com/bevry/base/master/.editorconfig',
+		{ url: 'https://raw.githubusercontent.com/bevry/base/master/HISTORY.md', overwrite: false },
+		{ url: 'https://raw.githubusercontent.com/bevry/base/master/.gitignore', custom: true },
+		'https://raw.githubusercontent.com/bevry/base/master/LICENSE.md',
+		'https://raw.githubusercontent.com/bevry/base/master/CONTRIBUTING.md',
+		'https://raw.githubusercontent.com/bevry/base/master/index.js',
+		'https://raw.githubusercontent.com/bevry/base/master/test.js'
 	]
 	if (answers.publish) {
-		downloads.push({ url: 'https://rawgit.com/bevry/base/master/.npmignore', custom: true })
+		downloads.push({ url: 'https://raw.githubusercontent.com/bevry/base/master/.npmignore', custom: true })
 	}
 	if (answers.language === 'esnext') {
-		downloads.push('https://rawgit.com/bevry/base/master/.eslintrc.js')
+		downloads.push('https://raw.githubusercontent.com/bevry/base/master/.eslintrc.js')
 		if (answers.flowtype) {
-			downloads.push('https://rawgit.com/bevry/base/master/.flowconfig')
+			downloads.push('https://raw.githubusercontent.com/bevry/base/master/.flowconfig')
 		}
 	}
 	else if (answers.language === 'coffeescript') {
-		downloads.push('https://rawgit.com/bevry/base/34fc820c8d87f1f21706ce7e26882b6cd5437368/coffeelint.json')
+		downloads.push('https://raw.githubusercontent.com/bevry/base/34fc820c8d87f1f21706ce7e26882b6cd5437368/coffeelint.json')
 	}
 	if (packageData.devDependencies.docpad) {
-		downloads.push('https://rawgit.com/bevry/base/master/docpad-setup.sh')
+		downloads.push('https://raw.githubusercontent.com/bevry/base/master/docpad-setup.sh')
 	}
 	await Promise.all(downloads.map((i) => download(i)))
 
@@ -691,11 +691,11 @@ async function init () {
 			]
 		},
 		install: [
-			'curl https://rawgit.com/balupton/awesome-travis/master/scripts/npm-upgrade.bash | bash',
-			'curl https://rawgit.com/balupton/awesome-travis/master/scripts/npm-install.bash | bash'
+			'curl https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/npm-upgrade.bash | bash',
+			'curl https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/npm-install.bash | bash'
 		],
 		before_script: [
-			'curl https://rawgit.com/balupton/awesome-travis/master/scripts/npm-verify.bash | bash'
+			'curl https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/npm-verify.bash | bash'
 		],
 		after_success: []
 	}
@@ -712,7 +712,7 @@ async function init () {
 			util.exec(`travis env set SURGE_TOKEN "${answers.surgeToken}"`)
 		])
 		travis.after_success.push(
-			'curl https://rawgit.com/balupton/awesome-travis/master/scripts/surge.bash | bash'
+			'curl https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/surge.bash | bash'
 		)
 	}
 	if (answers.publish) {
@@ -722,7 +722,7 @@ async function init () {
 			util.exec(`travis env set NPM_EMAIL "${answers.npmEmail}"`)
 		])
 		travis.after_success.push(
-			'curl https://rawgit.com/balupton/awesome-travis/master/scripts/npm-publish.bash | bash'
+			'curl https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/npm-publish.bash | bash'
 		)
 	}
 
