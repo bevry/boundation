@@ -956,7 +956,7 @@ async function init () {
 		)
 		// add test entry as well
 	)
-	await util.spawn
+
 	console.log('running setup...\n')
 	await util.spawn('npm run our:setup')
 	console.log('\n...running setup')
