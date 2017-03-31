@@ -934,6 +934,11 @@ async function init () {
 	catch (err) {}
 	console.log('...renaming old files')
 
+	// running setup
+	console.log('running setup...\n')
+	await util.spawn('npm run our:setup')
+	console.log('\n...running setup')
+
 	// test everything
 	console.log('all finished, testing with release preparation...\n')
 	await util.spawn('npm run our:release:prepare')

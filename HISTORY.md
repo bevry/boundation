@@ -1,5 +1,8 @@
 # History
 
+## v1.2.2 2017 March 31
+- Before we run the tests, run `our:setup` first
+
 ## v1.2.1 2017 March 31
 - Perform a `yarn upgrade` after the `yarn`
 
