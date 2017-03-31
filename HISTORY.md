@@ -1,5 +1,10 @@
 # History
 
+## v1.4.0 2017 April 1
+- Update history file standard
+  - Closes [issue #4](https://github.com/bevry/based/issues/4)
+- Fixed `mkdir: source: File exists` regression from v1.3.0
+
 ## v1.3.1 2017 April 1
 - Fixed some misplaced code
 

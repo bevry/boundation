@@ -689,6 +689,12 @@ async function init () {
 		packageData.badges.list = packageData.badges.list.filter((i) => removeList.indexOf(i) === -1)
 	}
 
+	// update history name
+	const oldHistoryExists = await util.exists('history.md')
+	if (oldHistoryExists) {
+		await util.rename('history.md', 'HISTORY.md')
+	}
+
 	// download files
 	console.log('downloading files')
 	const downloads = [
@@ -753,6 +759,18 @@ async function init () {
 			'<!--LICENSE -->'
 		].join('\n'))
 	}
+
+	// convert the history file
+	console.log('updating history file standard')
+	let historyContent = await util.read('HISTORY.md')
+	historyContent = historyContent.toString()
+	if (/^##/m.test(historyContent) === false) {
+		historyContent = historyContent
+			.replace(/^-/gm, '##')
+			.replace(/^\t/gm, '')
+	}
+	historyContent = historyContent.replace(/^(## v\d+\.\d+\.\d+) ([a-z]+ \d+), (\d+)$/gim, '$1 $3 $2')
+	await util.write('HISTORY.md', historyContent)
 
 	// customise travis
 	if (answers.travis) {
@@ -943,7 +961,7 @@ async function init () {
 
 	// scaffold
 	console.log('scaffolding remaining files...\n')
-	await util.spawn(['mkdir'].concat(
+	await util.spawn(['mkdir', '-p'].concat(
 		packageData.editions.map(
 			(edition) => edition.directory
 		)
