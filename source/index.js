@@ -501,6 +501,8 @@ async function init () {
 		{
 			license: 'MIT',
 			author: `${new Date().getFullYear()}+ Bevry <us@bevry.me> (http://bevry.me)`,
+			engines: {},
+			dependencies: {},
 			devDependencies: {}
 		},
 		packageDataLocal || {},
@@ -935,6 +937,26 @@ async function init () {
 	console.log('...renaming old files')
 
 	// running setup
+	console.log('running setup...\n')
+	await util.spawn('npm run our:setup')
+	console.log('\n...running setup')
+
+	// scaffold
+	console.log('scaffolding remaining files...\n')
+	await util.spawn(['mkdir'].concat(
+		packageData.editions.map(
+			(edition) => edition.directory
+		)
+	))
+	await util.spawn(
+		['touch'].concat(
+			packageData.editions.map(
+				(edition) => pathUtil.join(edition.directory, edition.entry)
+			)
+		)
+		// add test entry as well
+	)
+	await util.spawn
 	console.log('running setup...\n')
 	await util.spawn('npm run our:setup')
 	console.log('\n...running setup')

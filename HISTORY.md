@@ -1,5 +1,9 @@
 # History
 
+## v1.3.0 2017 April 1
+- No longer fails right away when scaffolding empty directories
+- Still fails in the above case as the test file does not yet exist, will address in a future release
+
 ## v1.2.2 2017 March 31
 - Before we run the tests, run `our:setup` first
 
