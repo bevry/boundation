@@ -895,7 +895,7 @@ async function init () {
 		'documentation': false,
 		'flow-bin': false,
 		'coffee-script': false,
-		'yuidoc': false
+		'yuidocjs': false
 	}
 	if (packageData.devDependencies.docpad) {
 		packages.docpad = 'dev'
@@ -911,7 +911,7 @@ async function init () {
 	}
 	else if (answers.language === 'coffeescript') {
 		packages['coffee-script'] = packages.coffeelint = 'dev'
-		if (answers.docs) packages.yuidoc = 'dev'
+		if (answers.docs) packages.yuidocjs = 'dev'
 	}
 
 	// install the development dependencies

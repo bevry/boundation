@@ -1,5 +1,8 @@
 # History
 
+## v1.4.1 2017 April 10
+- Installing yuidoc now works
+
 ## v1.4.0 2017 April 1
 - Update history file standard
   - Closes [issue #4](https://github.com/bevry/based/issues/4)
