@@ -493,7 +493,14 @@ async function init () {
 	const answers = Object.assign(defaults, await getAnswers())
 
 	// Prepare
-	const unlinkFiles = ['esnextguardian.js', 'nakefile.js', 'Cakefile', 'cyclic.js', '.jshintrc', '.jscrc']
+	const unlinkFiles = [
+		'esnextguardian.js',
+		'nakefile.js',
+		'Cakefile',
+		'cyclic.js',
+		'.jshintrc',
+		'.jscrc'
+	]
 
 	// setup the package data variables
 	const packageDataLocal = getPackage()
@@ -675,6 +682,7 @@ async function init () {
 	}
 
 	// remove old fields
+	delete packageData.nakeConfiguration
 	delete packageData.cakeConfiguration
 
 	// customise badges
