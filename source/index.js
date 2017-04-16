@@ -859,7 +859,7 @@ async function init () {
 			packageData.scripts['our:compile:es2015'] = 'babel ./source --out-dir ./es2015 --presets es2015'
 		}
 		if (answers.docs) {
-			packageData.scripts['out:meta:docs'] = 'documentation build -f html -o ./docs -g --shallow ./source/**.js'
+			packageData.scripts['our:meta:docs'] = 'documentation build -f html -o ./docs -g --shallow ./source/**.js'
 		}
 		if (answers.flowtype) {
 			packageData.scripts['our:verify:flow'] = 'flow check'

@@ -1,5 +1,8 @@
 # History
 
+## v1.4.2 2017 April 16
+- Fixed busted `docs` npm script due to typo
+
 ## v1.4.1 2017 April 10
 - Installing yuidoc now works
 
