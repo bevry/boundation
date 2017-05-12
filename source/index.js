@@ -585,7 +585,15 @@ async function init () {
 
 	// customise editions
 	console.log('customising editions')
-	if (!packageData.editions) {
+	if ( packageData.editions ) {
+		// trim edition directory of edition entry if it is there (converts editions v1.0 to v1.1+)
+		packageData.editions.forEach(function (edition) {
+			if ( edition.entry && edition.directory && edition.entry.indexOf(edition.directory) === 0 ) {
+				edition.entry = edition.entry.substr(edition.directory.length + 1)
+			}
+		})
+	}
+	else {
 		const editions = []
 		if (answers.language === 'esnext') {
 			editions.push({

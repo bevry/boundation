@@ -1,8 +1,12 @@
 # History
 
+## v1.4.4 2017 May 12
+- Convert edition v1.0 standard to edition v1.1+
+  - Closes [issue #12](https://github.com/bevry/based/issues/12)
+
 ## v1.4.3 2017 April 16
-- delete old `nakeConfiguration` property
-  - closes https://github.com/bevry/based/issues/8
+- Delete old `nakeConfiguration` property
+  - Closes [issue #8](https://github.com/bevry/based/issues/8)
 
 ## v1.4.2 2017 April 16
 - Fixed busted `docs` npm script due to typo
