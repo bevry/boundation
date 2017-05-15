@@ -246,7 +246,7 @@ function getPackageFlowtypeDependency () {
 function getPackageModules () {
 	const packageData = getPackage()
 	const edition = (packageData && packageData.editions && packageData.editions[0])
-	if (edition == null || edition.syntaxes == null)  return null
+	if (edition == null || edition.syntaxes == null) return null
 	return edition.syntaxes.indexOf('import') !== -1
 }
 
@@ -585,10 +585,10 @@ async function init () {
 
 	// customise editions
 	console.log('customising editions')
-	if ( packageData.editions ) {
+	if (packageData.editions) {
 		// trim edition directory of edition entry if it is there (converts editions v1.0 to v1.1+)
 		packageData.editions.forEach(function (edition) {
-			if ( edition.entry && edition.directory && edition.entry.indexOf(edition.directory) === 0 ) {
+			if (edition.entry && edition.directory && edition.entry.indexOf(edition.directory) === 0) {
 				edition.entry = edition.entry.substr(edition.directory.length + 1)
 			}
 		})
@@ -899,6 +899,7 @@ async function init () {
 	console.log('..wrote the package.json file')
 
 	// prepare the development dependencies
+	/** @type {Object.<string, boolean | string>} */
 	const packages = {
 		'projectz': 'dev',
 		'assert-helpers': false,
@@ -926,7 +927,12 @@ async function init () {
 		if (answers.flowtype) packages['flow-bin'] = 'dev'
 	}
 	else if (answers.language === 'coffeescript') {
-		packages['coffee-script'] = packages.coffeelint = 'dev'
+		if (packageData.dependencies['coffee-script']) {
+			packages['coffee-script'] = packages.coffeelint = true
+		}
+		else {
+			packages['coffee-script'] = packages.coffeelint = 'dev'
+		}
 		if (answers.docs) packages.yuidocjs = 'dev'
 	}
 
@@ -967,7 +973,7 @@ async function init () {
 	try {
 		await util.rename('src', 'source')
 	}
-	catch (err) {}
+	catch (err) { }
 	console.log('...renaming old files')
 
 	// running setup
