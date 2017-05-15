@@ -692,6 +692,7 @@ async function init () {
 	// remove old fields
 	delete packageData.nakeConfiguration
 	delete packageData.cakeConfiguration
+	delete packageData.directories
 
 	// customise badges
 	console.log('customising badges')
