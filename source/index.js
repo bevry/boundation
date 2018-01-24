@@ -290,9 +290,9 @@ function getPackageAuthor () {
 }
 */
 
-function mergeScript (packageData, script) {
-	packageData.scripts[script] = Object.keys(packageData.scripts)
-		.filter((key) => key.indexOf(`${script}:`) === 0 && packageData.scripts[key])
+function mergeScript (packageData, name, match) {
+	packageData.scripts[name] = Object.keys(packageData.scripts)
+		.filter((key) => match.test(key) && packageData.scripts[key])
 		.map((key) => `npm run ${key}`)
 		.join(' && ') || NO_NEED_SCRIPT
 }
@@ -531,6 +531,13 @@ async function init () {
 
 	// setup the package data variables
 	const packageDataLocal = getPackage()
+	const customPackageScripts = {}
+	Object.keys(packageDataLocal.scripts).forEach(function (key) {
+		if (key.indexOf('my:') === 0) {
+			const value = packageDataLocal.scripts[key]
+			customPackageScripts[key] = value
+		}
+	})
 	const packageData = Object.assign(
 		{
 			license: 'MIT',
@@ -581,7 +588,7 @@ async function init () {
 					slackinURL: 'https://slack.bevry.me'
 				}
 			},
-			scripts: {
+			scripts: Object.assign({
 				'our:setup': '',
 				'our:setup:npm': 'npm install',
 				'our:setup:docpad': '',
@@ -606,7 +613,7 @@ async function init () {
 				'our:release:tag': "export MESSAGE=$(cat ./HISTORY.md | sed -n \"/## v$npm_package_version/,/##/p\" | sed 's/## //' | awk 'NR>1{print buf}{buf = $0}') && test \"$MESSAGE\" || (echo 'proper changelog entry not found' && exit -1) && git tag v$npm_package_version -am \"$MESSAGE\"",
 				'our:release:push': 'git push origin master && git push origin --tags',
 				'test': 'node --harmony ./test.js --joe-reporter=console'
-			}
+			}, customPackageScripts)
 		}
 	)
 
@@ -882,6 +889,9 @@ async function init () {
 				`eval "$(curl -s https://raw.githubusercontent.com/bevry/awesome-travis/${awesomeTravisCommit}/scripts/surge.bash)"`
 			)
 		}
+		else {
+			await util.spawn(['travis', 'env', 'unset', 'SURGE_LOGIN', 'SURGE_TOKEN'])
+		}
 		if (answers.publish) {
 			if (answers.npmAuthToken) {
 				await util.spawn(['travis', 'env', 'set', 'NPM_AUTHTOKEN', answers.npmAuthToken])
@@ -933,10 +943,11 @@ async function init () {
 			packageData.scripts['our:verify:flow'] = 'flow check'
 		}
 	}
-	mergeScript(packageData, 'our:setup')
-	mergeScript(packageData, 'our:compile')
-	mergeScript(packageData, 'our:meta')
-	mergeScript(packageData, 'our:verify')
+	mergeScript(packageData, 'our:setup', /^(our|my):setup/)
+	mergeScript(packageData, 'our:compile', /^(our|my):compile/)
+	mergeScript(packageData, 'our:meta', /^(our|my):meta/)
+	mergeScript(packageData, 'our:verify', /^(our|my):verify/)
+	// test is a special instance, so do not do it on test
 	Object.keys(packageData.scripts).forEach(function (key) {
 		if (packageData.scripts[key] === '') {
 			delete packageData.scripts[key]

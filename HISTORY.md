@@ -1,5 +1,11 @@
 # History
 
+## v1.6.0 2018 January 24
+- Keep and merge package scripts that are prefixed with `my:`
+    - Closes [issue #7](https://github.com/bevry/based/issues/7)
+- Unset surge env vars on travis if not needed
+- Updated base files
+
 ## v1.5.2 2018 January 24
 - Ask for the desired node version instead of guessing it
 - Updated base files
