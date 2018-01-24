@@ -374,6 +374,12 @@ async function getQuestions () {
 			validate: isNumber
 		},
 		{
+			name: 'desiredNodeVersion',
+			message: 'What is the desired node version it should run against?',
+			default: getPackageNodeVersion() || '8',
+			validate: isNumber
+		},
+		{
 			name: 'babel',
 			type: 'confirm',
 			message: 'Will you use babel to support earlier node versions?',
@@ -838,6 +844,7 @@ async function init () {
 			matrix: {
 				fast_finish: true,
 				allow_failures: [
+					// https://github.com/nodejs/LTS
 					{ node_js: '0.8' },
 					{ node_js: '0.10' },
 					{ node_js: '0.12' },
@@ -867,7 +874,7 @@ async function init () {
 		// these spawns must be run serially, as otherwise not all variables may be written, which is annoying
 		console.log('travis environment variables')
 		await util.spawn(['travis', 'enable'])
-		await util.spawn(['travis', 'env', 'set', 'DESIRED_NODE_VERSION', travis.node_js[travis.node_js.length - 1], '--public'])
+		await util.spawn(['travis', 'env', 'set', 'DESIRED_NODE_VERSION', answers.desiredNodeVersion, '--public'])
 		if (answers.docs) {
 			await util.spawn(['travis', 'env', 'set', 'SURGE_LOGIN', answers.surgeLogin, '--public'])
 			await util.spawn(['travis', 'env', 'set', 'SURGE_TOKEN', answers.surgeToken])

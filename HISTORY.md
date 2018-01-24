@@ -1,5 +1,9 @@
 # History
 
+## v1.5.2 2018 January 24
+- Ask for the desired node version instead of guessing it
+- Updated base files
+
 ## v1.5.1 2018 January 24
 - Updated base files
 
