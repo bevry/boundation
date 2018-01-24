@@ -801,7 +801,7 @@ async function init () {
 				'0.12',
 				'4',
 				'6',
-				'7'
+				'8'
 			],
 			matrix: {
 				fast_finish: true /* ,
