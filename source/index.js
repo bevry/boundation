@@ -1029,6 +1029,7 @@ async function init () {
 		'joe': false,
 		'joe-reporter-console': false,
 		'editions': useEditionAutoloader,
+		'surge': answers.docs ? 'dev' : false,
 		'eslint': false,
 		'babel-cli': false,
 		'babel-preset-es2015': false,
