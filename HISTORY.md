@@ -1,12 +1,25 @@
 # History
 
+## v1.5.0 2018 January 24
+- Use awesome-travis commit instead of master
+    - Closes [issue #3](https://github.com/bevry/based/issues/3)
+- Fix `coffee-script` dep (when needed) always being moved to devDeps
+    - Closes [issue #11](https://github.com/bevry/based/issues/11)
+- Delete legacy `directories` field
+    - Closes [issue #9](https://github.com/bevry/based/issues/9)
+- Don't fail when using a SSH git remote
+- Support Auth Tokens for NPM instead of the Email, Username, and Password combination
+- Updated supported node versions for travis
+- Output travis environment variables
+- Updated base files
+
 ## v1.4.4 2017 May 12
 - Convert edition v1.0 standard to edition v1.1+
-  - Closes [issue #12](https://github.com/bevry/based/issues/12)
+    - Closes [issue #12](https://github.com/bevry/based/issues/12)
 
 ## v1.4.3 2017 April 16
 - Delete old `nakeConfiguration` property
-  - Closes [issue #8](https://github.com/bevry/based/issues/8)
+    - Closes [issue #8](https://github.com/bevry/based/issues/8)
 
 ## v1.4.2 2017 April 16
 - Fixed busted `docs` npm script due to typo
@@ -16,7 +29,7 @@
 
 ## v1.4.0 2017 April 1
 - Update history file standard
-  - Closes [issue #4](https://github.com/bevry/based/issues/4)
+    - Closes [issue #4](https://github.com/bevry/based/issues/4)
 - Fixed `mkdir: source: File exists` regression from v1.3.0
 
 ## v1.3.1 2017 April 1

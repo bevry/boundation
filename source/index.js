@@ -1,14 +1,24 @@
 /* eslint no-sync:0, camelcase:0, no-console:0 */
 'use strict'
 
+/**
+ * @param {Error} error
+ * @returns {string}
+ */
 function stackOrMessage (error) {
 	return error.stack ? `\n${error.stack}` : error.toString()
 }
 
-process.on('unhandledRejection', function (reason) {
+/**
+ * @param {Error} reason
+ * @returns {void}
+*/
+function unhandledRejection (reason) {
 	console.error(`\nA promise FAILED with: ${stackOrMessage(reason)}`)
 	process.exit(-1)
-})
+}
+process.on('unhandledRejection', unhandledRejection)
+
 
 const inquirer = require('inquirer')
 const fsUtil = require('fs')
@@ -41,6 +51,9 @@ function isGitUrl (input) {
 }
 function otherwise (input, value) {
 	return input == null ? value : input
+}
+function repoToWebsite (input = '') {
+	return input.replace(/\.git$/, '').replace(/^git@github\.com:/, 'https://github.com/')
 }
 
 /*
@@ -136,7 +149,7 @@ const util = {
 async function download (opts) {
 	try {
 		if (typeof opts === 'string') opts = { url: opts }
-		const response = await fetch(opts.url)
+		const response = await fetch(opts.url, {})
 		let data = await response.text()
 		const file = opts.file || pathUtil.basename(urlUtil.parse(opts.url).pathname)
 		const exists = await util.exists(file)
@@ -290,6 +303,7 @@ function arrangePackage (packageData) {
 
 const defaults = {
 	npmEmail: process.env.NPM_EMAIL,
+	npmAuthToken: process.env.NPM_AUTHTOKEN,
 	npmUsername: process.env.NPM_USERNAME,
 	npmPassword: process.env.NPM_PASSWORD,
 	travisEmail: process.env.TRAVIS_NOTIFICATION_EMAIL,
@@ -410,12 +424,19 @@ async function getQuestions () {
 			default: true
 		},
 		{
+			name: 'npmAuthToken',
+			message: 'What will be the npm auth token for releasing on travis?',
+			default: 'bevry',
+			filter: trim,
+			when ({ travis, publish }) { return travis && publish && !defaults.npmAuthToken }
+		},
+		{
 			name: 'npmUsername',
 			message: 'What will be the npm username for releasing on travis?',
 			default: 'bevry',
 			validate: isSpecified,
 			filter: trim,
-			when ({ travis, publish }) { return travis && publish && !defaults.npmUsername }
+			when ({ travis, publish, npmAuthToken }) { return travis && publish && !defaults.npmUsername && !npmAuthToken }
 		},
 		{
 			name: 'npmEmail',
@@ -423,7 +444,7 @@ async function getQuestions () {
 			default: 'us@bevry.me',
 			validate: isSpecified,
 			filter: trim,
-			when ({ travis, publish }) { return travis && publish && !defaults.npmEmail }
+			when ({ travis, publish, npmAuthToken }) { return travis && publish && !defaults.npmEmail && !npmAuthToken }
 		},
 		{
 			name: 'npmPassword',
@@ -431,7 +452,7 @@ async function getQuestions () {
 			message: 'What will be the npm password for releasing on travis?',
 			validate: isSpecified,
 			filter: trim,
-			when ({ travis, publish }) { return travis && publish && !defaults.npmPassword }
+			when ({ travis, publish, npmAuthToken }) { return travis && publish && !defaults.npmPassword && !npmAuthToken }
 		},
 		{
 			name: 'surgeLogin',
@@ -517,13 +538,13 @@ async function init () {
 			name: answers.name,
 			description: answers.description,
 			keywords: answers.keywords.split(/,\s*/),
-			homepage: answers.repoUrl.replace(/\.git$/, ''),
+			homepage: repoToWebsite(answers.repoUrl),
 			bugs: {
-				url: answers.repoUrl.replace(/\.git$/, '/issues')
+				url: repoToWebsite(answers.repoUrl) + '/issues'
 			},
 			repository: {
 				type: 'git',
-				url: answers.repoUrl
+				url: repoToWebsite(answers.repoUrl) + '.git'
 			},
 			badges: {
 				list: [
@@ -792,6 +813,16 @@ async function init () {
 	// customise travis
 	if (answers.travis) {
 		console.log('customising travis')
+
+		// grab the latest awesome-travis commit
+		const awesomeTravisCommitReponse = await fetch('https://api.github.com/repos/bevry/awesome-travis/commits', {
+			headers: {
+				Accept: 'application/vnd.github.v3+json'
+			}
+		})
+		const awesomeTravisCommit = (await awesomeTravisCommitReponse.json())[0].sha
+
+		// generate structure
 		const travis = {
 			sudo: false,
 			language: 'node_js',
@@ -801,11 +832,17 @@ async function init () {
 				'0.12',
 				'4',
 				'6',
-				'8'
+				'8',
+				'9'
 			],
 			matrix: {
-				fast_finish: true /* ,
-				allow_failures: [] */
+				fast_finish: true,
+				allow_failures: [
+					{ node_js: '0.8' },
+					{ node_js: '0.10' },
+					{ node_js: '0.12' },
+					{ node_js: '9' }
+				]
 			},
 			cache: {
 				directories: [
@@ -814,20 +851,17 @@ async function init () {
 				]
 			},
 			install: [
-				'eval "$(curl -s https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/node-install.bash)"'
+				`eval "$(curl -s https://raw.githubusercontent.com/bevry/awesome-travis/${awesomeTravisCommit}/scripts/node-install.bash)"`
 			],
 			before_script: [
-				'eval "$(curl -s https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/node-verify.bash)"'
+				`eval "$(curl -s https://raw.githubusercontent.com/bevry/awesome-travis/${awesomeTravisCommit}/scripts/node-verify.bash)"`
 			],
 			after_success: []
 		}
-		travis.node_js = travis.node_js.filter((version) => semver(version, answers.nodeVersion) !== -1)
 
-		/*
-		travis.matrix.allow_failures = travis.node_js
-			.filter((version) => semver(version, answers.nodeVersion) === -1)
-			.map((node_js) => ({ node_js }))
-		*/
+		// trim node versions that we do not care about
+		travis.node_js = travis.node_js.filter((version) => semver(version, answers.nodeVersion) !== -1)
+		travis.matrix.allow_failures = travis.matrix.allow_failures.filter((value) => semver(value.node_js, answers.nodeVersion) !== -1)
 
 		// travis env variables
 		// these spawns must be run serially, as otherwise not all variables may be written, which is annoying
@@ -838,17 +872,27 @@ async function init () {
 			await util.spawn(['travis', 'env', 'set', 'SURGE_LOGIN', answers.surgeLogin, '--public'])
 			await util.spawn(['travis', 'env', 'set', 'SURGE_TOKEN', answers.surgeToken])
 			travis.after_success.push(
-				'eval "$(curl -s https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/surge.bash)"'
+				`eval "$(curl -s https://raw.githubusercontent.com/bevry/awesome-travis/${awesomeTravisCommit}/scripts/surge.bash)"`
 			)
 		}
 		if (answers.publish) {
-			await util.spawn(['travis', 'env', 'set', 'NPM_USERNAME', answers.npmUsername, '--public'])
-			await util.spawn(['travis', 'env', 'set', 'NPM_PASSWORD', answers.npmPassword])
-			await util.spawn(['travis', 'env', 'set', 'NPM_EMAIL', answers.npmEmail])
+			if (answers.npmAuthToken) {
+				await util.spawn(['travis', 'env', 'set', 'NPM_AUTHTOKEN', answers.npmAuthToken])
+				await util.spawn(['travis', 'env', 'unset', 'NPM_USERNAME', 'NPM_PASSWORD', 'NPM_EMAIL'])
+			}
+			else {
+				await util.spawn(['travis', 'env', 'unset', 'NPM_AUTHTOKEN'])
+				await util.spawn(['travis', 'env', 'set', 'NPM_USERNAME', answers.npmUsername, '--public'])
+				await util.spawn(['travis', 'env', 'set', 'NPM_PASSWORD', answers.npmPassword])
+				await util.spawn(['travis', 'env', 'set', 'NPM_EMAIL', answers.npmEmail])
+			}
 			travis.after_success.push(
-				'eval "$(curl -s https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/node-publish.bash)"'
+				`eval "$(curl -s https://raw.githubusercontent.com/bevry/awesome-travis/${awesomeTravisCommit}/scripts/node-publish.bash)"`
 			)
 		}
+
+		// output the written variables
+		await util.spawn(['travis', 'env', 'list'])
 
 		// write the .travis.yml file
 		// these spawns must be run serially, as otherwise not all variables may be written, which is annoying
