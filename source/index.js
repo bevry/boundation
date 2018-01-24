@@ -215,6 +215,40 @@ async function getRemotePackage () {
 }
 */
 
+async function getSupportedNodeVersion () {
+	const response = await fetch('https://raw.githubusercontent.com/nodejs/Release/master/schedule.json')
+	const json = await response.json()
+	const now = (new Date()).getTime()
+	const lts = Object.keys(json).find(function (version) {
+		const meta = json[version]
+		if (meta.lts) {
+			const end = (new Date(meta.lts)).getTime()
+			if (end <= now) {
+				return true
+			}
+		}
+		return false
+	}).replace('v', '')
+	return lts
+}
+
+async function getLTSNodeVersion () {
+	const response = await fetch('https://raw.githubusercontent.com/nodejs/Release/master/schedule.json')
+	const json = await response.json()
+	const now = (new Date()).getTime()
+	const lts = Object.keys(json).reverse().find(function (version) {
+		const meta = json[version]
+		if (meta.lts) {
+			const lts = (new Date(meta.lts)).getTime()
+			if (lts <= now) {
+				return true
+			}
+		}
+		return false
+	}).replace('v', '')
+	return lts
+}
+
 function getPackage () {
 	if (state.package != null) return state.package
 	try {
@@ -241,7 +275,7 @@ function getPackageKeywords () {
 	return (packageData && packageData.keywords && packageData.keywords.join(', ')) || null
 }
 
-function getPackageNodeVersion () {
+function getPackageMinimumNodeVersion () {
 	const packageData = getPackage()
 	return (packageData && packageData.engines && packageData.engines.node && packageData.engines.node.replace(/[^0-9]+/, '')) || null
 }
@@ -368,21 +402,27 @@ async function getQuestions () {
 			default: (getPackage().main && getPackage().main.replace(/^.+\//, '').replace(/\.[^.]+?$/, '')) || 'index'
 		},
 		{
-			name: 'nodeVersion',
-			message: 'What will be the minimum node version it will support?',
-			default: getPackageNodeVersion() || '0.8',
+			name: 'minimumTestNodeVersion',
+			message: 'What will be the minimum node version for testing?',
+			default: getPackageMinimumNodeVersion() || '0.8',
+			validate: isNumber
+		},
+		{
+			name: 'minimumNodeVersion',
+			message: 'What will be the minimum node version for support?',
+			default: getPackageMinimumNodeVersion() || await getSupportedNodeVersion(),
 			validate: isNumber
 		},
 		{
 			name: 'desiredNodeVersion',
-			message: 'What is the desired node version it should run against?',
-			default: getPackageNodeVersion() || '8',
+			message: 'What is the desired node version?',
+			default: await getLTSNodeVersion(),
 			validate: isNumber
 		},
 		{
 			name: 'babel',
 			type: 'confirm',
-			message: 'Will you use babel to support earlier node versions?',
+			message: 'Will you use babel to support older environments?',
 			default: otherwise(getPackageBabel(), getPackageCompile()),
 			when ({ language }) {
 				return language === 'esnext'
@@ -694,7 +734,7 @@ async function init () {
 
 	// customise engines, private, and browser
 	console.log('customising package data')
-	packageData.engines.node = `>=${answers.nodeVersion}`
+	packageData.engines.node = `>=${answers.minimumNodeVersion}`
 	if (packageData.license && packageData.license.type) {
 		packageData.license = packageData.license.type
 	}
@@ -874,8 +914,8 @@ async function init () {
 		}
 
 		// trim node versions that we do not care about
-		travis.node_js = travis.node_js.filter((version) => semver(version, answers.nodeVersion) !== -1)
-		travis.matrix.allow_failures = travis.matrix.allow_failures.filter((value) => semver(value.node_js, answers.nodeVersion) !== -1)
+		travis.node_js = travis.node_js.filter((version) => semver(version, answers.minimumTestNodeVersion) !== -1)
+		travis.matrix.allow_failures = travis.matrix.allow_failures.filter((value) => semver(value.node_js, answers.minimumNodeVersion) !== -1)
 
 		// travis env variables
 		// these spawns must be run serially, as otherwise not all variables may be written, which is annoying

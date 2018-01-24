@@ -1,5 +1,9 @@
 # History
 
+## v1.7.0 2018 January 24
+- Fetch supported and LTS node versions dynamically
+- Updated base files
+
 ## v1.6.0 2018 January 24
 - Keep and merge package scripts that are prefixed with `my:`
     - Closes [issue #7](https://github.com/bevry/based/issues/7)
