@@ -1,7 +1,7 @@
 sudo: false
 language: node_js
 node_js:
-- '7'
+- '8'
 matrix:
   fast_finish: true
 cache:
@@ -9,11 +9,11 @@ cache:
   - "$HOME/.npm"
   - "$HOME/.yarn-cache"
 install:
-- eval "$(curl -s https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/node-install.bash)"
+- eval "$(curl -s https://raw.githubusercontent.com/bevry/awesome-travis/master/scripts/node-install.bash)"
 before_script:
-- eval "$(curl -s https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/node-verify.bash)"
+- eval "$(curl -s https://raw.githubusercontent.com/bevry/awesome-travis/master/scripts/node-verify.bash)"
 after_success:
-- eval "$(curl -s https://raw.githubusercontent.com/balupton/awesome-travis/master/scripts/node-publish.bash)"
+- eval "$(curl -s https://raw.githubusercontent.com/bevry/awesome-travis/master/scripts/node-publish.bash)"
 notifications:
   slack:
     secure: lg3fXMql4yUPxF+uTW8Uf5RwnbAnI0Lz/VkviLfAy9izmKnskG79aoW+Fu2ckj+ZDWRImAJtE4MScf4nCDs0r4vT4XfV6rTMSwreajU6Zl2UF+2QoIq2yud0zZ9tqY1nsXKGPXsWpLixasozA1fiAnXA0W71/VlCizTH97UpVpRB81EcwUQDcBBOYs5TOm6Rmt9HzGWHXVMJ58YDcsvodlXSEw2CUM9APmPXQz5xCrBKJrBEdFbFDN5R6qmjcFm9n73zpUIaXl84tX5/I480DsZknVx0zhkYiThjIVTEIgcJ9HwSAYVHvm/VVChLJmHedpK56IADDjfH5O4gqsBIxpckIWml181miXwttS/Ed6EgxNpaTUpoNE9YvASRtdacHkoOnWz+4XSQvWY3XkLkS8Y6sOdIMDf/S+7FGSd63Pxngh+5kknNJxtx0qWk+YR/xaP7TKMBwTyzKg0S1S0kpIMcsxCbbADzpGzlyb9thzrgCwzNVV2u/aWC/YAs2NayqIwn7CML/BgmlMQf7sq1piCwlRPpPYdDp6t+Gt1RhxMcn/pY7YXEbItg6YqIAdBjDY9W13mKx/iVuN91t9402+6c3Mbg5yMUm0RNrvsdNIg2jHQpe+Ha6Zj/Ha0oqFElnoAsa91L+cRWY4M7/ZkwLICZM0OltloNZ3ygGPMbI3k=
