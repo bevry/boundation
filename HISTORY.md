@@ -1,5 +1,8 @@
 # History
 
+## v1.7.1 2018 January 24
+- Fixed the previous release
+
 ## v1.7.0 2018 January 24
 - Fetch supported and LTS node versions dynamically
 - Updated base files

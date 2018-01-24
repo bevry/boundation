@@ -33,6 +33,15 @@ const cwd = process.cwd()
 
 const NO_NEED_SCRIPT = 'echo no need for this project'
 const state = {}
+const nodeVersions = [
+	'0.8',
+	'0.10',
+	'0.12',
+	'4',
+	'6',
+	'8',
+	'9'
+]
 
 function trim (input) {
 	return input.trim()
@@ -215,7 +224,7 @@ async function getRemotePackage () {
 }
 */
 
-async function getSupportedNodeVersion () {
+async function getMinimumNodeLTSVersion () {
 	const response = await fetch('https://raw.githubusercontent.com/nodejs/Release/master/schedule.json')
 	const json = await response.json()
 	const now = (new Date()).getTime()
@@ -232,7 +241,7 @@ async function getSupportedNodeVersion () {
 	return lts
 }
 
-async function getLTSNodeVersion () {
+async function getMaximumNodeLTSVersion () {
 	const response = await fetch('https://raw.githubusercontent.com/nodejs/Release/master/schedule.json')
 	const json = await response.json()
 	const now = (new Date()).getTime()
@@ -275,7 +284,7 @@ function getPackageKeywords () {
 	return (packageData && packageData.keywords && packageData.keywords.join(', ')) || null
 }
 
-function getPackageMinimumNodeVersion () {
+function getPackageNodeEngineVersion () {
 	const packageData = getPackage()
 	return (packageData && packageData.engines && packageData.engines.node && packageData.engines.node.replace(/[^0-9]+/, '')) || null
 }
@@ -402,21 +411,33 @@ async function getQuestions () {
 			default: (getPackage().main && getPackage().main.replace(/^.+\//, '').replace(/\.[^.]+?$/, '')) || 'index'
 		},
 		{
-			name: 'minimumTestNodeVersion',
-			message: 'What will be the minimum node version for testing?',
-			default: getPackageMinimumNodeVersion() || '0.8',
-			validate: isNumber
-		},
-		{
-			name: 'minimumNodeVersion',
-			message: 'What will be the minimum node version for support?',
-			default: getPackageMinimumNodeVersion() || await getSupportedNodeVersion(),
-			validate: isNumber
-		},
-		{
 			name: 'desiredNodeVersion',
 			message: 'What is the desired node version?',
-			default: await getLTSNodeVersion(),
+			default: await getMaximumNodeLTSVersion(),
+			validate: isNumber
+		},
+		{
+			name: 'minimumSupportNodeVersion',
+			message: 'What is the minimum node version for support?',
+			default: getPackageNodeEngineVersion() || await getMinimumNodeLTSVersion(),
+			validate: isNumber
+		},
+		{
+			name: 'maximumSupportNodeVersion',
+			message: 'What is the maximum node version for support?',
+			default: await getMaximumNodeLTSVersion(),
+			validate: isNumber
+		},
+		{
+			name: 'minimumTestNodeVersion',
+			message: 'What is the minimum node version for testing?',
+			default: nodeVersions[0],
+			validate: isNumber
+		},
+		{
+			name: 'maximumTestNodeVersion',
+			message: 'What is the maximum node version for testing?',
+			default: nodeVersions[nodeVersions.length - 1],
 			validate: isNumber
 		},
 		{
@@ -734,7 +755,7 @@ async function init () {
 
 	// customise engines, private, and browser
 	console.log('customising package data')
-	packageData.engines.node = `>=${answers.minimumNodeVersion}`
+	packageData.engines.node = `>=${answers.minimumSupportNodeVersion}`
 	if (packageData.license && packageData.license.type) {
 		packageData.license = packageData.license.type
 	}
@@ -879,24 +900,10 @@ async function init () {
 		const travis = {
 			sudo: false,
 			language: 'node_js',
-			node_js: [
-				'0.8',
-				'0.10',
-				'0.12',
-				'4',
-				'6',
-				'8',
-				'9'
-			],
+			node_js: nodeVersions,
 			matrix: {
 				fast_finish: true,
-				allow_failures: [
-					// https://github.com/nodejs/LTS
-					{ node_js: '0.8' },
-					{ node_js: '0.10' },
-					{ node_js: '0.12' },
-					{ node_js: '9' }
-				]
+				allow_failures: []
 			},
 			cache: {
 				directories: [
@@ -914,8 +921,21 @@ async function init () {
 		}
 
 		// trim node versions that we do not care about
-		travis.node_js = travis.node_js.filter((version) => semver(version, answers.minimumTestNodeVersion) !== -1)
-		travis.matrix.allow_failures = travis.matrix.allow_failures.filter((value) => semver(value.node_js, answers.minimumNodeVersion) !== -1)
+		travis.node_js = travis.node_js
+			.filter((version) =>
+				semver(version, answers.minimumTestNodeVersion) >= 0
+				&&
+				semver(version, answers.maximumTestNodeVersion) <= 0
+			)
+		travis.matrix.allow_failures = travis.node_js
+			.filter((version) =>
+				semver(version, answers.minimumSupportNodeVersion) < 0
+				||
+				semver(version, answers.maximumSupportNodeVersion) > 0
+			)
+			.map(function (version) {
+				return { node_js: version }
+			})
 
 		// travis env variables
 		// these spawns must be run serially, as otherwise not all variables may be written, which is annoying
