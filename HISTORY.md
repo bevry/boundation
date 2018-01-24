@@ -1,5 +1,8 @@
 # History
 
+## v1.8.0 2018 January 24
+- Install surge dev dep if needed
+
 ## v1.7.1 2018 January 24
 - Fixed the previous release
 
