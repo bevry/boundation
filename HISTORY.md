@@ -1,5 +1,8 @@
 # History
 
+## v1.5.1 2018 January 24
+- Updated base files
+
 ## v1.5.0 2018 January 24
 - Use awesome-travis commit instead of master
     - Closes [issue #3](https://github.com/bevry/based/issues/3)
