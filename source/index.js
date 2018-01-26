@@ -291,7 +291,12 @@ function getPackageNodeEngineVersion () {
 
 function getPackageDocumentationDependency () {
 	const packageData = getPackage()
-	return (packageData && packageData.devDependencies && Boolean(packageData.devDependencies.documentation)) || null
+	if (packageData && packageData.devDependencies) {
+		if (packageData.devDependencies.documentation || packageData.devDependencies.yuidocjs || packageData.devDependencies.biscotto) {
+			return true
+		}
+	}
+	return false
 }
 
 function getPackageFlowtypeDependency () {
@@ -311,19 +316,32 @@ function getPackageRepoUrl () {
 	return (packageData && packageData.repository && packageData.repository.url) || null
 }
 
-function getPackageCoffee () {
+function hasMultipleEditions () {
 	const packageData = getPackage()
-	return (packageData && packageData.devDependencies && Boolean(packageData.devDependencies['coffee-script'])) || null
+	return (packageData.editions && packageData.editions.length > 1) || false
 }
 
-function getPackageBabel () {
+function isPackageJSON () {
 	const packageData = getPackage()
-	return (packageData && packageData.devDependencies && Boolean(packageData.devDependencies.babel)) || null
+	return (packageData && (/\.json$/).test(packageData.main)) || false
 }
 
-function getPackageCompile () {
+function isPackageCoffee () {
 	const packageData = getPackage()
-	return (packageData && packageData.scripts && packageData.scripts['our:compile'] !== NO_NEED_SCRIPT)
+	if (packageData) {
+		if ((/\.coffee$/).test(packageData.main)) {
+			return true
+		}
+		if (packageData.devDependencies) {
+			if (packageData.devDependencies['coffee-script'] || packageData.devDependencies.coffeescript) {
+				return true
+			}
+		}
+		if (packageData.editions && packageData.editions[0].syntaxes.indexOf('coffeescript') !== -1) {
+			return true
+		}
+	}
+	return false
 }
 
 /*
@@ -401,9 +419,9 @@ async function getQuestions () {
 		{
 			name: 'language',
 			type: 'list',
-			choices: ['coffeescript', 'esnext'],
+			choices: ['coffeescript', 'esnext', 'json'],
 			message: 'What language will it use?',
-			default: (getPackageCoffee() && 'coffeescript') || 'esnext'
+			default: (isPackageJSON() && 'json') || (isPackageCoffee() && 'coffeescript') || 'esnext'
 		},
 		{
 			name: 'entry',
@@ -444,7 +462,7 @@ async function getQuestions () {
 			name: 'babel',
 			type: 'confirm',
 			message: 'Will you use babel to support older environments?',
-			default: otherwise(getPackageBabel(), getPackageCompile()),
+			default: hasMultipleEditions(),
 			when ({ language }) {
 				return language === 'esnext'
 			}
@@ -579,6 +597,7 @@ async function getAnswers () {
 async function init () {
 	// Fetch
 	const answers = Object.assign(defaults, await getAnswers())
+	const isJavaScript = ['esnext', 'javascript', 'json'].indexOf(answers.language) !== -1
 
 	// Prepare
 	const unlinkFiles = [
@@ -655,11 +674,13 @@ async function init () {
 				'our:setup:docpad': '',
 				'our:clean': 'rm -Rf ./docs ./es2015 ./es5 ./out',
 				'our:compile': '',
-				'our:compile:coffee': '',
+				'our:compile:coffee:esnext': '',
+				'our:compile:coffee:es2015': '',
 				'our:compile:es2015': '',
 				'our:meta': '',
 				'our:meta:docs': '',
 				'our:meta:yuidoc': '',
+				'our:meta:biscotto': '',
 				'our:meta:projectz': 'projectz compile',
 				'our:verify': '',
 				'our:verify:coffeelint': '',
@@ -683,6 +704,9 @@ async function init () {
 	if (packageData.editions) {
 		// trim edition directory of edition entry if it is there (converts editions v1.0 to v1.1+)
 		packageData.editions.forEach(function (edition) {
+			if (edition.directory === '.') {
+				delete edition.directory
+			}
 			if (edition.entry && edition.directory && edition.entry.indexOf(edition.directory) === 0) {
 				edition.entry = edition.entry.substr(edition.directory.length + 1)
 			}
@@ -737,20 +761,42 @@ async function init () {
 					]
 				},
 				{
-					description: 'CoffeeScript Compiled + ES5 + Require',
-					directory: 'es5',
+					description: 'CoffeeScript Compiled + ESNext + Require',
+					directory: 'esnext',
 					entry: `${answers.entry}.js`,
 					syntaxes: [
 						'javascript',
-						'es5',
+						'esnext',
 						'require'
+					]
+				},
+				{
+					description: 'CoffeeScript Compiled + ES2015 + Require',
+					directory: 'es2015',
+					entry: `${answers.entry}.js`,
+					syntaxes: [
+						'javascript',
+						'es2015',
+						'require'
+					]
+				}
+			)
+		}
+		else if (answers.language === 'json') {
+			editions.push(
+				{
+					description: 'JSON',
+					directory: '.',
+					entry: `${answers.entry}.json`,
+					syntaxes: [
+						'json'
 					]
 				}
 			)
 		}
 		packageData.editions = editions
 	}
-	const useEditionAutoloader = answers.language === 'esnext' && packageData.editions.length > 1
+	const useEditionAutoloader = packageData.editions.length > 1
 	const lastEdition = packageData.editions[packageData.editions.length - 1]
 
 	// customise engines, private, and browser
@@ -768,16 +814,19 @@ async function init () {
 		}
 	}
 	if (!useEditionAutoloader) {
-		const extension = pathUtil.extname(lastEdition.entry)
-		packageData.main = pathUtil.join(lastEdition.directory, lastEdition.entry)
+		const extension = pathUtil.extname(lastEdition.entry).replace(/\.json$/, '.js')
+		packageData.main = pathUtil.join(lastEdition.directory || '.', lastEdition.entry)
 		const testPath = (lastEdition.entry.indexOf('.plugin.') !== -1)
-			? pathUtil.join('.', lastEdition.directory, lastEdition.entry.replace('.plugin.', '.test.'))
-			: pathUtil.join('.', lastEdition.directory, `test${extension}`)
+			? pathUtil.join('.', lastEdition.directory || '.', lastEdition.entry.replace('.plugin.', '.test.'))
+			: pathUtil.join('.', lastEdition.directory || '.', `test${extension}`)
 		packageData.scripts.test = `node --harmony ${testPath} --joe-reporter=console`
+	}
+	else {
+		packageData.main = 'index.js'
 	}
 	if (answers.browser) {
 		if (answers.publish) {
-			packageData.browser = lastEdition.directory + '/' + lastEdition.entry
+			packageData.browser = pathUtil.join(lastEdition.directory || '.', lastEdition.entry)
 		}
 		else {
 			delete packageData.browser
@@ -828,7 +877,7 @@ async function init () {
 	else {
 		unlinkFiles.push('.npmignore')
 	}
-	if (answers.language === 'esnext') {
+	if (isJavaScript) {
 		downloads.push('https://raw.githubusercontent.com/bevry/base/master/.eslintrc.js')
 		if (answers.flowtype) {
 			downloads.push('https://raw.githubusercontent.com/bevry/base/master/.flowconfig')
@@ -889,12 +938,24 @@ async function init () {
 		console.log('customising travis')
 
 		// grab the latest awesome-travis commit
-		const awesomeTravisCommitReponse = await fetch('https://api.github.com/repos/bevry/awesome-travis/commits', {
-			headers: {
-				Accept: 'application/vnd.github.v3+json'
-			}
-		})
-		const awesomeTravisCommit = (await awesomeTravisCommitReponse.json())[0].sha
+		const githubAuth =
+			(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET)
+				? `client_id=${process.env.GITHUB_CLIENT_ID}&client_secret=${process.env.GITHUB_CLIENT_SECRET}`
+				: ''
+		let awesomeTravisCommit = 'master', awesomeTravisError = null
+		try {
+			const awesomeTravisCommitReponse = await fetch(`https://api.github.com/repos/bevry/awesome-travis/commits?${githubAuth}`, {
+				headers: {
+					Accept: 'application/vnd.github.v3+json'
+				}
+			})
+			const awesomeTravisCommitJSON = await awesomeTravisCommitReponse.json()
+			awesomeTravisError = awesomeTravisCommitJSON.message
+			awesomeTravisCommit = awesomeTravisCommitJSON[0].sha
+		}
+		catch (err) {
+			console.log('fetching the latest travis commit failed, so using master', awesomeTravisError, err)
+		}
 
 		// generate structure
 		const travis = {
@@ -985,13 +1046,19 @@ async function init () {
 		packageData.scripts['our:setup:docpad'] = 'bash ./docpad-setup.sh'
 	}
 	if (answers.language === 'coffeescript') {
-		packageData.scripts['our:compile:coffee'] = 'coffee -bco ./es5 ./source'
+		packageData.scripts['our:compile:coffee:esnext'] = 'coffee -bco ./esnext ./source'
+		packageData.scripts['our:compile:coffee:es2015'] = 'coffee -bcto ./es2015 ./source'
 		packageData.scripts['our:verify:coffeelint'] = 'coffeelint ./source'
 		if (answers.docs) {
-			packageData.scripts['our:meta:yudoc'] = 'yuidoc -o ./docs --syntaxtype coffee -e .coffee ./source'
+			if (packageData.devDependencies.biscotto) {
+				packageData.scripts['our:meta:biscotto'] = 'biscotto -n "$npm_package_title" --title "$npm_package_title API Documentation" --readme README.md --output-dir docs source - LICENSE.md HISTORY.md'
+			}
+			else {
+				packageData.scripts['our:meta:yuidoc'] = 'yuidoc -o ./docs --syntaxtype coffee -e .coffee ./source'
+			}
 		}
 	}
-	else if (answers.language === 'esnext') {
+	else if (isJavaScript) {
 		packageData.scripts['our:verify:eslint'] = 'eslint --fix ./source'
 		if (answers.babel) {
 			packageData.scripts['our:compile:es2015'] = 'babel ./source --out-dir ./es2015 --presets es2015'
@@ -1032,10 +1099,12 @@ async function init () {
 		'surge': answers.docs ? 'dev' : false,
 		'eslint': false,
 		'babel-cli': false,
+		'babel-core': false,
 		'babel-preset-es2015': false,
 		'documentation': false,
 		'flow-bin': false,
 		'coffee-script': false,
+		'coffeescript': false,
 		'yuidocjs': false
 	}
 	if (packageData.devDependencies.docpad) {
@@ -1044,20 +1113,22 @@ async function init () {
 	else {
 		packages.joe = packages['joe-reporter-console'] = packages['assert-helpers'] = 'dev'
 	}
-	if (answers.language === 'esnext') {
+	if (isJavaScript) {
 		packages.eslint = 'dev'
 		if (answers.babel) packages['babel-cli'] = packages['babel-preset-es2015'] = 'dev'
 		if (answers.docs) packages.documentation = 'dev'
 		if (answers.flowtype) packages['flow-bin'] = 'dev'
 	}
 	else if (answers.language === 'coffeescript') {
-		if (packageData.dependencies['coffee-script']) {
-			packages['coffee-script'] = packages.coffeelint = true
+		if (packageData.dependencies.coffeescript || packageData.dependencies['coffee-script']) {
+			packages.coffeescript = packages.coffeelint = true
 		}
 		else {
-			packages['coffee-script'] = packages.coffeelint = 'dev'
+			packages.coffeescript = packages.coffeelint = 'dev'
 		}
-		if (answers.docs) packages.yuidocjs = 'dev'
+		if (answers.docs && !packageData.devDependencies.biscotto) packages.yuidocjs = 'dev'
+		packages['babel-core'] = packages['babel-preset-es2015'] = 'dev'
+		await util.write('.babelrc', '{ "presets": ["es2015"] }')
 	}
 
 	// install the development dependencies
@@ -1109,13 +1180,13 @@ async function init () {
 	console.log('scaffolding remaining files...\n')
 	await util.spawn(['mkdir', '-p'].concat(
 		packageData.editions.map(
-			(edition) => edition.directory
+			(edition) => edition.directory || '.'
 		)
 	))
 	await util.spawn(
 		['touch'].concat(
 			packageData.editions.map(
-				(edition) => pathUtil.join(edition.directory, edition.entry)
+				(edition) => pathUtil.join(edition.directory || '.', edition.entry)
 			)
 		)
 		// add test entry as well

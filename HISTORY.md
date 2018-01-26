@@ -1,5 +1,12 @@
 # History
 
+## v1.9.0 2018 January 26
+- Support CoffeeScript v2
+- Support Biscotto for CoffeeScript documentation
+- Support Editions without any directory
+- Support JSON project type
+- Use `GITHUB_CLIENT_SECRET` and `GITHUB_CLIENT_ID` to fetch latest commit if available to prevent hitting github's rate limits
+
 ## v1.8.0 2018 January 24
 - Install surge dev dep if needed
 
