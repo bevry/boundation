@@ -701,7 +701,7 @@ async function init () {
 
 	// customise editions
 	console.log('customising editions')
-	if (packageData.editions) {
+	if (!isPackageCoffee && packageData.editions) {
 		// trim edition directory of edition entry if it is there (converts editions v1.0 to v1.1+)
 		packageData.editions.forEach(function (edition) {
 			if (edition.directory === '.') {
@@ -1080,6 +1080,15 @@ async function init () {
 			delete packageData.scripts[key]
 		}
 	})
+
+	// write the docpad specific files
+	if (packageData.devDependencies.docpad && isPackageCoffee) {
+		console.log('writing docpad placeholder files...')
+		const pluginName = packageData.name.replace(/^docpad-plugin-/, '')
+		await util.write('source/index.coffee', `module.exports = require('./${pluginName}.plugin')`)
+		await util.write('source/test.coffee', `module.exports = require('./${pluginName}.test')`)
+		console.log('...wrote docpad placeholder files')
+	}
 
 	// write the package.json file
 	console.log('writing the package.json file...')
