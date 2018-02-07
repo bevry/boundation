@@ -1,5 +1,10 @@
 # History
 
+## v1.11.0 2018 February 7
+- DocPad Plugins are now better supported, no longer need the placeholder files introduced in v1.10.0
+- Now asks about the author information and will try and fetch it from git
+- Now asks about the test entry location
+
 ## v1.10.0 2018 February 7
 - The CoffeeScript v2 upgrade (from v1.9.0) now works with DocPad CoffeeScript projects
 
