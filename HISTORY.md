@@ -1,5 +1,8 @@
 # History
 
+## v1.10.0 2018 February 7
+- The CoffeeScript v2 upgrade (from v1.9.0) now works with DocPad CoffeeScript projects
+
 ## v1.9.0 2018 January 26
 - Support CoffeeScript v2
 - Support Biscotto for CoffeeScript documentation
