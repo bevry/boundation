@@ -58,14 +58,19 @@ function isNumber (input) {
 function isGitUrl (input) {
 	return (/\.git$/).test(input)
 }
-function otherwise (input, value) {
-	return input == null ? value : input
-}
 function repoToWebsite (input = '') {
 	return input.replace(/\.git$/, '').replace(/^git@github\.com:/, 'https://github.com/')
 }
 
 /*
+function otherwise (input, value) {
+	return input == null ? value : input
+}
+async function getRemotePackage () {
+	const response = await fetch('https://raw.githubusercontent.com/bevry/base/master/package.json')
+	const data = await response.json()
+	return data
+}
 function getOrganisationFromGithubUrl (url) {
 	if ( !url )  return null
 	const organisation = url.replace(/^.+github.com\/([^/]+).+$/, '$1')
@@ -216,12 +221,6 @@ async function getGitUserEmail () {
 	}
 }
 
-async function getRemotePackage () {
-	const response = await fetch('https://raw.githubusercontent.com/bevry/base/master/package.json')
-	const data = await response.json()
-	return data
-}
-
 async function getMinimumNodeLTSVersion () {
 	const response = await fetch('https://raw.githubusercontent.com/nodejs/Release/master/schedule.json')
 	const json = await response.json()
@@ -345,7 +344,7 @@ function getPackageMainEntry (packageData = getPackage()) {
 			return packageData.name.replace(/^docpad-plugin-/, '') + '.plugin'
 		}
 		else {
-			return packageData.main && packageData.main.replace(/^.+\//, '').replace(/\.[^.]+?$/, '') || null
+			return (packageData.main && packageData.main.replace(/^.+\//, '').replace(/\.[^.]+?$/, '')) || null
 		}
 	}
 	return null
@@ -360,7 +359,7 @@ function getPackageTestEntry (packageData = getPackage()) {
 			const result = packageData.scripts
 				&& packageData.scripts.test
 				&& packageData.scripts.test
-				&& packageData.scripts.test.match(/^node(?: --[a-zA-Z0-9_]+)* (?:[^/]+\/)*([^\.]+)\.(js|coffee)/)
+				&& packageData.scripts.test.match(/^node(?: --[a-zA-Z0-9_]+)* (?:[^/]+\/)*([^.]+)\.(js|coffee)/)
 			return (result && result[1]) || null
 		}
 	}
