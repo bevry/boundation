@@ -86,7 +86,7 @@
     "arrangekeys": "^1.2.0",
     "inquirer": "^5.0.1",
     "js-yaml": "^3.10.0",
-    "node-fetch": "^1.7.3",
+    "node-fetch": "^2.0.0",
     "safeps": "^7.0.1"
   },
   "devDependencies": {
