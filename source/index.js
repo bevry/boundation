@@ -1193,26 +1193,28 @@ async function init () {
 	const removeDependencies = Object.keys(packages).filter((key) => packages[key] === false && (packageData.dependencies[key] || packageData.devDependencies[key]))
 	if (addDependencies.length) {
 		console.log('adding the dependencies...\n')
-		await util.spawn(['yarn', 'add'].concat(addDependencies))
+		await util.spawn(['npm', 'install', '--save'].concat(addDependencies))
 		console.log('\n...added the dependencies')
 	}
 	if (addDevDependencies.length) {
 		console.log('adding the development dependencies...\n')
-		await util.spawn(['yarn', 'add', '--dev'].concat(addDevDependencies))
+		await util.spawn(['npm', 'install', '--save-dev'].concat(addDevDependencies))
 		console.log('\n...added the development dependencies')
 	}
 	if (removeDependencies.length) {
 		console.log('remove old dependencies...\n')
-		await util.spawn(['yarn', 'remove'].concat(removeDependencies))
+		await util.spawn(['npm', 'uninstall', '--save', '--save-dev'].concat(removeDependencies))
 		console.log('\n...removed old dependencies')
 	}
-	console.log('installing the dependencies...\n')
-	await util.spawn('yarn')
-	console.log('\n...installed all the dependencies')
 
 	console.log('upgrading the installed dependencies...\n')
-	await util.spawn('yarn upgrade')
+	await util.spawn(['npm', 'install', '-g', 'npm-check-updates'])
+	await util.spawn(['ncu', '-u'])
 	console.log('\n...upgrading all the installed dependencies')
+
+	console.log('installing the dependencies...\n')
+	await util.spawn(['npm', 'install'])
+	console.log('\n...installed all the dependencies')
 
 	// remove old files
 	console.log('removing old files...')
