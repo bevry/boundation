@@ -203,7 +203,7 @@ async function getGitUserName () {
 	if (state.gitUserName) return state.gitUserName
 	try {
 		const stdout = await util.exec('git config --global user.name', { stdio: ['ignore', 'pipe', 'ignore'] })
-		state.gitUserName = (stdout && stdout.toString()) || null
+		state.gitUserName = (stdout && stdout.toString().trim()) || null
 		return state.gitUserName
 	}
 	catch (error) {
@@ -215,7 +215,7 @@ async function getGitUserEmail () {
 	if (state.gitUserEmail) return state.gitUserEmail
 	try {
 		const stdout = await util.exec('git config --global user.email', { stdio: ['ignore', 'pipe', 'ignore'] })
-		state.gitUserEmail = (stdout && stdout.toString()) || null
+		state.gitUserEmail = (stdout && stdout.toString().trim()) || null
 		return state.gitUserEmail
 	}
 	catch (error) {
