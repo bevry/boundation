@@ -1,5 +1,9 @@
 # History
 
+## v1.13.0 2018 February 15
+- You can now scaffold new projects by running inside an empty directory
+    - Closes [#1](https://github.com/bevry/based/issues/1)
+
 ## v1.12.0 2018 February 15
 - Remove Gratipay badge as it no longer exists
 
@@ -7,6 +11,7 @@
 - DocPad Plugins are now better supported, no longer need the placeholder files introduced in v1.10.0
 - Now asks about the author information and will try and fetch it from git
 - Now asks about the test entry location
+    - Closes [#2](https://github.com/bevry/based/issues/2)
 
 ## v1.10.0 2018 February 7
 - The CoffeeScript v2 upgrade (from v1.9.0) now works with DocPad CoffeeScript projects
