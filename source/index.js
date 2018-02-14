@@ -349,7 +349,10 @@ function getPackageMainEntry (packageData = getPackage()) {
 			return packageData.name.replace(/^docpad-plugin-/, '') + '.plugin'
 		}
 		else {
-			return (packageData.main && packageData.main.replace(/^.+\//, '').replace(/\.[^.]+?$/, '')) || null
+			return (packageData.main && packageData.main
+				.replace(/^.+\//, '') /* remove dirname */
+				.replace(/\.[^.]+$/, '') /* remove extension */
+			) || null
 		}
 	}
 	return null
@@ -364,7 +367,7 @@ function getPackageTestEntry (packageData = getPackage()) {
 			const result = packageData.scripts
 				&& packageData.scripts.test
 				&& packageData.scripts.test
-				&& packageData.scripts.test.match(/^node(?: --[a-zA-Z0-9_]+)* (?:[^/]+\/)*([^.]+)\.(js|coffee)/)
+				&& packageData.scripts.test.match(/^node(?: --[a-zA-Z0-9_]+)* (?:[^/]+\/)*([^.]+)\.js/) /* fetches filename without ext */
 			return (result && result[1]) || null
 		}
 	}
