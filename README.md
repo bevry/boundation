@@ -54,9 +54,9 @@ Automatic application of the Bevry base files /bevry/base
 
 ## Usage
 
-Install the package globally, then run it via:
+Install the package globally. Then run on your project or in a new directory with:
 
-``` bash
+```
 bevry-base
 ```
 
