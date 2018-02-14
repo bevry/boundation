@@ -673,7 +673,6 @@ async function init () {
 					'---',
 					'patreon',
 					'opencollective',
-					'gratipay',
 					'flattr',
 					'paypal',
 					'bitcoin',
@@ -684,7 +683,6 @@ async function init () {
 				config: {
 					patreonUsername: 'bevry',
 					opencollectiveUsername: 'bevry',
-					gratipayUsername: 'bevry',
 					flattrUsername: 'balupton',
 					paypalURL: 'https://bevry.me/paypal',
 					bitcoinURL: 'https://bevry.me/bitcoin',
@@ -890,15 +888,17 @@ async function init () {
 
 	// customise badges
 	console.log('customising badges')
+	const removeBadges = ['gratipay']
 	if (packageData.private) {
-		const removeList = [
+		removeBadges.push(
 			'npmversion',
 			'npmdownloads',
 			'daviddm',
 			'daviddmdev'
-		]
-		packageData.badges.list = packageData.badges.list.filter((i) => removeList.indexOf(i) === -1)
+		)
 	}
+	packageData.badges.list = packageData.badges.list.filter((i) => removeBadges.indexOf(i) === -1)
+	delete packageData.badges.gratipayUsername
 
 	// update history name
 	const oldHistoryExists = await util.exists('history.md')
