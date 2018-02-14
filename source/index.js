@@ -312,7 +312,10 @@ function getPackageAuthor (packageData = getPackage()) {
 }
 
 function hasMultipleEditions (packageData = getPackage()) {
-	return (packageData.editions && packageData.editions.length > 1) || false
+	if (packageData && packageData.editions) {
+		return packageData.editions.length > 1
+	}
+	return null
 }
 
 function isPackageJSON (packageData = getPackage()) {
@@ -492,7 +495,10 @@ async function getQuestions () {
 			name: 'babel',
 			type: 'confirm',
 			message: 'Will you use babel to support older environments?',
-			default: hasMultipleEditions(),
+			default () {
+				const result = hasMultipleEditions()
+				return result == null ? true : result
+			},
 			when ({ language }) {
 				return language === 'esnext'
 			}
