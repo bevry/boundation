@@ -3,6 +3,7 @@
 ## v1.13.0 2018 February 15
 - You can now scaffold new projects by running inside an empty directory
     - Closes [#1](https://github.com/bevry/based/issues/1)
+- Now uses `npm` and `npm-check-updates` instead of `yarn`
 
 ## v1.12.0 2018 February 15
 - Remove Gratipay badge as it no longer exists
