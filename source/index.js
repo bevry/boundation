@@ -181,7 +181,9 @@ async function download (opts) {
 		return util.write(file, data)
 	}
 	catch (err) {
-		throw new Error(`Download of ${opts.url} FAILED due to: ${stackOrMessage(err)}`)
+		return Promise.reject(
+			new Error(`Download of ${opts.url} FAILED due to: ${stackOrMessage(err)}`)
+		)
 	}
 }
 
@@ -614,7 +616,9 @@ async function getAnswers () {
 		return await inquirer.prompt(await getQuestions())
 	}
 	catch (err) {
-		throw new Error(`Failed to fetch the answers from the user: ${stackOrMessage(err)}`)
+		return Promise.reject(
+			new Error(`Failed to fetch the answers from the user: ${stackOrMessage(err)}`)
+		)
 	}
 }
 
