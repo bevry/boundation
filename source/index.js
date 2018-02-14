@@ -847,7 +847,14 @@ async function init () {
 		packageData.editions = editions
 	}
 	const useEditionAutoloader = packageData.editions.length > 1
-	const lastEdition = packageData.editions[packageData.editions.length - 1]
+	const sourceEdition = packageData.editions[0]
+	const compiledEdition = packageData.editions[packageData.editions.length - 1]
+	const sourceExtension = sourceEdition.entry.replace(/^.+\./, '')
+	const compiledExtension = compiledEdition.entry.replace(/^.+\./, '')
+	const sourceMainPath = pathUtil.join(sourceEdition.directory || '.', answers.mainEntry + '.' + sourceExtension)
+	const sourceTestPath = pathUtil.join(sourceEdition.directory || '.', answers.testEntry + '.' + sourceExtension)
+	const compiledMainPath = pathUtil.join(compiledEdition.directory || '.', answers.mainEntry + '.' + compiledExtension)
+	const compiledTestPath = pathUtil.join(compiledEdition.directory || '.', answers.testEntry + '.' + compiledExtension)
 
 	console.log('customising package data')
 	// customise entry
@@ -869,8 +876,8 @@ async function init () {
 		].join('\n'))
 	}
 	else {
-		mainPath = pathUtil.join(lastEdition.directory || '.', lastEdition.entry)
-		testPath = pathUtil.join(lastEdition.directory || '.', answers.testEntry)
+		mainPath = compiledMainPath
+		testPath = compiledTestPath
 	}
 	packageData.main = mainPath
 	packageData.scripts.test = `node --harmony ./${testPath} --joe-reporter=console`
@@ -889,7 +896,7 @@ async function init () {
 	}
 	if (answers.browser) {
 		if (answers.publish) {
-			packageData.browser = pathUtil.join(lastEdition.directory || '.', lastEdition.entry)
+			packageData.browser = compiledMainPath
 		}
 		else {
 			delete packageData.browser
@@ -1244,14 +1251,7 @@ async function init () {
 			(edition) => edition.directory || '.'
 		)
 	))
-	await util.spawn(
-		['touch'].concat(
-			packageData.editions.map(
-				(edition) => pathUtil.join(edition.directory || '.', edition.entry)
-			)
-		)
-		// add test entry as well
-	)
+	await util.spawn(['touch', sourceMainPath, sourceTestPath])
 
 	console.log('running setup...\n')
 	await util.spawn('npm run our:setup')
@@ -1262,6 +1262,5 @@ async function init () {
 	await util.spawn('npm run our:release:prepare')
 	console.log('\n...all done')
 }
-
 
 init()
