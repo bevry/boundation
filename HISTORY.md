@@ -1,5 +1,8 @@
 # History
 
+## v1.14.0 2018 February 15
+- Renamed from `bevry-base` to `boundation`
+
 ## v1.13.0 2018 February 15
 - You can now scaffold new projects by running inside an empty directory
     - Closes [#1](https://github.com/bevry/based/issues/1)

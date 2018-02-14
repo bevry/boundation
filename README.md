@@ -1,17 +1,17 @@
 <!-- TITLE/ -->
 
-<h1>bevry-base</h1>
+<h1>boundation</h1>
 
 <!-- /TITLE -->
 
 
 <!-- BADGES/ -->
 
-<span class="badge-travisci"><a href="http://travis-ci.org/bevry/based" title="Check this project's build status on TravisCI"><img src="https://img.shields.io/travis/bevry/based/master.svg" alt="Travis CI Build Status" /></a></span>
-<span class="badge-npmversion"><a href="https://npmjs.org/package/bevry-base" title="View this project on NPM"><img src="https://img.shields.io/npm/v/bevry-base.svg" alt="NPM version" /></a></span>
-<span class="badge-npmdownloads"><a href="https://npmjs.org/package/bevry-base" title="View this project on NPM"><img src="https://img.shields.io/npm/dm/bevry-base.svg" alt="NPM downloads" /></a></span>
-<span class="badge-daviddm"><a href="https://david-dm.org/bevry/based" title="View the status of this project's dependencies on DavidDM"><img src="https://img.shields.io/david/bevry/based.svg" alt="Dependency Status" /></a></span>
-<span class="badge-daviddmdev"><a href="https://david-dm.org/bevry/based#info=devDependencies" title="View the status of this project's development dependencies on DavidDM"><img src="https://img.shields.io/david/dev/bevry/based.svg" alt="Dev Dependency Status" /></a></span>
+<span class="badge-travisci"><a href="http://travis-ci.org/bevry/boundation" title="Check this project's build status on TravisCI"><img src="https://img.shields.io/travis/bevry/boundation/master.svg" alt="Travis CI Build Status" /></a></span>
+<span class="badge-npmversion"><a href="https://npmjs.org/package/boundation" title="View this project on NPM"><img src="https://img.shields.io/npm/v/boundation.svg" alt="NPM version" /></a></span>
+<span class="badge-npmdownloads"><a href="https://npmjs.org/package/boundation" title="View this project on NPM"><img src="https://img.shields.io/npm/dm/boundation.svg" alt="NPM downloads" /></a></span>
+<span class="badge-daviddm"><a href="https://david-dm.org/bevry/boundation" title="View the status of this project's dependencies on DavidDM"><img src="https://img.shields.io/david/bevry/boundation.svg" alt="Dependency Status" /></a></span>
+<span class="badge-daviddmdev"><a href="https://david-dm.org/bevry/boundation#info=devDependencies" title="View the status of this project's development dependencies on DavidDM"><img src="https://img.shields.io/david/dev/bevry/boundation.svg" alt="Dev Dependency Status" /></a></span>
 <br class="badge-separator" />
 <span class="badge-patreon"><a href="https://patreon.com/bevry" title="Donate to this project using Patreon"><img src="https://img.shields.io/badge/patreon-donate-yellow.svg" alt="Patreon donate button" /></a></span>
 <span class="badge-opencollective"><a href="https://opencollective.com/bevry" title="Donate to this project using Open Collective"><img src="https://img.shields.io/badge/open%20collective-donate-yellow.svg" alt="Open Collective donate button" /></a></span>
@@ -27,7 +27,7 @@
 
 <!-- DESCRIPTION/ -->
 
-Automatic application of the Bevry base files /bevry/base
+Automatic scaffolding and upgrading of your JavaScript ecosystem projects using Bevry's best practices
 
 <!-- /DESCRIPTION -->
 
@@ -37,15 +37,15 @@ Automatic application of the Bevry base files /bevry/base
 <h2>Install</h2>
 
 <a href="https://npmjs.com" title="npm is a package manager for javascript"><h3>NPM</h3></a><ul>
-<li>Install: <code>npm install --global bevry-base</code></li>
-<li>Executable: <code>bevry-base</code></li></ul>
+<li>Install: <code>npm install --global boundation</code></li>
+<li>Executable: <code>boundation</code></li></ul>
 
 <h3><a href="https://github.com/bevry/editions" title="Editions are the best way to produce and consume packages you care about.">Editions</a></h3>
 
 <p>This package is published with the following editions:</p>
 
-<ul><li><code>bevry-base</code> aliases <code>bevry-base/source/index.js</code></li>
-<li><code>bevry-base/source/index.js</code> is Source + <a href="https://babeljs.io/docs/learn-es2015/" title="ECMAScript Next">ESNext</a> + <a href="https://nodejs.org/dist/latest-v5.x/docs/api/modules.html" title="Node/CJS Modules">Require</a></li></ul>
+<ul><li><code>boundation</code> aliases <code>boundation/source/index.js</code></li>
+<li><code>boundation/source/index.js</code> is Source + <a href="https://babeljs.io/docs/learn-es2015/" title="ECMAScript Next">ESNext</a> + <a href="https://nodejs.org/dist/latest-v5.x/docs/api/modules.html" title="Node/CJS Modules">Require</a></li></ul>
 
 <p>Older environments may need <a href="https://babeljs.io/docs/usage/polyfill/" title="A polyfill that emulates missing ECMAScript environment features">Babel's Polyfill</a> or something similar.</p>
 
@@ -54,27 +54,42 @@ Automatic application of the Bevry base files /bevry/base
 
 ## Usage
 
-Install the package globally. Then run on your project or in a new directory with:
+Install the package globally. Then run `boundation` on your project or in an empty directory.
 
-```
-bevry-base
-```
+It will ask you several questions about your project, then initialise or upgrade the project with the latest Bevry best-practices.
 
-It will ask you questions about the project, and then perform the base file initialisation/update for you.
 
-Currently it is catered towards Bevry projects only, but open to issues and pull-requests to make it more powerful.
+## Features
 
-Source files pulled down from:
-
-- [`bevry/base`](https://github.com/bevry/base)
-- [`balupton/awesome-travis`](https://github.com/balupton/awesome-travis)
+- Supports JavaScript and CoffeeScript projects, more project types to come
+- Automatic [Editions](https://github.com/bevry/editions) setup and upgrades for automatic selection of the best edition for the environment, allowing you to develop for the latest environment with the latest technology, then automatically test on and support older environments
+- Uses [Projectz](https://github.com/bevry/projectz) to automatically generate and maintain your readme, license, badges, and the contributing file
+- Powerful NPM Scripts
+    - `npm run our:setup` for setting up the project for development
+        - automatic addition of your `my:setup:*` scripts
+    - `npm run our:compile` for compiling the project
+        - automatic addition of your `my:compile:*` scripts
+    - `npm run our:meta` for compiling the meta files
+        - automatic addition of your `my:meta:*` scripts
+    - `npm run our:verify` for linting
+        - automatic addition of your `my:verify:*` scripts
+    - `npm run our:release` for checking for uncommitted changes, a changelog entry, performing the git tag automatically, and the git push
+- Optional Automatic Travis CI setup to release your project to npm when tests pass, and to test on older environments. Powered by [Awesome Travis](https://github.com/bevry/awesome-travis).
+- Automatic dependency upgrades
+- ESLint for JavaScript projects, and CoffeeLint for CoffeeScript projectsfiles
+- Optional DocumentationJS for JavaScript projects
+- Optional YUIDoc for new CoffeeScript projects, and Biscotto for old
+- Optional Flow Type for type checking of JavaScript projects
+- Optional ES6 Import module support
+- Optional Babel support for older porjects
+- Optional DocPad Plugin support
 
 
 <!-- HISTORY/ -->
 
 <h2>History</h2>
 
-<a href="https://github.com/bevry/based/blob/master/HISTORY.md#files">Discover the release history by heading on over to the <code>HISTORY.md</code> file.</a>
+<a href="https://github.com/bevry/boundation/blob/master/HISTORY.md#files">Discover the release history by heading on over to the <code>HISTORY.md</code> file.</a>
 
 <!-- /HISTORY -->
 
@@ -83,7 +98,7 @@ Source files pulled down from:
 
 <h2>Contribute</h2>
 
-<a href="https://github.com/bevry/based/blob/master/CONTRIBUTING.md#files">Discover how you can contribute by heading on over to the <code>CONTRIBUTING.md</code> file.</a>
+<a href="https://github.com/bevry/boundation/blob/master/CONTRIBUTING.md#files">Discover how you can contribute by heading on over to the <code>CONTRIBUTING.md</code> file.</a>
 
 <!-- /CONTRIBUTE -->
 
@@ -96,7 +111,7 @@ Source files pulled down from:
 
 These amazing people are maintaining this project:
 
-<ul><li><a href="http://balupton.com">Benjamin Lupton</a> — <a href="https://github.com/bevry/based/commits?author=balupton" title="View the GitHub contributions of Benjamin Lupton on repository bevry/based">view contributions</a></li></ul>
+<ul><li><a href="http://balupton.com">Benjamin Lupton</a> — <a href="https://github.com/bevry/boundation/commits?author=balupton" title="View the GitHub contributions of Benjamin Lupton on repository bevry/boundation">view contributions</a></li></ul>
 
 <h3>Sponsors</h3>
 
@@ -113,9 +128,9 @@ No sponsors yet! Will you be the first?
 
 These amazing people have contributed code to this project:
 
-<ul><li><a href="http://balupton.com">Benjamin Lupton</a> — <a href="https://github.com/bevry/based/commits?author=balupton" title="View the GitHub contributions of Benjamin Lupton on repository bevry/based">view contributions</a></li></ul>
+<ul><li><a href="http://balupton.com">Benjamin Lupton</a> — <a href="https://github.com/bevry/boundation/commits?author=balupton" title="View the GitHub contributions of Benjamin Lupton on repository bevry/boundation">view contributions</a></li></ul>
 
-<a href="https://github.com/bevry/based/blob/master/CONTRIBUTING.md#files">Discover how you can contribute by heading on over to the <code>CONTRIBUTING.md</code> file.</a>
+<a href="https://github.com/bevry/boundation/blob/master/CONTRIBUTING.md#files">Discover how you can contribute by heading on over to the <code>CONTRIBUTING.md</code> file.</a>
 
 <!-- /BACKERS -->
 
