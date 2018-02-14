@@ -1,5 +1,8 @@
 # History
 
+## v1.12.0 2018 February 15
+- Remove Gratipay badge as it no longer exists
+
 ## v1.11.0 2018 February 7
 - DocPad Plugins are now better supported, no longer need the placeholder files introduced in v1.10.0
 - Now asks about the author information and will try and fetch it from git
