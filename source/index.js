@@ -167,10 +167,10 @@ async function download (opts) {
 		let data = await response.text()
 		const file = opts.file || pathUtil.basename(urlUtil.parse(opts.url).pathname)
 		const exists = await util.exists(file)
-		if (opts.overwrite === false) {
-			return Promise.resolve()
-		}
 		if (exists) {
+			if (opts.overwrite === false) {
+				return Promise.resolve()
+			}
 			const localData = await util.read(file).toString()
 			const lines = localData.split('\n')
 			const customIndex = lines.findIndex((line) => (/^# CUSTOM/i).test(line))
