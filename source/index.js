@@ -524,7 +524,7 @@ async function getQuestions () {
 		{
 			name: 'author',
 			message: 'Who will the package author be?',
-			default: getPackageAuthor() || `${new Date().getFullYear()}+ ${getGitUserName() || 'name'} <${getGitUserEmail() || 'email'}>`,
+			default: getPackageAuthor() || `${new Date().getFullYear()}+ ${await getGitUserName() || 'name'} <${await getGitUserEmail() || 'email'}>`,
 			validate: isSpecified,
 			filter: trim
 		},
