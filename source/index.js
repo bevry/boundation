@@ -340,7 +340,7 @@ function isPackageCoffee (packageData = getPackage()) {
 }
 
 function isPackageDocPadPlugin (packageData = getPackage()) {
-	return packageData.name.indexOf('docpad-plugin-') === 0
+	return packageData && packageData.name.indexOf('docpad-plugin-') === 0
 }
 
 function getPackageMainEntry (packageData = getPackage()) {
@@ -646,12 +646,14 @@ async function init () {
 	// setup the package data variables
 	const packageDataLocal = getPackage()
 	const customPackageScripts = {}
-	Object.keys(packageDataLocal.scripts).forEach(function (key) {
-		if (key.indexOf('my:') === 0) {
-			const value = packageDataLocal.scripts[key]
-			customPackageScripts[key] = value
-		}
-	})
+	if (packageDataLocal) {
+		Object.keys(packageDataLocal.scripts).forEach(function (key) {
+			if (key.indexOf('my:') === 0) {
+				const value = packageDataLocal.scripts[key]
+				customPackageScripts[key] = value
+			}
+		})
+	}
 	const packageData = Object.assign(
 		{
 			license: 'MIT',
