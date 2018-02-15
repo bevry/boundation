@@ -61,7 +61,7 @@ It will ask you several questions about your project, then initialise or upgrade
 
 ## Features
 
-- Supports JavaScript and CoffeeScript projects, more project types to come
+- Supports JavaScript, CoffeeScript, and Website projects, more project types to come
 - Automatic [Editions](https://github.com/bevry/editions) setup and upgrades for automatic selection of the best edition for the environment, allowing you to develop for the latest environment with the latest technology, then automatically test on and support older environments
 - Uses [Projectz](https://github.com/bevry/projectz) to automatically generate and maintain your readme, license, badges, and the contributing file
 - Uses [Bevry's Base Files](https://github.com/bevry/base) which provides linting configurations that automatically detect the features of your projects, and adjusts the linting accordingly, as well as pulling down files like `.gitignore` and `.npmignore` with respect for custom sections
@@ -71,11 +71,16 @@ It will ask you several questions about your project, then initialise or upgrade
         - automatic addition of your `my:setup:*` scripts
     - `npm run our:compile` for compiling the project
         - automatic addition of your `my:compile:*` scripts
+    - `npm run our:deploy` for linting
+        - automatic addition of your `my:deploy:*` scripts
     - `npm run our:meta` for compiling the meta files
         - automatic addition of your `my:meta:*` scripts
-    - `npm run our:verify` for linting
+    - `npm run our:verify` for linting and tests
         - automatic addition of your `my:verify:*` scripts
-    - `npm run our:release` for checking for uncommitted changes, a changelog entry, performing the git tag automatically, and the git push
+    - `npm run our:release` for for releasing your project
+        - on code projects, it will run verify, check for uncommitted changes, a changelog entry, performing the git tag automatically, and the git push
+        - on website projects, it will run verify and git push
+        - automatic addition of your `my:release:*` scripts
 - Optional automatic Travis CI setup to release your project to npm when tests pass, and to test on older environments
     - Powered by [Awesome Travis](https://github.com/bevry/awesome-travis)
 - Optional DocumentationJS for JavaScript projects
