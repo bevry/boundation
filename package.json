@@ -89,8 +89,8 @@
     "safeps": "^7.0.1"
   },
   "devDependencies": {
-    "assert-helpers": "^4.5.0",
-    "eslint": "^4.16.0",
+    "assert-helpers": "^4.5.1",
+    "eslint": "^4.17.0",
     "joe": "^2.0.2",
     "joe-reporter-console": "^2.0.1",
     "projectz": "^1.4.0"
@@ -104,14 +104,14 @@
     "our:meta:projectz": "projectz compile",
     "our:verify": "npm run our:verify:eslint",
     "our:verify:eslint": "eslint --fix ./source",
+    "our:deploy": "echo no need for this project",
     "our:test": "npm run our:verify && npm test",
-    "our:release": "npm run our:release:prepare && npm run our:release:check && npm run our:release:tag && npm run our:release:push",
+    "our:release": "npm run our:release:prepare && npm run our:release:check-changelog && npm run our:release:check-dirty && npm run our:release:tag && npm run our:release:push",
     "our:release:prepare": "npm run our:clean && npm run our:compile && npm run our:test && npm run our:meta",
-    "our:release:check": "npm run our:release:check:changelog && npm run our:release:check:dirty",
-    "our:release:check:changelog": "cat ./HISTORY.md | grep v$npm_package_version || (echo add a changelog entry for v$npm_package_version && exit -1)",
-    "our:release:check:dirty": "git diff --exit-code",
+    "our:release:check-changelog": "cat ./HISTORY.md | grep v$npm_package_version || (echo add a changelog entry for v$npm_package_version && exit -1)",
+    "our:release:check-dirty": "git diff --exit-code",
     "our:release:tag": "export MESSAGE=$(cat ./HISTORY.md | sed -n \"/## v$npm_package_version/,/##/p\" | sed 's/## //' | awk 'NR>1{print buf}{buf = $0}') && test \"$MESSAGE\" || (echo 'proper changelog entry not found' && exit -1) && git tag v$npm_package_version -am \"$MESSAGE\"",
     "our:release:push": "git push origin master && git push origin --tags",
-    "test": "node --harmony ./source/test --joe-reporter=console"
+    "test": "node --harmony ./source/test.js --joe-reporter=console"
   }
 }
