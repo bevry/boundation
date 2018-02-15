@@ -43,6 +43,14 @@ const nodeVersions = [
 	'9'
 ]
 
+// curl flags:
+// -L will follow redirects
+// -s is silent mode, so will only return the result
+// -S will show the error if something went wrong
+// -f will not output errors as content
+// https://github.com/bevry/boundation/issues/15
+const CURL_FLAGS = '-fsSL'
+
 function trim (input) {
 	return input.trim()
 }
@@ -318,6 +326,22 @@ function hasMultipleEditions (packageData = getPackage()) {
 	return null
 }
 
+function getPackageType (packageData = getPackage()) {
+	if (packageData) {
+		if (packageData.scripts && packageData.scripts.start) {
+			if (packageData.main) {
+				return 'coded-website'
+			}
+			else {
+				return 'website'
+			}
+		}
+		else {
+			return 'code'
+		}
+	}
+}
+
 function isPackageJSON (packageData = getPackage()) {
 	return (packageData && (/\.json$/).test(packageData.main)) || false
 }
@@ -428,41 +452,74 @@ async function getQuestions () {
 			filter: trim
 		},
 		{
+			name: 'type',
+			type: 'list',
+			choices: ['code', 'website', 'coded-website'],
+			message: 'What type of project is this?',
+			default: getPackageType()
+		},
+		{
+			name: 'deployWithSurge',
+			type: 'confirm',
+			message: 'Use surge to deploy the website?',
+			when ({ type }) {
+				return type === 'website' || type === 'coded-website'
+			}
+		},
+		{
+			name: 'docpadPlugin',
+			type: 'confirm',
+			message: 'Will this be a DocPad plugin?',
+			default: isPackageDocPadPlugin() || false,
+			when ({ type }) {
+				return type === 'code'
+			}
+		},
+		{
 			name: 'publish',
 			type: 'confirm',
 			message: 'Will it be published to npm?',
-			default: getPackage().private != null ? !getPackage().private : null
+			default: getPackage().private != null ? !getPackage().private : null,
+			when ({ type }) {
+				return type === 'code'
+			}
 		},
 		{
 			name: 'browser',
 			type: 'confirm',
 			message: 'Will it be used on the client-side inside web browsers?',
-			default: Boolean(getPackage().browser)
+			default: Boolean(getPackage().browser),
+			when ({ type }) {
+				return type === 'code'
+			}
 		},
 		{
 			name: 'language',
 			type: 'list',
 			choices: ['esnext', 'javascript', 'coffeescript', 'json'],
 			message: 'What language will it use?',
-			default: (isPackageJSON() && 'json') || (isPackageCoffee() && 'coffeescript') || 'esnext'
-		},
-		{
-			name: 'docpadPlugin',
-			type: 'confirm',
-			message: 'Will this be a DocPad plugin?',
-			default: isPackageDocPadPlugin() || false
+			default: (isPackageJSON() && 'json') || (isPackageCoffee() && 'coffeescript') || 'esnext',
+			when ({ type }) {
+				return type !== 'website'
+			}
 		},
 		{
 			name: 'mainEntry',
 			message: 'What is the main entry filename (without extension)?',
 			default: getPackageMainEntry() || 'index',
-			validate: isSpecified
+			validate: isSpecified,
+			when ({ type }) {
+				return type !== 'website'
+			}
 		},
 		{
 			name: 'testEntry',
 			message: 'What is the test entry filename (without extension)?',
 			default: getPackageTestEntry() || 'test',
-			validate: isSpecified
+			validate: isSpecified,
+			when ({ type }) {
+				return type !== 'website'
+			}
 		},
 		{
 			name: 'desiredNodeVersion',
@@ -474,25 +531,37 @@ async function getQuestions () {
 			name: 'minimumSupportNodeVersion',
 			message: 'What is the minimum node version for support?',
 			default: getPackageNodeEngineVersion() || await getMinimumNodeLTSVersion(),
-			validate: isNumber
+			validate: isNumber,
+			when ({ type }) {
+				return type === 'code'
+			}
 		},
 		{
 			name: 'maximumSupportNodeVersion',
 			message: 'What is the maximum node version for support?',
 			default: await getMaximumNodeLTSVersion(),
-			validate: isNumber
+			validate: isNumber,
+			when ({ type }) {
+				return type === 'code'
+			}
 		},
 		{
 			name: 'minimumTestNodeVersion',
 			message: 'What is the minimum node version for testing?',
 			default: nodeVersions[0],
-			validate: isNumber
+			validate: isNumber,
+			when ({ type }) {
+				return type === 'code'
+			}
 		},
 		{
 			name: 'maximumTestNodeVersion',
 			message: 'What is the maximum node version for testing?',
 			default: nodeVersions[nodeVersions.length - 1],
-			validate: isNumber
+			validate: isNumber,
+			when ({ type }) {
+				return type === 'code'
+			}
 		},
 		{
 			name: 'babel',
@@ -502,23 +571,26 @@ async function getQuestions () {
 				const result = hasMultipleEditions()
 				return result == null ? true : result
 			},
-			when ({ language }) {
-				return language === 'esnext'
+			when ({ type, language }) {
+				return type !== 'website' && language === 'esnext'
 			}
 		},
 		{
 			name: 'docs',
 			type: 'confirm',
 			message: 'Will there be inline source code documentation?',
-			default: getPackageDocumentationDependency() || false
+			default: getPackageDocumentationDependency() || false,
+			when ({ type }) {
+				return type === 'code'
+			}
 		},
 		{
 			name: 'flowtype',
 			type: 'confirm',
 			message: 'Will it use flow type for strong type checking?',
 			default: getPackageFlowtypeDependency() || false,
-			when ({ language }) {
-				return language === 'esnext' || language === 'javascript'
+			when ({ type, language }) {
+				return type === 'code' && (language === 'esnext' || language === 'javascript')
 			}
 		},
 		{
@@ -526,8 +598,8 @@ async function getQuestions () {
 			type: 'confirm',
 			message: 'Will it use ES6 Modules?',
 			default: getPackageModules() || false,
-			when ({ language }) {
-				return language === 'esnext'
+			when ({ type, language }) {
+				return type === 'code' && language === 'esnext'
 			}
 		},
 		{
@@ -579,7 +651,7 @@ async function getQuestions () {
 			message: 'For deploying the documentation, what is your surge username?',
 			validate: isSpecified,
 			filter: trim,
-			when ({ travis, docs }) { return travis && docs && !defaults.surgeLogin }
+			when ({ travis, docs, deployWithSurge }) { return travis && (docs || deployWithSurge) && !defaults.surgeLogin }
 		},
 		{
 			name: 'surgeToken',
@@ -587,7 +659,7 @@ async function getQuestions () {
 			message: 'For deploying the documentation, what is your surge token?',
 			validate: isSpecified,
 			filter: trim,
-			when ({ travis, docs }) { return travis && docs && !defaults.surgeToken }
+			when ({ travis, docs, deployWithSurge }) { return travis && (docs || deployWithSurge) && !defaults.surgeToken }
 		},
 		{
 			name: 'travisEmail',
@@ -632,11 +704,9 @@ async function getAnswers () {
 }
 
 async function init () {
-	// Fetch
+	// Prepare
 	const answers = Object.assign(defaults, await getAnswers())
 	const isJavaScript = ['esnext', 'javascript', 'json'].indexOf(answers.language) !== -1
-
-	// Prepare
 	const unlinkFiles = [
 		'esnextguardian.js',
 		'nakefile.js',
@@ -645,6 +715,27 @@ async function init () {
 		'.jshintrc',
 		'.jscrc'
 	]
+
+	// Website projects should only support a single node version
+	if (answers.type !== 'code') {
+		answers.minimumSupportNodeVersion
+			= answers.maximumSupportNodeVersion
+			= answers.minimumTestNodeVersion
+			= answers.maximumTestNodeVersion
+			= answers.desiredNodeVersion
+	}
+
+	// rename old files
+	console.log('renaming old files...')
+	if (await util.exists('history.md')) {
+		await util.rename('history.md', 'HISTORY.md')
+	}
+	if (answers.type === 'code') {
+		if (await util.exists('src')) {
+			await util.rename('src', 'source')
+		}
+	}
+	console.log('...renamed old files')
 
 	// setup the package data variables
 	const packageDataLocal = getPackage()
@@ -656,6 +747,11 @@ async function init () {
 				customPackageScripts[key] = value
 			}
 		})
+	}
+	if (packageDataLocal && packageDataLocal.scripts) {
+		if (packageDataLocal.scripts.deploy) {
+			customPackageScripts['my:deploy'] = packageDataLocal.scripts.deploy
+		}
 	}
 	const packageData = Object.assign(
 		{
@@ -705,208 +801,239 @@ async function init () {
 					slackinURL: 'https://slack.bevry.me'
 				}
 			},
-			scripts: Object.assign({
-				'our:setup': '',
-				'our:setup:npm': 'npm install',
-				'our:setup:docpad': '',
-				'our:clean': 'rm -Rf ./docs ./es2015 ./es5 ./out',
-				'our:compile': '',
-				'our:compile:coffee:esnext': '',
-				'our:compile:coffee:es2015': '',
-				'our:compile:es2015': '',
-				'our:meta': '',
-				'our:meta:docs': '',
-				'our:meta:yuidoc': '',
-				'our:meta:biscotto': '',
-				'our:meta:projectz': 'projectz compile',
-				'our:verify': '',
-				'our:verify:coffeelint': '',
-				'our:verify:eslint': '',
-				'our:verify:flow': '',
-				'our:test': 'npm run our:verify && npm test',
-				'our:release': 'npm run our:release:prepare && npm run our:release:check && npm run our:release:tag && npm run our:release:push',
-				'our:release:prepare': 'npm run our:clean && npm run our:compile && npm run our:test && npm run our:meta',
-				'our:release:check': 'npm run our:release:check:changelog && npm run our:release:check:dirty',
-				'our:release:check:changelog': 'cat ./HISTORY.md | grep v$npm_package_version || (echo add a changelog entry for v$npm_package_version && exit -1)',
-				'our:release:check:dirty': 'git diff --exit-code',
-				'our:release:tag': "export MESSAGE=$(cat ./HISTORY.md | sed -n \"/## v$npm_package_version/,/##/p\" | sed 's/## //' | awk 'NR>1{print buf}{buf = $0}') && test \"$MESSAGE\" || (echo 'proper changelog entry not found' && exit -1) && git tag v$npm_package_version -am \"$MESSAGE\"",
-				'our:release:push': 'git push origin master && git push origin --tags',
-				'test': `node --harmony ./${answers.testEntry}.js --joe-reporter=console`
-			}, customPackageScripts)
+			scripts: Object.assign(
+				{
+					'our:setup': '',
+					'our:setup:npm': 'npm install',
+					'our:setup:docpad': '',
+					'our:clean': 'rm -Rf ./docs ./es2015 ./es5 ./out',
+					'our:compile': '',
+					'our:compile:coffee:esnext': '',
+					'our:compile:coffee:es2015': '',
+					'our:compile:es2015': '',
+					'our:meta': '',
+					'our:meta:docs': '',
+					'our:meta:yuidoc': '',
+					'our:meta:biscotto': '',
+					'our:meta:projectz': 'projectz compile',
+					'our:verify': '',
+					'our:verify:coffeelint': '',
+					'our:verify:eslint': '',
+					'our:verify:flow': '',
+					'our:deploy': '',
+					'our:test': 'npm run our:verify && npm test',
+					'our:release': '',
+					'our:release:prepare': 'npm run our:clean && npm run our:compile && npm run our:test && npm run our:meta'
+				},
+				answers.publish ? {
+					'our:release:check-changelog': 'cat ./HISTORY.md | grep v$npm_package_version || (echo add a changelog entry for v$npm_package_version && exit -1)',
+					'our:release:check-dirty': 'git diff --exit-code',
+					'our:release:tag': "export MESSAGE=$(cat ./HISTORY.md | sed -n \"/## v$npm_package_version/,/##/p\" | sed 's/## //' | awk 'NR>1{print buf}{buf = $0}') && test \"$MESSAGE\" || (echo 'proper changelog entry not found' && exit -1) && git tag v$npm_package_version -am \"$MESSAGE\"",
+					'our:release:push': 'git push origin master && git push origin --tags'
+				} : {
+					'our:release:push': 'git push origin master && git push origin --tags'
+				},
+				customPackageScripts,
+				{
+					start: (packageDataLocal && packageDataLocal.scripts && packageDataLocal.scripts.start) || '',
+					test: (packageDataLocal && packageDataLocal.scripts && packageDataLocal.scripts.test) || ''
+				}
+			)
 		}
 	)
 
-	// customise editions
-	console.log('customising editions')
-	if (!isPackageCoffee && packageData.editions) {
-		// trim edition directory of edition entry if it is there (converts editions v1.0 to v1.1+)
-		packageData.editions.forEach(function (edition) {
-			if (edition.directory === '.') {
-				delete edition.directory
-			}
-			if (edition.entry && edition.directory && edition.entry.indexOf(edition.directory) === 0) {
-				edition.entry = edition.entry.substr(edition.directory.length + 1)
-			}
-		})
-	}
-	else {
-		const editions = []
-		if (answers.language === 'esnext') {
-			editions.push({
-				description: 'Source + ESNext',
-				directory: 'source',
-				entry: `${answers.mainEntry}.js`,
-				syntaxes: [
-					'javascript',
-					'esnext'
-				]
-			})
-			if (answers.modules) {
-				editions[0].description += ' + Import'
-				editions[0].syntaxes.push('import')
-			}
-			else {
-				editions[0].description += ' + Require'
-				editions[0].syntaxes.push('require')
-			}
-			if (answers.flowtype) {
-				editions[0].description += ' + Flow Type Comments'
-				editions[0].syntaxes.push('flow type comments')
-			}
-			if (answers.babel) {
-				editions.push({
-					description: 'Babel Compiled + ES2015 + Require',
-					directory: 'es2015',
-					entry: `${answers.mainEntry}.js`,
-					syntaxes: [
-						'javascript',
-						'es2015',
-						'require'
-					]
-				})
-			}
-		}
-		else if (answers.language === 'coffeescript') {
-			editions.push(
-				{
-					description: 'Source + CoffeeScript + Require',
-					directory: 'source',
-					entry: `${answers.mainEntry}.coffee`,
-					syntaxes: [
-						'coffeescript',
-						'require'
-					]
-				},
-				{
-					description: 'CoffeeScript Compiled + ESNext + Require',
-					directory: 'esnext',
-					entry: `${answers.mainEntry}.js`,
-					syntaxes: [
-						'javascript',
-						'esnext',
-						'require'
-					]
-				},
-				{
-					description: 'CoffeeScript Compiled + ES2015 + Require',
-					directory: 'es2015',
-					entry: `${answers.mainEntry}.js`,
-					syntaxes: [
-						'javascript',
-						'es2015',
-						'require'
-					]
-				}
-			)
-		}
-		else if (answers.language === 'javascript') {
-			editions.push(
-				{
-					description: 'JavaScript + Require',
-					directory: '.',
-					entry: `${answers.mainEntry}.js`,
-					syntaxes: [
-						'javascript',
-						'require'
-					]
-				}
-			)
-		}
-		else if (answers.language === 'json') {
-			editions.push(
-				{
-					description: 'JSON',
-					directory: '.',
-					entry: `${answers.mainEntry}.json`,
-					syntaxes: [
-						'json'
-					]
-				}
-			)
-		}
-		packageData.editions = editions
-	}
-	const useEditionAutoloader = packageData.editions.length > 1
-	const sourceEdition = packageData.editions[0]
-	const compiledEdition = packageData.editions[packageData.editions.length - 1]
-	const sourceExtension = sourceEdition.entry.replace(/^.+\./, '')
-	const compiledExtension = compiledEdition.entry.replace(/^.+\./, '')
-	const sourceMainPath = pathUtil.join(sourceEdition.directory || '.', answers.mainEntry + '.' + sourceExtension)
-	const sourceTestPath = pathUtil.join(sourceEdition.directory || '.', answers.testEntry + '.' + sourceExtension)
-	const compiledMainPath = pathUtil.join(compiledEdition.directory || '.', answers.mainEntry + '.' + compiledExtension)
-	const compiledTestPath = pathUtil.join(compiledEdition.directory || '.', answers.testEntry + '.' + compiledExtension)
-
+	// customise package data
 	console.log('customising package data')
-	// customise entry
-	let mainPath, testPath
-	if (useEditionAutoloader) {
-		mainPath = 'index.js'
-		testPath = 'test.js'
-		await util.write('index.js', [
-			"'use strict'",
-			'',
-			"module.exports = require('editions').requirePackage(__dirname, require)",
-			''
-		].join('\n'))
-		await util.write('test.js', [
-			"'use strict'",
-			'',
-			`module.exports = require('editions').requirePackage(__dirname, require, '${answers.testEntry}')`,
-			''
-		].join('\n'))
+	if (answers.type === 'code') {
+		packageData.engines.node = `>=${answers.minimumSupportNodeVersion}`
 	}
 	else {
-		mainPath = compiledMainPath
-		testPath = compiledTestPath
+		packageData.engines.node = `${answers.desiredNodeVersion}`
 	}
-	packageData.main = mainPath
-	packageData.scripts.test = `node --harmony ./${testPath} --joe-reporter=console`
-	// customise others
-	packageData.engines.node = `>=${answers.minimumSupportNodeVersion}`
 	if (packageData.license && packageData.license.type) {
 		packageData.license = packageData.license.type
-	}
-	if (answers.publish != null) {
-		if (answers.publish) {
-			delete packageData.private
-		}
-		else {
-			packageData.private = true
-		}
-	}
-	if (answers.browser) {
-		if (answers.publish) {
-			packageData.browser = compiledMainPath
-		}
-		else {
-			delete packageData.browser
-		}
 	}
 
 	// remove old fields
 	delete packageData.nakeConfiguration
 	delete packageData.cakeConfiguration
 	delete packageData.directories
+
+	// customise editions
+	let useEditionAutoloader = false
+	if (answers.type === 'website') {
+		delete packageData.main
+	}
+	else {
+		if (isJavaScript && packageData.editions) {
+			// trim edition directory of edition entry if it is there (converts editions v1.0 to v1.1+)
+			packageData.editions.forEach(function (edition) {
+				if (edition.directory === '.') {
+					delete edition.directory
+				}
+				if (edition.entry && edition.directory && edition.entry.indexOf(edition.directory) === 0) {
+					edition.entry = edition.entry.substr(edition.directory.length + 1)
+				}
+			})
+		}
+		else {
+			const editions = []
+			if (answers.language === 'esnext') {
+				editions.push({
+					description: 'Source + ESNext',
+					directory: 'source',
+					entry: `${answers.mainEntry}.js`,
+					syntaxes: [
+						'javascript',
+						'esnext'
+					]
+				})
+				if (answers.modules) {
+					editions[0].description += ' + Import'
+					editions[0].syntaxes.push('import')
+				}
+				else {
+					editions[0].description += ' + Require'
+					editions[0].syntaxes.push('require')
+				}
+				if (answers.flowtype) {
+					editions[0].description += ' + Flow Type Comments'
+					editions[0].syntaxes.push('flow type comments')
+				}
+				if (answers.babel) {
+					editions.push({
+						description: 'Babel Compiled + ES2015 + Require',
+						directory: 'es2015',
+						entry: `${answers.mainEntry}.js`,
+						syntaxes: [
+							'javascript',
+							'es2015',
+							'require'
+						]
+					})
+				}
+			}
+			else if (answers.language === 'coffeescript') {
+				editions.push(
+					{
+						description: 'Source + CoffeeScript + Require',
+						directory: 'source',
+						entry: `${answers.mainEntry}.coffee`,
+						syntaxes: [
+							'coffeescript',
+							'require'
+						]
+					},
+					{
+						description: 'CoffeeScript Compiled + ESNext + Require',
+						directory: 'esnext',
+						entry: `${answers.mainEntry}.js`,
+						syntaxes: [
+							'javascript',
+							'esnext',
+							'require'
+						]
+					},
+					{
+						description: 'CoffeeScript Compiled + ES2015 + Require',
+						directory: 'es2015',
+						entry: `${answers.mainEntry}.js`,
+						syntaxes: [
+							'javascript',
+							'es2015',
+							'require'
+						]
+					}
+				)
+			}
+			else if (answers.language === 'javascript') {
+				editions.push(
+					{
+						description: 'JavaScript + Require',
+						directory: '.',
+						entry: `${answers.mainEntry}.js`,
+						syntaxes: [
+							'javascript',
+							'require'
+						]
+					}
+				)
+			}
+			else if (answers.language === 'json') {
+				editions.push(
+					{
+						description: 'JSON',
+						directory: '.',
+						entry: `${answers.mainEntry}.json`,
+						syntaxes: [
+							'json'
+						]
+					}
+				)
+			}
+			packageData.editions = editions
+		}
+		useEditionAutoloader = packageData.editions.length > 1
+		const sourceEdition = packageData.editions[0]
+		const compiledEdition = packageData.editions[packageData.editions.length - 1]
+		const sourceExtension = sourceEdition.entry.replace(/^.+\./, '')
+		const compiledExtension = compiledEdition.entry.replace(/^.+\./, '')
+		const sourceMainPath = pathUtil.join(sourceEdition.directory || '.', answers.mainEntry + '.' + sourceExtension)
+		const sourceTestPath = pathUtil.join(sourceEdition.directory || '.', answers.testEntry + '.' + sourceExtension)
+		const compiledMainPath = pathUtil.join(compiledEdition.directory || '.', answers.mainEntry + '.' + compiledExtension)
+		const compiledTestPath = pathUtil.join(compiledEdition.directory || '.', answers.testEntry + '.' + compiledExtension)
+
+		// customise entry
+		let mainPath, testPath
+		if (useEditionAutoloader) {
+			mainPath = 'index.js'
+			testPath = 'test.js'
+			await util.write('index.js', [
+				"'use strict'",
+				'',
+				"module.exports = require('editions').requirePackage(__dirname, require)",
+				''
+			].join('\n'))
+			await util.write('test.js', [
+				"'use strict'",
+				'',
+				`module.exports = require('editions').requirePackage(__dirname, require, '${answers.testEntry}')`,
+				''
+			].join('\n'))
+		}
+		else {
+			mainPath = compiledMainPath
+			testPath = compiledTestPath
+		}
+		packageData.main = mainPath
+		packageData.scripts.test = `node --harmony ./${testPath} --joe-reporter=console`
+		if (answers.publish != null) {
+			if (answers.publish) {
+				delete packageData.private
+			}
+			else {
+				packageData.private = true
+			}
+		}
+		if (answers.browser) {
+			if (answers.publish) {
+				packageData.browser = compiledMainPath
+			}
+			else {
+				delete packageData.browser
+			}
+		}
+
+		// scaffold
+		console.log('scaffolding edition files...\n')
+		await util.spawn(['mkdir', '-p'].concat(
+			packageData.editions.map(
+				(edition) => edition.directory || '.'
+			)
+		))
+		await util.spawn(['touch', sourceMainPath, sourceTestPath])
+		console.log('..scaffolded edition files\n')
+	}
 
 	// customise badges
 	console.log('customising badges')
@@ -922,21 +1049,17 @@ async function init () {
 	packageData.badges.list = packageData.badges.list.filter((i) => removeBadges.indexOf(i) === -1)
 	delete packageData.badges.gratipayUsername
 
-	// update history name
-	const oldHistoryExists = await util.exists('history.md')
-	if (oldHistoryExists) {
-		await util.rename('history.md', 'HISTORY.md')
-	}
-
 	// download files
 	console.log('downloading files')
 	const downloads = [
 		'https://raw.githubusercontent.com/bevry/base/master/.editorconfig',
-		{ url: 'https://raw.githubusercontent.com/bevry/base/master/HISTORY.md', overwrite: false },
 		{ url: 'https://raw.githubusercontent.com/bevry/base/master/.gitignore', custom: true },
 		'https://raw.githubusercontent.com/bevry/base/master/LICENSE.md',
 		'https://raw.githubusercontent.com/bevry/base/master/CONTRIBUTING.md'
 	]
+	if (answers.type === 'code') {
+		downloads.push({ url: 'https://raw.githubusercontent.com/bevry/base/master/HISTORY.md', overwrite: false })
+	}
 	if (answers.publish) {
 		downloads.push({ url: 'https://raw.githubusercontent.com/bevry/base/master/.npmignore', custom: true })
 	}
@@ -988,16 +1111,18 @@ async function init () {
 	}
 
 	// convert the history file
-	console.log('updating history file standard')
-	let historyContent = await util.read('HISTORY.md')
-	historyContent = historyContent.toString()
-	if (/^##/m.test(historyContent) === false) {
-		historyContent = historyContent
-			.replace(/^-/gm, '##')
-			.replace(/^\t/gm, '')
+	if (answers.type === 'code') {
+		console.log('updating history file standard')
+		let historyContent = await util.read('HISTORY.md')
+		historyContent = historyContent.toString()
+		if (/^##/m.test(historyContent) === false) {
+			historyContent = historyContent
+				.replace(/^-/gm, '##')
+				.replace(/^\t/gm, '')
+		}
+		historyContent = historyContent.replace(/^(## v\d+\.\d+\.\d+) ([a-z]+ \d+), (\d+)$/gim, '$1 $3 $2')
+		await util.write('HISTORY.md', historyContent)
 	}
-	historyContent = historyContent.replace(/^(## v\d+\.\d+\.\d+) ([a-z]+ \d+), (\d+)$/gim, '$1 $3 $2')
-	await util.write('HISTORY.md', historyContent)
 
 	// customise travis
 	if (answers.travis) {
@@ -1039,10 +1164,10 @@ async function init () {
 				]
 			},
 			install: [
-				`eval "$(curl -s https://raw.githubusercontent.com/bevry/awesome-travis/${awesomeTravisCommit}/scripts/node-install.bash)"`
+				`eval "$(curl ${CURL_FLAGS} https://raw.githubusercontent.com/bevry/awesome-travis/${awesomeTravisCommit}/scripts/node-install.bash)"`
 			],
 			before_script: [
-				`eval "$(curl -s https://raw.githubusercontent.com/bevry/awesome-travis/${awesomeTravisCommit}/scripts/node-verify.bash)"`
+				`eval "$(curl ${CURL_FLAGS} https://raw.githubusercontent.com/bevry/awesome-travis/${awesomeTravisCommit}/scripts/node-verify.bash)"`
 			],
 			after_success: []
 		}
@@ -1069,12 +1194,19 @@ async function init () {
 		console.log('travis environment variables')
 		await util.spawn(['travis', 'enable'])
 		await util.spawn(['travis', 'env', 'set', 'DESIRED_NODE_VERSION', answers.desiredNodeVersion, '--public'])
-		if (answers.docs) {
+		if (answers.docs || answers.deployWithSurge) {
 			await util.spawn(['travis', 'env', 'set', 'SURGE_LOGIN', answers.surgeLogin, '--public'])
 			await util.spawn(['travis', 'env', 'set', 'SURGE_TOKEN', answers.surgeToken])
-			travis.after_success.push(
-				`eval "$(curl -s https://raw.githubusercontent.com/bevry/awesome-travis/${awesomeTravisCommit}/scripts/surge.bash)"`
-			)
+			if (answers.docs) {
+				travis.after_success.push(
+					`eval "$(curl ${CURL_FLAGS} https://raw.githubusercontent.com/bevry/awesome-travis/${awesomeTravisCommit}/scripts/surge.bash)"`
+				)
+			}
+			else {
+				travis.after_success.push(
+					`eval "$(curl ${CURL_FLAGS} https://raw.githubusercontent.com/bevry/awesome-travis/${awesomeTravisCommit}/scripts/deploy-custom.bash)"`
+				)
+			}
 		}
 		else {
 			await util.spawn(['travis', 'env', 'unset', 'SURGE_LOGIN', 'SURGE_TOKEN'])
@@ -1091,7 +1223,7 @@ async function init () {
 				await util.spawn(['travis', 'env', 'set', 'NPM_EMAIL', answers.npmEmail])
 			}
 			travis.after_success.push(
-				`eval "$(curl -s https://raw.githubusercontent.com/bevry/awesome-travis/${awesomeTravisCommit}/scripts/node-publish.bash)"`
+				`eval "$(curl ${CURL_FLAGS} https://raw.githubusercontent.com/bevry/awesome-travis/${awesomeTravisCommit}/scripts/node-publish.bash)"`
 			)
 		}
 
@@ -1140,6 +1272,8 @@ async function init () {
 	mergeScript(packageData, 'our:compile', /^(our|my):compile/)
 	mergeScript(packageData, 'our:meta', /^(our|my):meta/)
 	mergeScript(packageData, 'our:verify', /^(our|my):verify/)
+	mergeScript(packageData, 'our:release', /^(our|my):release/) // (:[^:]+)?$
+	mergeScript(packageData, 'our:deploy', /^(our|my):deploy/)
 	// test is a special instance, so do not do it on test
 	Object.keys(packageData.scripts).forEach(function (key) {
 		if (packageData.scripts[key] === '') {
@@ -1162,7 +1296,7 @@ async function init () {
 		'joe': false,
 		'joe-reporter-console': false,
 		'editions': useEditionAutoloader,
-		'surge': answers.docs ? 'dev' : false,
+		'surge': (answers.docs || answers.deployWithSurge) ? 'dev' : false,
 		'eslint': false,
 		'babel-cli': false,
 		'babel-core': false,
@@ -1176,7 +1310,7 @@ async function init () {
 	if (answers.docpadPlugin || packageData.devDependencies.docpad) {
 		packages.docpad = 'dev'
 	}
-	else {
+	else if (answers.type !== 'website') {
 		packages.joe = packages['joe-reporter-console'] = packages['assert-helpers'] = 'dev'
 	}
 	if (isJavaScript) {
@@ -1231,27 +1365,10 @@ async function init () {
 	await Promise.all(unlinkFiles.map((file) => util.unlink(file)))
 	console.log('...removed old files')
 
-	// renaming old files
-	console.log('renaming old files...')
-	try {
-		await util.rename('src', 'source')
-	}
-	catch (err) { }
-	console.log('...renaming old files')
-
 	// running setup
 	console.log('running setup...\n')
 	await util.spawn('npm run our:setup')
 	console.log('\n...running setup')
-
-	// scaffold
-	console.log('scaffolding remaining files...\n')
-	await util.spawn(['mkdir', '-p'].concat(
-		packageData.editions.map(
-			(edition) => edition.directory || '.'
-		)
-	))
-	await util.spawn(['touch', sourceMainPath, sourceTestPath])
 
 	console.log('running setup...\n')
 	await util.spawn('npm run our:setup')
