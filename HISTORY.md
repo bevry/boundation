@@ -2,6 +2,7 @@
 
 ## v1.15.0 2018 February 15
 - Added support for `website` and `coded-website` project types
+    - Closes [#6](https://github.com/bevry/boundation/issues/6)
 - Awesome Travis scripts are changed flags from `-s` to `fsSL`
 - Fixed editions being replaced on existing JavaScript projects
 
