@@ -76,7 +76,7 @@ It will ask you several questions about your project, then initialise or upgrade
     - `npm run our:verify` for linting
         - automatic addition of your `my:verify:*` scripts
     - `npm run our:release` for checking for uncommitted changes, a changelog entry, performing the git tag automatically, and the git push
-- Optional Automatic Travis CI setup to release your project to npm when tests pass, and to test on older environments
+- Optional automatic Travis CI setup to release your project to npm when tests pass, and to test on older environments
     - Powered by [Awesome Travis](https://github.com/bevry/awesome-travis)
 - Optional DocumentationJS for JavaScript projects
 - Optional YUIDoc for new CoffeeScript projects, and Biscotto for old
