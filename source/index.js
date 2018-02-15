@@ -726,7 +726,7 @@ async function init () {
 	}
 
 	// rename old files
-	console.log('renaming old files...')
+	console.log('renaming old files')
 	if (await util.exists('history.md')) {
 		await util.rename('history.md', 'HISTORY.md')
 	}
@@ -735,7 +735,6 @@ async function init () {
 			await util.rename('src', 'source')
 		}
 	}
-	console.log('...renamed old files')
 
 	// setup the package data variables
 	const packageDataLocal = getPackage()
@@ -1025,14 +1024,13 @@ async function init () {
 		}
 
 		// scaffold
-		console.log('scaffolding edition files...\n')
+		console.log('scaffolding edition files')
 		await util.spawn(['mkdir', '-p'].concat(
 			packageData.editions.map(
 				(edition) => edition.directory || '.'
 			)
 		))
 		await util.spawn(['touch', sourceMainPath, sourceTestPath])
-		console.log('..scaffolded edition files\n')
 	}
 
 	// customise badges
