@@ -1,5 +1,8 @@
 # History
 
+## v1.16.1 2018 June 6
+- Add `--version` flag
+
 ## v1.16.0 2018 June 6
 - Swap node 9 to node 10 now that node 10 is out and node 9 is deprecated
 - Change node engine to >=10 instead of >=9
