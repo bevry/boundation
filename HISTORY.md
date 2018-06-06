@@ -1,5 +1,9 @@
 # History
 
+## v1.15.1 2018 June 6
+- Swap node 9 to node 10 now that node 10 is out and node 9 is deprecated
+- Updated dependencies
+
 ## v1.15.0 2018 February 15
 - Added support for `website` and `coded-website` project types
     - Closes [#6](https://github.com/bevry/boundation/issues/6)
