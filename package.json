@@ -1,6 +1,6 @@
 {
   "name": "boundation",
-  "version": "1.15.1",
+  "version": "1.16.0",
   "description": "Automatic scaffolding and upgrading of your JavaScript ecosystem projects using Bevry's best practices",
   "homepage": "https://github.com/bevry/boundation",
   "license": "MIT",
@@ -56,7 +56,7 @@
     "url": "https://github.com/bevry/boundation.git"
   },
   "engines": {
-    "node": ">=8"
+    "node": ">=10"
   },
   "editions": [
     {
@@ -90,7 +90,7 @@
   },
   "devDependencies": {
     "assert-helpers": "^4.5.1",
-    "eslint": "^4.17.0",
+    "eslint": "^4.19.1",
     "joe": "^2.0.2",
     "joe-reporter-console": "^2.0.1",
     "projectz": "^1.4.0"
