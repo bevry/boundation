@@ -1,8 +1,8 @@
 {
   "name": "boundation",
-  "version": "1.16.1",
+  "version": "1.16.2",
   "description": "Automatic scaffolding and upgrading of your JavaScript ecosystem projects using Bevry's best practices",
-  "homepage": "https://github.com/bevry/boundation",
+  "homepage": "ssh://git@github.com/bevry/boundation",
   "license": "MIT",
   "keywords": [
     "npm",
@@ -49,14 +49,14 @@
     "Benjamin Lupton <b@lupton.cc> (http://balupton.com)"
   ],
   "bugs": {
-    "url": "https://github.com/bevry/boundation/issues"
+    "url": "ssh://git@github.com/bevry/boundation/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/bevry/boundation.git"
+    "url": "ssh://git@github.com/bevry/boundation.git"
   },
   "engines": {
-    "node": ">=10"
+    "node": ">=8"
   },
   "editions": [
     {
@@ -90,7 +90,7 @@
   },
   "devDependencies": {
     "assert-helpers": "^4.5.1",
-    "eslint": "^4.19.1",
+    "eslint": "^5.1.0",
     "joe": "^2.0.2",
     "joe-reporter-console": "^2.0.1",
     "projectz": "^1.4.0"

@@ -410,10 +410,7 @@ function arrangePackage (packageData) {
 }
 
 const defaults = {
-	npmEmail: process.env.NPM_EMAIL,
 	npmAuthToken: process.env.NPM_AUTHTOKEN,
-	npmUsername: process.env.NPM_USERNAME,
-	npmPassword: process.env.NPM_PASSWORD,
 	travisEmail: process.env.TRAVIS_NOTIFICATION_EMAIL,
 	slackSubdomain: process.env.SLACK_SUBDOMAIN,
 	slackToken: process.env.SLACK_TRAVIS_TOKEN,
@@ -539,7 +536,7 @@ async function getQuestions () {
 		{
 			name: 'maximumSupportNodeVersion',
 			message: 'What is the maximum node version for support?',
-			default: await getMaximumNodeLTSVersion(),
+			default: nodeVersions[nodeVersions.length - 1],
 			validate: isNumber,
 			when ({ type }) {
 				return type === 'code'
@@ -617,38 +614,15 @@ async function getQuestions () {
 		},
 		{
 			name: 'npmAuthToken',
+			type: 'password',
 			message: 'What will be the npm auth token for releasing on travis?',
-			default: 'bevry',
 			filter: trim,
 			when ({ travis, publish }) { return travis && publish && !defaults.npmAuthToken }
 		},
 		{
-			name: 'npmUsername',
-			message: 'What will be the npm username for releasing on travis?',
-			default: 'bevry',
-			validate: isSpecified,
-			filter: trim,
-			when ({ travis, publish, npmAuthToken }) { return travis && publish && !defaults.npmUsername && !npmAuthToken }
-		},
-		{
-			name: 'npmEmail',
-			message: 'What will be the npm email for releasing on travis?',
-			default: 'us@bevry.me',
-			validate: isSpecified,
-			filter: trim,
-			when ({ travis, publish, npmAuthToken }) { return travis && publish && !defaults.npmEmail && !npmAuthToken }
-		},
-		{
-			name: 'npmPassword',
-			type: 'password',
-			message: 'What will be the npm password for releasing on travis?',
-			validate: isSpecified,
-			filter: trim,
-			when ({ travis, publish, npmAuthToken }) { return travis && publish && !defaults.npmPassword && !npmAuthToken }
-		},
-		{
 			name: 'surgeLogin',
 			message: 'For deploying the documentation, what is your surge username?',
+			default: 'us@bevry.me',
 			validate: isSpecified,
 			filter: trim,
 			when ({ travis, docs, deployWithSurge }) { return travis && (docs || deployWithSurge) && !defaults.surgeLogin }
@@ -664,7 +638,7 @@ async function getQuestions () {
 		{
 			name: 'travisEmail',
 			message: 'What will be the travis notification email?',
-			default: 'travisci@bevry.me',
+			default: 'bot+travisci@bevry.me',
 			validate: isSpecified,
 			filter: trim,
 			when ({ travis }) { return travis && !defaults.travisEmail }
@@ -1113,7 +1087,7 @@ async function init () {
 		console.log('updating history file standard')
 		let historyContent = await util.read('HISTORY.md')
 		historyContent = historyContent.toString()
-		if (/^##/m.test(historyContent) === false) {
+		if ((/^##/m).test(historyContent) === false) {
 			historyContent = historyContent
 				.replace(/^-/gm, '##')
 				.replace(/^\t/gm, '')
@@ -1216,9 +1190,6 @@ async function init () {
 			}
 			else {
 				await util.spawn(['travis', 'env', 'unset', 'NPM_AUTHTOKEN'])
-				await util.spawn(['travis', 'env', 'set', 'NPM_USERNAME', answers.npmUsername, '--public'])
-				await util.spawn(['travis', 'env', 'set', 'NPM_PASSWORD', answers.npmPassword])
-				await util.spawn(['travis', 'env', 'set', 'NPM_EMAIL', answers.npmEmail])
 			}
 			travis.after_success.push(
 				`eval "$(curl ${CURL_FLAGS} https://raw.githubusercontent.com/bevry/awesome-travis/${awesomeTravisCommit}/scripts/node-publish.bash)"`

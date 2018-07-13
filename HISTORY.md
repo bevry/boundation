@@ -1,5 +1,10 @@
 # History
 
+## v1.16.2 2018 June 13
+- Removed npm email, username, password support
+- Fixed type and default for npm auth token
+- Maximum support node version now defaults to the latest known node version
+
 ## v1.16.1 2018 June 6
 - Add `--version` flag
 
