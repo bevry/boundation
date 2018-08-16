@@ -58,6 +58,12 @@ Install the package globally. Then run `boundation` on your project or in an emp
 
 It will ask you several questions about your project, then initialise or upgrade the project with the latest Bevry best-practices.
 
+If you have the `secret env` command available, you can preload `boundation` with the following usage:
+
+``` bash
+secret env GITHUB_CLIENT_ID GITHUB_CLIENT_SECRET NPM_AUTHTOKEN TRAVIS_NOTIFICATION_EMAIL SURGE_LOGIN SURGE_TOKEN NOW_TOKEN -- boundation
+```
+
 
 ## Features
 
