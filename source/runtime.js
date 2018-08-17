@@ -1,4 +1,4 @@
-/* eslint no-console:0 */
+/* eslint no-console:0 no-use-before-define:0 */
 'use strict'
 
 // Local
@@ -38,7 +38,7 @@ function nodeMajorVersion (value) {
 
 // Update engines
 async function updateEngines (state) {
-	const { answers, packageData, supportedNodeVersions, nodeVersions } = state
+	const { answers, supportedNodeVersions, nodeVersions } = state
 
 	// =================================
 	// run each edition against the supported node version
@@ -48,7 +48,7 @@ async function updateEngines (state) {
 		if (edition.engines && edition.engines.node) {
 			status(`determining engines for edition ${edition.directory}...`)
 			const testPath = pathUtil.join(edition.directory || '.', answers.testEntry + '.js')
-			const versions = new Versions(supportedNodeVersions.concat(edition.targets && edition.targets.node || []))
+			const versions = new Versions(supportedNodeVersions.concat((edition.targets && edition.targets.node) || []))
 			await versions.load()
 			await versions.install()
 			const numbers = versions.map((version) => version.version)
@@ -88,7 +88,7 @@ async function updateEngines (state) {
 	if (uselessEditions.length) {
 		status(`removing useless editions ${uselessEditions.map((edition) => edition.directory).join(', ')}...`)
 		state.editions = state.editions.filter((edition) => uselessEditions.includes(edition) === false)
-		status(`...removed useless editions`)
+		status('...removed useless editions')
 		return await updateRuntime(state)
 	}
 

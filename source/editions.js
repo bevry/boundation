@@ -4,9 +4,7 @@
 // Local
 const { status } = require('./log')
 
-// External
-const pathUtil = require('path')
-
+// Helpers
 class Edition {
 	constructor (opts) {
 		Object.defineProperty(this, 'targets', {
@@ -28,6 +26,7 @@ class Edition {
 	}
 }
 
+// Actions
 async function updateEditions (state) {
 	const { answers, packageData } = state
 
