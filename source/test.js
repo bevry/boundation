@@ -1,3 +1,5 @@
 'use strict'
 
-console.log('no tests yet')
+console.log('requiring boundation...')
+require('./')
+console.log('...required boundation')

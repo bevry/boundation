@@ -41,4 +41,4 @@ async function init (state) {
 	success('all done!')
 }
 
-init(require('./state'))
+module.exports = init
