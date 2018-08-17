@@ -1,5 +1,8 @@
 # History
 
+## v1.17.4 2018 August 17
+- Fixed only one edition being added to babel env, instead of all applicable ones
+
 ## v1.17.3 2018 August 17
 - Fixed `documentation` dependency not being added under circumstances when it was needed
 

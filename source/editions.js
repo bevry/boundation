@@ -17,11 +17,6 @@ class Edition {
 			writable: true
 		})
 
-		Object.defineProperty(this, 'babel', {
-			enumerable: false,
-			writable: true
-		})
-
 		Object.defineProperty(this, 'testEntry', {
 			enumerable: false,
 			writable: true
@@ -246,20 +241,6 @@ async function updateEditions (state) {
 					else {
 						edition.scripts = {
 							[`our:compile:${edition.directory}`]: `env BABEL_ENV=${edition.directory} babel --out-dir ./${edition.directory} ./${answers.sourceDirectory}`
-						}
-					}
-					edition.babel = {
-						env: {
-							[edition.directory]: {
-								presets: [
-									[
-										'env',
-										{
-											targets: edition.targets
-										}
-									]
-								]
-							}
 						}
 					}
 				}

@@ -162,13 +162,31 @@ function arrangePackage (state) {
 	state.packageData.editions = state.editions
 	const packageData = JSON.parse(JSON.stringify(state.packageData))
 
-	// overwrite babel with editions[babel]
+	// inject edition properties into package data
 	if (state.editions && state.editions.length) {
-		// uses state.editions, as the earlier stringifyw ould have trimmed the hidden properties (such as babel)
-		packageData.babel = Object.assign({}, ...state.editions.map((edition) => edition.babel || {}))
-		if (Object.keys(packageData.babel).length === 0) {
+		// add targets to babel
+		packageData.babel = {
+			env: {}
+		}
+		for (const edition of state.editions) {
+			if (!edition.targets) continue
+			packageData.babel.env[edition.directory] = ({
+				presets: [
+					[
+						'env',
+						{
+							targets: edition.targets
+						}
+					]
+				]
+			})
+		}
+
+		// trim babel if empty
+		if (Object.keys(packageData.babel.env).length === 0) {
 			delete packageData.babel
 		}
+
 		// arrange keys of editions
 		packageData.editions = packageData.editions.map((edition) => arrangekeys(edition, 'description directory entry syntaxes engines'))
 	}

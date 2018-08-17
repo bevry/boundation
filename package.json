@@ -1,6 +1,6 @@
 {
   "name": "boundation",
-  "version": "1.17.3",
+  "version": "1.17.4",
   "description": "Automatic scaffolding and upgrading of your JavaScript ecosystem projects using Bevry's best practices",
   "homepage": "https://github.com/bevry/boundation",
   "license": "MIT",
@@ -109,6 +109,5 @@
     "our:verify": "npm run our:verify:eslint",
     "our:verify:eslint": "eslint --fix ./source",
     "test": "node --harmony ./source/test.js --joe-reporter=console"
-  },
-  "babel": {}
+  }
 }
