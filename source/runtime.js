@@ -317,6 +317,7 @@ async function updateRuntime (state) {
 			}
 		}
 		else if (answers.language === 'esnext') {
+			packages.documentation = 'dev'
 			state.scripts['our:meta:docs'] = `documentation build -f html -o ./docs -g --shallow ./${answers.sourceDirectory}/**.js`
 		}
 	}
@@ -328,9 +329,10 @@ async function updateRuntime (state) {
 		packages['babel-cli'] = packages['babel-preset-env'] = 'dev'
 	}
 	if (answers.deploy === 'surge') {
+		packages.surge = 'dev'
 		state.scripts['my:deploy'] = `surge ./${answers.deployDirectory}`
 	}
-	if (answers.docs || answers.deploy === 'surge') {
+	else if (answers.docs) {
 		packages.surge = 'dev'
 	}
 	if (answers.deploy && answers.deploy.startsWith('now')) {
