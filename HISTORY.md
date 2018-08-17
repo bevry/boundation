@@ -1,5 +1,8 @@
 # History
 
+## v1.17.1 2018 August 17
+- Ran boundation on boundation
+
 ## v1.17.0 2018 August 17
 - Ensure `version` property exists
 - Support for multiple languages
