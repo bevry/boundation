@@ -1,5 +1,10 @@
 # History
 
+## v1.17.2 2018 August 17
+- Don't write `babel` property if it is empty
+- Relocate root source files to their new locations rather than deleting them
+- Correctly set extension in browser field
+
 ## v1.17.1 2018 August 17
 - Ran boundation on boundation
 

@@ -4,7 +4,7 @@
 // Local
 const { status } = require('./log')
 const { isSpecified } = require('./string')
-const { spawn, write, unlink } = require('./fs')
+const { spawn, write, unlink, exists, rename } = require('./fs')
 const { readPackage, writePackage } = require('./package')
 const { versionComparator } = require('./version')
 const { getAnswers } = require('./answers')
@@ -47,7 +47,7 @@ async function updateEngines (state) {
 	for (const edition of state.editions) {
 		if (edition.engines && edition.engines.node) {
 			status(`determining engines for edition ${edition.directory}...`)
-			const testPath = pathUtil.join(edition.directory || '.', answers.testEntry + '.js')
+			const testPath = pathUtil.join(edition.directory || '.', edition.testEntry)
 			const versions = new Versions(supportedNodeVersions.concat((edition.targets && edition.targets.node) || []))
 			await versions.load()
 			await versions.install()
@@ -139,18 +139,30 @@ async function scaffoldEditions (state) {
 	const useEditionAutoloader = editions && editions.length > 1
 	if (useEditions) {
 		const sourceEdition = editions[0]
-		const sourceMainPath = pathUtil.join(sourceEdition.directory || '.', answers.mainEntry + '.js')
-		const sourceTestPath = pathUtil.join(sourceEdition.directory || '.', answers.testEntry + '.js')
+		const sourceMainEntry = sourceEdition.entry
+		const sourceTestEntry = sourceEdition.testEntry
+		const sourceMainPath = pathUtil.join(sourceEdition.directory || '.', sourceMainEntry)
+		const sourceTestPath = pathUtil.join(sourceEdition.directory || '.', sourceTestEntry)
 
 		// log
 		status('scaffolding edition files...')
 
-		// scaffold
+		// scaffold directories
 		await spawn(['mkdir', '-p'].concat(
 			editions.map(
 				(edition) => edition.directory || '.'
 			)
 		))
+
+		// Move original files to new locations if needed
+		const sourceMainPathExists = await exists(sourceMainPath)
+		const sourceMainEntryExists = await exists(sourceMainEntry)
+		const sourceTestPathExists = await exists(sourceTestPath)
+		const sourceTestEntryExists = await exists(sourceTestEntry)
+		if (!sourceMainPathExists && sourceMainEntryExists) await rename(sourceMainEntry, sourceMainPath)
+		if (!sourceTestPathExists && sourceTestEntryExists) await rename(sourceTestEntry, sourceTestPath)
+
+		// scaffold above paths if non existent
 		await spawn(['touch', sourceMainPath, sourceTestPath])
 
 		// setup main and test paths
@@ -182,12 +194,18 @@ async function scaffoldEditions (state) {
 
 		// browser path
 		if (answers.browser) {
-			const browserEdition = editions.find((edition) => edition.engines && edition.engines.browsers)
-			packageData.browser = pathUtil.join((browserEdition || sourceEdition).directory || '.', answers.mainEntry + '.js')
+			const browserEdition = editions.find((edition) => edition.engines && edition.engines.browsers) || sourceEdition
+			packageData.browser = pathUtil.join(browserEdition.directory || '.', browserEdition.entry)
 		}
 
 		// log
 		status('...scaffolded edition files')
+	}
+	else if (answers.browser) {
+		packageData.browser = packageData.main
+	}
+	else {
+		delete packageData.browser
 	}
 }
 

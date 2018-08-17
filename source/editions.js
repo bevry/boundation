@@ -22,6 +22,11 @@ class Edition {
 			writable: true
 		})
 
+		Object.defineProperty(this, 'testEntry', {
+			enumerable: false,
+			writable: true
+		})
+
 		Object.assign(this, opts)
 	}
 }
@@ -47,6 +52,7 @@ async function updateEditions (state) {
 			editions.push(new Edition({
 				directory: answers.sourceDirectory,
 				entry: `${answers.mainEntry}.js`,
+				testEntry: `${answers.testEntry}.js`,
 				syntaxes: [
 					'javascript',
 					'esnext'
@@ -71,6 +77,7 @@ async function updateEditions (state) {
 				new Edition({
 					directory: answers.sourceDirectory,
 					entry: `${answers.mainEntry}.coffee`,
+					testEntry: `${answers.testEntry}.coffee`,
 					syntaxes: [
 						'coffeescript',
 						'require'
@@ -80,6 +87,7 @@ async function updateEditions (state) {
 				new Edition({
 					directory: 'edition:esnext',
 					entry: `${answers.mainEntry}.js`,
+					testEntry: `${answers.testEntry}.js`,
 					syntaxes: [
 						'javascript',
 						'esnext',
@@ -98,6 +106,7 @@ async function updateEditions (state) {
 					description: 'JSON',
 					directory: answers.sourceDirectory,
 					entry: `${answers.mainEntry}.json`,
+					testEntry: `${answers.testEntry}.js`,
 					syntaxes: [
 						'json'
 					],
@@ -118,6 +127,7 @@ async function updateEditions (state) {
 				new Edition({
 					directory: 'edition:browsers',
 					entry: `${answers.mainEntry}.js`,
+					testEntry: `${answers.testEntry}.js`,
 					syntaxes: [
 						'javascript',
 						'require'
@@ -139,6 +149,7 @@ async function updateEditions (state) {
 				new Edition({
 					directory: `edition:node:${answers.maximumSupportNodeVersion}`,
 					entry: `${answers.mainEntry}.js`,
+					testEntry: `${answers.testEntry}.js`,
 					syntaxes: [
 						'javascript',
 						'require'
@@ -157,6 +168,7 @@ async function updateEditions (state) {
 					new Edition({
 						directory: `edition:node:${answers.desiredNodeVersion}`,
 						entry: `${answers.mainEntry}.js`,
+						testEntry: `${answers.testEntry}.js`,
 						syntaxes: [
 							'javascript',
 							'require'
@@ -176,6 +188,7 @@ async function updateEditions (state) {
 					new Edition({
 						directory: `edition:node:${answers.minimumSupportNodeVersion}`,
 						entry: `${answers.mainEntry}.js`,
+						testEntry: `${answers.testEntry}.js`,
 						syntaxes: [
 							'javascript',
 							'require'

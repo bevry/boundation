@@ -166,6 +166,9 @@ function arrangePackage (state) {
 	if (state.editions && state.editions.length) {
 		// uses state.editions, as the earlier stringifyw ould have trimmed the hidden properties (such as babel)
 		packageData.babel = Object.assign({}, ...state.editions.map((edition) => edition.babel || {}))
+		if (Object.keys(packageData.babel).length === 0) {
+			delete packageData.babel
+		}
 		// arrange keys of editions
 		packageData.editions = packageData.editions.map((edition) => arrangekeys(edition, 'description directory entry syntaxes engines'))
 	}
