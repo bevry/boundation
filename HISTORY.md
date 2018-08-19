@@ -1,5 +1,9 @@
 # History
 
+## v1.17.5 2018 August 19
+- All dependencies will now only be updated if you specify so
+- Fixed coffeescript compilations
+
 ## v1.17.4 2018 August 17
 - Fixed only one edition being added to babel env, instead of all applicable ones
 
