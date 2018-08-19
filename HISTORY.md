@@ -4,10 +4,9 @@
 
 Edition engines are now the range of unique supported versions for that edition, and are trimmed and passed accordingly.
 
-For instance, say `edition:esnext` supports node `6, 8, 10`.
-However all the other editions only support node `0.10, 0.12, 4`.
-Then you don't want those other editions, to run on node [6, 8, 10] via an engine of `>0.10`.
-As such, targetted editions now have their engines set to the specific versions they support.
+For instance, say `edition:esnext` supports node 6, 8, 10 and `edition:node:0.8` only node 0.10, 0.12, 4.
+You wouldn't want `edition:node:0.8` to run against node 6, 8, 10 via an engine of `>0.10`.
+As such, targeted editions now have their engines set to the specific node versions they support.
 So for this example, `edition:node:0.8` would have the engines `0.10 || 0.12 || 4` instead of `>0.10`.
 
 This can be seen from the following log output:
