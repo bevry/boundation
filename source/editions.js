@@ -91,6 +91,9 @@ async function updateEditions (state) {
 					engines: {
 						node: true,
 						browsers: false
+					},
+					scripts: {
+						'our:compile:edition:esnext': `coffee -bco ./edition:esnext ./${answers.sourceDirectory}`
 					}
 				})
 			)
@@ -225,27 +228,16 @@ async function updateEditions (state) {
 					edition.description += ' with import for modules'
 				}
 			}
-			if (edition.directory !== answers.sourceDirectory) {
-				// add the scripts
-				if (answers.language === 'coffeescript' && (edition.directory === 'edition:esnext' || !edition.targets)) {
+			if (edition.directory !== answers.sourceDirectory && edition.targets && !edition.scripts) {
+				if (answers.language === 'coffeescript') {
 					edition.scripts = {
-						[`our:compile:${edition.directory}`]: `coffee -bco ./${edition.directory} ./${answers.sourceDirectory}`
-					}
-				}
-				else if (edition.targets) {
-					if (answers.language === 'coffeescript') {
-						edition.scripts = {
-							[`our:compile:${edition.directory}`]: `env BABEL_ENV=${edition.directory} coffee -bcto ./${edition.directory} ./${answers.sourceDirectory}`
-						}
-					}
-					else {
-						edition.scripts = {
-							[`our:compile:${edition.directory}`]: `env BABEL_ENV=${edition.directory} babel --out-dir ./${edition.directory} ./${answers.sourceDirectory}`
-						}
+						[`our:compile:${edition.directory}`]: `env BABEL_ENV=${edition.directory} coffee -bcto ./${edition.directory}/ ./${answers.sourceDirectory}`
 					}
 				}
 				else {
-					throw new Error(`invalid edition configuration on edition: ${edition.directory}`)
+					edition.scripts = {
+						[`our:compile:${edition.directory}`]: `env BABEL_ENV=${edition.directory} babel --out-dir ./${edition.directory} ./${answers.sourceDirectory}`
+					}
 				}
 			}
 		})
