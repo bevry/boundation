@@ -1,5 +1,10 @@
 # History
 
+## v1.18.1 2018 August 19
+- Fixed edition descriptions like `coffeescript compiled for node.js true with require for modules`
+    - will now be `coffeescript compiled for node.js with require for modules`
+- Fixed `TypeError: chalk.bold.underline.orange is not a function`
+
 ## v1.18.0 2018 August 19
 
 Edition engines are now the range of unique supported versions for that edition, and are trimmed and passed accordingly.

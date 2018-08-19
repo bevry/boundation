@@ -6,7 +6,7 @@ function status (message) {
 	process.stdout.write(chalk.bold.underline(message) + '\n')
 }
 function warn (message) {
-	process.stderr.write(chalk.bold.underline.orange(message) + '\n')
+	process.stderr.write(chalk.bold.underline.magenta(message) + '\n')
 }
 function error (message) {
 	process.stderr.write(chalk.bold.underline.red(message) + '\n')
