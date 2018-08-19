@@ -18,6 +18,9 @@ const semver = require('semver')
 function nodeMajorVersion (value) {
 	return value.startsWith('0') ? value.split('.').slice(0, 2).join('.') : value.split('.')[0]
 }
+function nodeMajorVersions (array) {
+	return array.map((version) => nodeMajorVersion(version))
+}
 function addLatest (array) {
 	return array.map((item) => `${item}@latest`)
 }
@@ -47,9 +50,13 @@ async function updateEngines (state) {
 	// run each edition against the supported node version
 	// to fetch the engines for each edition
 
+	const versionsAlreadySupported = new Set()
+	const uselessEditions = []
+
+	/* eslint no-loop-func:0 */
 	for (const edition of state.editions) {
 		if (edition.engines && edition.engines.node) {
-			status(`determining engines for edition ${edition.directory}...`)
+			status(`determining engines for edition [${edition.directory}]...`)
 			const testPath = pathUtil.join(edition.directory || '.', edition.testEntry)
 			const versions = new Versions(supportedNodeVersions.concat((edition.targets && edition.targets.node) || []))
 			await versions.load()
@@ -58,19 +65,49 @@ async function updateEngines (state) {
 			await versions.test(`node --harmony ./${testPath} --joe-reporter=console`)
 			const passed = versions.json.passed || []
 			const failed = versions.json.failed || []
+
+			// cleaning, as otherwise the second run will treat it differntly
+			if (!edition.targets || !edition.targets.node) {
+				edition.engines.node = true
+			}
+
+			// Update the sets
+			const passedUnique = passed.filter((version) => versionsAlreadySupported.has(nodeMajorVersion(version)) === false)
+			const failedUnique = failed.filter((version) => versionsAlreadySupported.has(nodeMajorVersion(version)) === false)
+			const failedRequired = edition.engines.node === true
+				? []
+				: failedUnique.filter((version) => semver.satisfies(version, edition.engines.node))
+			const supported = edition.engines.node === true
+				? passedUnique
+				: passedUnique.filter((version) => semver.satisfies(version, edition.engines.node))
+
+			console.log(`passed: ${passed.join(', ')}\nunique: ${passedUnique.join(', ')}\nsupported: ${supported.join(', ')}\nfailed: ${failed.join(', ')}\nunique: ${failedUnique.join(', ')}\nrequired: ${failedRequired.join(', ')}`)
+
 			if (passed.length === 0) {
 				console.error(versions.messages.join('\n\n'))
-				throw new Error(`The edition ${edition.directory} had no node versions [${numbers.join(', ')}] which its tests passed`)
+				throw new Error(`The edition [${edition.directory}] had no node versions [${numbers.join(', ')}] which its tests passed`)
 			}
-			if (typeof edition.engines.node === 'string') {
-				const uhoh = failed.filter((version) => semver.satisfies(version, edition.engines.node))
-				if (uhoh.length) {
-					console.error(versions.messages.join('\n\n'))
-					throw new Error(`The edition ${edition.directory} needed to support ${edition.engines.node} but failed on [${failed.join(', ')}]`)
-				}
+
+			if (failedRequired.length) {
+				console.error(versions.messages.join('\n\n'))
+				throw new Error(`The edition [${edition.directory}] with engines [${edition.engines.node}] needed to support [${failedRequired.join(', ')}] but failed on [${failed.join(', ')}]`)
 			}
-			edition.engines.node = '>=' + nodeMajorVersion(passed[0])
-			status(`...determined engines for edition ${edition.directory} as ${edition.engines.node} against ${numbers.join(', ')}`)
+
+			if (edition.engines.node === true) {
+				edition.engines.node = '>=' + nodeMajorVersion(passed[0])
+			}
+			else {
+				edition.engines.node = nodeMajorVersions(passed).join(' || ')
+			}
+
+			if (supported.length === 0) {
+				console.log(`The edition [${edition.directory}] had no unique node versions that it supported, so will been trimmed`)
+				uselessEditions.push(edition)
+				continue
+			}
+
+			passedUnique.forEach((version) => versionsAlreadySupported.add(nodeMajorVersion(version)))
+			status(`...determined engines for edition [${edition.directory}] as [${edition.engines.node}] against [${numbers.join(', ')}]`)
 		}
 	}
 
@@ -83,15 +120,21 @@ async function updateEngines (state) {
 	// trim useless editions
 
 	// if the current edition supports the lower next edition, then keep the current and discard the next
+
+	/*
 	const nodeEditions = state.editions.filter((edition) => edition.engines.node)
 	const uselessEditions = nodeEditions.filter(function (current, index) {
 		const previous = nodeEditions[index - 1]
 		return previous && current.engines.node === previous.engines.node
 	})
+	*/
+
 	if (uselessEditions.length) {
 		status(`removing useless editions ${uselessEditions.map((edition) => edition.directory).join(', ')}...`)
 		state.editions = state.editions.filter((edition) => uselessEditions.includes(edition) === false)
 		status('...removed useless editions')
+		// need to do this, as we have to trim the editions and the autoloader
+		// no need for this to update the scripts and babel, as they are done in writePackage, not updateRuntime
 		return await updateRuntime(state)
 	}
 
@@ -107,7 +150,7 @@ async function updateEngines (state) {
 	const passed = versions.json.passed || []
 	if (passed.length === 0) {
 		console.error(versions.messages.join('\n\n'))
-		throw new Error(`There were no node versions [${numbers.join(', ')}] which the project's tests passed`)
+		throw new Error(`There were no node versions[${numbers.join(', ')}]which the project's tests passed`)
 	}
 	status('...determined engines for project')
 

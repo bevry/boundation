@@ -1,5 +1,54 @@
 # History
 
+## v1.18.0 2018 August 19
+
+Edition engines are now the range of unique supported versions for that edition, and are trimmed and passed accordingly.
+
+For instance, say `edition:esnext` supports node `6, 8, 10`.
+However all the other editions only support node `0.10, 0.12, 4`.
+Then you don't want those other editions, to run on node [6, 8, 10] via an engine of `>0.10`.
+As such, targetted editions now have their engines set to the specific versions they support.
+So for this example, `edition:node:0.8` would have the engines `0.10 || 0.12 || 4` instead of `>0.10`.
+
+This can be seen from the following log output:
+
+``` text
+determining engines for edition [edition:esnext]...
+passed: 6.14.3, 8.11.3, 10.8.0
+unique: 6.14.3, 8.11.3, 10.8.0
+supported: 6.14.3, 8.11.3, 10.8.0
+failed: 0.10.48, 0.12.18, 4.9.1
+unique: 0.10.48, 0.12.18, 4.9.1
+required:
+...determined engines for edition [edition:esnext] as [>=6] against [0.10.48, 0.12.18, 4.9.1, 6.14.3, 8.11.3, 10.8.0]
+determining engines for edition [edition:node:10]...
+passed: 0.10.48, 0.12.18, 4.9.1
+unique: 0.10.48, 0.12.18, 4.9.1
+supported:
+failed: 6.14.3, 8.11.3, 10.8.0
+unique:
+required:
+The edition [edition:node:10] had no unique node versions that it supported, so will been trimmed
+determining engines for edition [edition:node:8]...
+passed: 0.10.48, 0.12.18, 4.9.1
+unique: 0.10.48, 0.12.18, 4.9.1
+supported:
+failed: 6.14.3, 8.11.3, 10.8.0
+unique:
+required:
+The edition [edition:node:8] had no unique node versions that it supported, so will been trimmed
+determining engines for edition [edition:node:0.10]...
+passed: 0.10.48, 0.12.18, 4.9.1
+unique: 0.10.48, 0.12.18, 4.9.1
+supported: 0.10.48, 0.12.18, 4.9.1
+failed: 6.14.3, 8.11.3, 10.8.0
+unique:
+required:
+...determined engines for edition [edition:node:0.10] as [0.10 || 0.12 || 4] against [0.10.48, 0.12.18, 4.9.1, 6.14.3, 8.11.3, 10.8.0]
+removing useless editions edition:node:10, edition:node:8...
+...removed useless editions
+```
+
 ## v1.17.5 2018 August 19
 - All dependencies will now only be updated if you specify so
 - Fixed coffeescript compilations
