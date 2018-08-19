@@ -216,7 +216,10 @@ async function updateEditions (state) {
 					}
 				}
 				else if (edition.engines && edition.engines.node) {
-					edition.description = `${answers.language} compiled for node.js ${edition.engines.node}`
+					edition.description = `${answers.language} compiled for node.js`
+					if (typeof edition.engines.node === 'string') {
+						edition.description += ` ${edition.engines.node}`
+					}
 				}
 				else {
 					edition.description = `${answers.language} compiled` // for node.js >=${answers.minimumSupportNodeVersion}`
