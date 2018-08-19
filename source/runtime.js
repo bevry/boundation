@@ -18,6 +18,9 @@ const semver = require('semver')
 function nodeMajorVersion (value) {
 	return value.startsWith('0') ? value.split('.').slice(0, 2).join('.') : value.split('.')[0]
 }
+function addLatest (array) {
+	return array.map((item) => `${item}@latest`)
+}
 
 // function completeVersion (value) {
 // 	const version = value.toString()
@@ -351,29 +354,31 @@ async function updateRuntime (state) {
 	const removeDependencies = Object.keys(packages).filter((key) => packages[key] === false && (packageData.dependencies[key] || packageData.devDependencies[key]))
 	if (addDependencies.length) {
 		status('adding the dependencies...')
-		await spawn(['npm', 'install', '--save'].concat(addDependencies))
+		await spawn(['npm', 'install', '--save'].concat(addLatest(addDependencies)))
 		status('...added the dependencies')
 	}
 	if (addDevDependencies.length) {
 		status('adding the development dependencies...')
-		await spawn(['npm', 'install', '--save-dev'].concat(addDevDependencies))
+		await spawn(['npm', 'install', '--save-dev'].concat(addLatest(addDevDependencies)))
 		status('...added the development dependencies')
 	}
 	if (removeDependencies.length) {
 		status('remove old dependencies...')
-		await spawn(['npm', 'uninstall', '--save', '--save-dev'].concat(removeDependencies))
+		await spawn(['npm', 'uninstall', '--save', '--save-dev'].concat(addLatest(removeDependencies)))
 		status('...removed old dependencies')
 	}
 
-	status('upgrading the installed dependencies...')
-	try {
-		await spawn(['ncu', '-u'])
+	if (answers.upgradeAllDependencies) {
+		status('upgrading the installed dependencies...')
+		try {
+			await spawn(['ncu', '-u'])
+		}
+		catch (err) {
+			await spawn(['npm', 'install', '-g', 'npm-check-updates'])
+			await spawn(['ncu', '-u'])
+		}
+		status('...upgraded all the installed dependencies')
 	}
-	catch (err) {
-		await spawn(['npm', 'install', '-g', 'npm-check-updates'])
-		await spawn(['ncu', '-u'])
-	}
-	status('...upgraded all the installed dependencies')
 
 	status('installing the dependencies...')
 	await spawn(['npm', 'install'])
