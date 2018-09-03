@@ -7,6 +7,8 @@ module.exports = {
 	supportedNodeVersions: null,
 	unsupportedNodeVersions: null,
 	editions: null,
+	useEditions: null,
+	useEditionAutoloader: null,
 	userScripts: {},
 	scripts: {}
 }

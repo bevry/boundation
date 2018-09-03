@@ -108,7 +108,12 @@ async function updateEngines (state) {
 				continue
 			}
 
-			passedUnique.forEach((version) => versionsAlreadySupported.add(nodeMajorVersion(version)))
+			if (edition.directory === 'source' && state.useEditionAutoloader === false) {
+				// if we are not using the edition autoloader, then we don't care what versions the source edition supports
+			}
+			else {
+				passedUnique.forEach((version) => versionsAlreadySupported.add(nodeMajorVersion(version)))
+			}
 			status(`...determined engines for edition [${edition.directory}] as [${edition.engines.node}] against [${numbers.join(', ')}]`)
 		}
 	}
@@ -121,22 +126,33 @@ async function updateEngines (state) {
 	// =================================
 	// trim useless editions
 
-	// if the current edition supports the lower next edition, then keep the current and discard the next
-
-	/*
-	const nodeEditions = state.editions.filter((edition) => edition.engines.node)
-	const uselessEditions = nodeEditions.filter(function (current, index) {
-		const previous = nodeEditions[index - 1]
-		return previous && current.engines.node === previous.engines.node
-	})
-	*/
+	if (state.useEditionAutoloader === false) {
+		// trim compiled editions that are supported by later edition
+		const nodeEditions = state.editions.filter((edition) => edition.engines.node)
+		for (let index = 0; index < nodeEditions.length - 1; index++) {
+			const edition = nodeEditions[index]
+			const nextEdition = nodeEditions[index + 1]
+			if (edition.directory !== 'source' && nextEdition.engines.node.includes(edition.engines.node) && uselessEditions.includes(edition) === false) {
+				console.log(`The edition [${edition.directory}] had no unique node versions that it supported, so will been trimmed`)
+				uselessEditions.push(edition)
+			}
+		}
+	}
 
 	if (uselessEditions.length) {
-		status(`removing useless editions ${uselessEditions.map((edition) => edition.directory).join(', ')}...`)
-		state.editions = state.editions.filter((edition) => uselessEditions.includes(edition) === false)
-		status('...removed useless editions')
 		// need to do this, as we have to trim the editions and the autoloader
 		// no need for this to update the scripts and babel, as they are done in writePackage, not updateRuntime
+
+		status(`removing useless editions ${uselessEditions.map((edition) => edition.directory).join(', ')}...`)
+
+		state.editions = state.editions.filter((edition) => uselessEditions.includes(edition) === false)
+
+		/* await Promise.all(
+			uselessEditions.map((edition) => unlink(edition.directory))
+		) - unlink is not suffecient for nested dirs */
+
+		status('...removed useless editions')
+
 		return await updateRuntime(state)
 	}
 
@@ -184,14 +200,22 @@ async function updateEngines (state) {
 
 async function scaffoldEditions (state) {
 	const { editions, packageData, answers } = state
-	const useEditions = editions && editions.length
-	const useEditionAutoloader = editions && editions.length > 1
-	if (useEditions) {
+	state.useEditions = editions && editions.length
+	state.useEditionAutoloader = editions && editions.length > 1 && answers.name !== 'editions'
+	if (state.useEditions) {
+		// source
 		const sourceEdition = editions[0]
 		const sourceMainEntry = sourceEdition.entry
 		const sourceTestEntry = sourceEdition.testEntry
 		const sourceMainPath = pathUtil.join(sourceEdition.directory || '.', sourceMainEntry)
 		const sourceTestPath = pathUtil.join(sourceEdition.directory || '.', sourceTestEntry)
+
+		// compiled (use slice to prevent reverse changing the original array)
+		const nodeEdition = editions.slice().reverse().find((edition) => edition.engines && edition.engines.node) || sourceEdition
+		const nodeMainEntry = nodeEdition.entry
+		const nodeTestEntry = nodeEdition.testEntry
+		const nodeMainPath = pathUtil.join(nodeEdition.directory || '.', nodeMainEntry)
+		const nodeTestPath = pathUtil.join(nodeEdition.directory || '.', nodeTestEntry)
 
 		// log
 		status('scaffolding edition files...')
@@ -206,65 +230,69 @@ async function scaffoldEditions (state) {
 		// move or scaffold edition main path if needed
 		const sourceMainPathExists = await exists(sourceMainPath)
 		const sourceMainEntryExists = await exists(sourceMainEntry)
-		// edition entry doesn't exist, but the root entry does
-		if (!sourceMainPathExists && sourceMainEntryExists) {
-			await rename(sourceMainEntry, sourceMainPath)
+		if (!sourceMainPathExists) {
+			// edition entry doesn't exist, but the root entry does
+			if (sourceMainEntryExists) {
+				await rename(sourceMainEntry, sourceMainPath)
+			}
+			// edition entry doesn't exist, but it is a docpad plugin
+			else if (answers.docpadPlugin) {
+				write(sourceMainPath, [
+					"'use strict'",
+					'',
+					"module.exports = class MyPlugin extends require('docpad-baseplugin') {",
+					"\tget name () { return 'myplugin' }",
+					'\tget initialConfig () { return {} }',
+					'}',
+					''
+				].join('\n'))
+			}
+			// edition entry doesn't exist, so create an empty file
+			else await spawn(['touch', sourceMainPath])
 		}
-		// edition entry doesn't exist, but it is a docpad plugin
-		else if (!sourceMainPathExists && answers.docpadPlugin) {
-			write(sourceMainPath, [
-				"'use strict'",
-				'',
-				"module.exports = class MyPlugin extends require('docpad-baseplugin') {",
-				"\tget name () { return 'myplugin' }",
-				'\tget initialConfig () { return {} }',
-				'}',
-				''
-			].join('\n'))
-		}
-		// edition entry doesn't exist, so create an empty file
-		else await spawn(['touch', sourceMainPath])
 
 		// move or scaffold edition test path if needed
 		if (answers.docpadPlugin === false || editions.length > 1) {
 			const sourceTestPathExists = await exists(sourceTestPath)
 			const sourceTestEntryExists = await exists(sourceTestEntry)
-			// edition entry doesn't exist, but the root entry does
-			if (!sourceTestPathExists && sourceTestEntryExists) {
-				await rename(sourceTestEntry, sourceTestPath)
-			}
-			// edition entry doesn't exist, but it is a docpad plugin
-			else if (!sourceTestPathExists && answers.docpadPlugin) {
-				await write(sourceTestPath, [
-					"'use strict'",
-					'',
-					"require('docpad-plugintester').test({",
-					"\tpluginPath: require('path').join(__dirname, '..')",
-					"\tPluginClass: require('./')",
-					'})',
-					''
-				].join('\n'))
-			}
-			// edition entry doesn't exist, so create a basic test file
-			else {
-				await write(sourceTestPath, [
-					"'use strict'",
-					'',
-					"const {equal} = require('assert-helpers')",
-					"const joe = require('joe')",
-					'',
-					`joe.suite('${packageData.name}', function (suite, test) {`,
-					"\ttest('no tests yet', function () {",
-					"\t\tconsole.log('no tests yet')",
-					'\t})',
-					'})',
-					''
-				].join('\n'))
+			if (!sourceTestPathExists) {
+				// edition entry doesn't exist, but the root entry does
+				if (sourceTestEntryExists) {
+					await rename(sourceTestEntry, sourceTestPath)
+				}
+				// edition entry doesn't exist, but it is a docpad plugin
+				else if (answers.docpadPlugin) {
+					await write(sourceTestPath, [
+						"'use strict'",
+						'',
+						"require('docpad-plugintester').test({",
+						"\tpluginPath: require('path').join(__dirname, '..')",
+						"\tPluginClass: require('./')",
+						'})',
+						''
+					].join('\n'))
+				}
+				// edition entry doesn't exist, so create a basic test file
+				else {
+					await write(sourceTestPath, [
+						"'use strict'",
+						'',
+						"const {equal} = require('assert-helpers')",
+						"const joe = require('joe')",
+						'',
+						`joe.suite('${packageData.name}', function (suite, test) {`,
+						"\ttest('no tests yet', function () {",
+						"\t\tconsole.log('no tests yet')",
+						'\t})',
+						'})',
+						''
+					].join('\n'))
+				}
 			}
 		}
 
 		// setup main and test paths
-		if (useEditionAutoloader) {
+		if (state.useEditionAutoloader) {
 			// this is the case for any language that requires compilation
 			await write('index.js', [
 				"'use strict'",
@@ -286,8 +314,8 @@ async function scaffoldEditions (state) {
 		else {
 			await unlink('index.js')
 			await unlink('test.js')
-			packageData.main = sourceMainPath
-			state.test = sourceTestPath
+			packageData.main = nodeMainPath
+			state.test = nodeTestPath
 		}
 
 		// browser path
@@ -328,13 +356,14 @@ async function updateRuntime (state) {
 		'assert-helpers': false,
 		'joe': false,
 		'joe-reporter-console': false,
-		'editions': state.editions && state.editions.length > 1,
+		'editions': state.useEditionAutoloader,
 		'surge': false,
 		'now': false,
 		'babel-cli': false,
 		'babel-core': false,
 		'babel-preset-es2015': false,
 		'babel-preset-env': false,
+		'valid-directory': false,
 		'documentation': false,
 		'flow-bin': false,
 		'coffee-script': false,
@@ -359,7 +388,7 @@ async function updateRuntime (state) {
 	state.scripts = Object.assign(
 		{
 			'our:setup:npm': 'npm install',
-			'our:clean': 'rm -Rf ./docs ./edition:* ./es2015 ./es5 ./out',
+			'our:clean': 'rm -Rf ./docs ./edition* ./es2015 ./es5 ./out',
 			'our:meta:projectz': 'projectz compile',
 			'our:test': 'npm run our:verify && npm test',
 			'our:release:prepare': 'npm run our:clean && npm run our:compile && npm run our:test && npm run our:meta',
@@ -445,6 +474,10 @@ async function updateRuntime (state) {
 	}
 	if (!answers.docpadPlugin && !answers.website) {
 		packages.joe = packages['joe-reporter-console'] = packages['assert-helpers'] = 'dev'
+	}
+	if (!answers.website) {
+		packages['valid-directory'] = 'dev'
+		state.scripts['our:verify:directory'] = 'npx valid-directory'
 	}
 
 	// write the package.json file

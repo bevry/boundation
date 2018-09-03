@@ -80,7 +80,7 @@ async function updateEditions (state) {
 					engines: false
 				}),
 				new Edition({
-					directory: 'edition:esnext',
+					directory: 'edition-esnext',
 					entry: `${answers.mainEntry}.js`,
 					testEntry: `${answers.testEntry}.js`,
 					syntaxes: [
@@ -93,7 +93,7 @@ async function updateEditions (state) {
 						browsers: false
 					},
 					scripts: {
-						'our:compile:edition:esnext': `coffee -bco ./edition:esnext ./${answers.sourceDirectory}`
+						'our:compile:edition-esnext': `coffee -bco ./edition-esnext ./${answers.sourceDirectory}`
 					}
 				})
 			)
@@ -123,7 +123,7 @@ async function updateEditions (state) {
 		if (answers.browsers) {
 			editions.push(
 				new Edition({
-					directory: 'edition:browsers',
+					directory: 'edition-browsers',
 					entry: `${answers.mainEntry}.js`,
 					testEntry: `${answers.testEntry}.js`,
 					syntaxes: [
@@ -145,7 +145,7 @@ async function updateEditions (state) {
 		if (answers.babel) {
 			editions.push(
 				new Edition({
-					directory: `edition:node:${answers.maximumSupportNodeVersion}`,
+					directory: `edition-node-${answers.maximumSupportNodeVersion}`,
 					entry: `${answers.mainEntry}.js`,
 					testEntry: `${answers.testEntry}.js`,
 					syntaxes: [
@@ -164,7 +164,7 @@ async function updateEditions (state) {
 			if (answers.maximumSupportNodeVersion !== answers.desiredNodeVersion) {
 				editions.push(
 					new Edition({
-						directory: `edition:node:${answers.desiredNodeVersion}`,
+						directory: `edition-node-${answers.desiredNodeVersion}`,
 						entry: `${answers.mainEntry}.js`,
 						testEntry: `${answers.testEntry}.js`,
 						syntaxes: [
@@ -184,7 +184,7 @@ async function updateEditions (state) {
 			if (answers.maximumSupportNodeVersion !== answers.minimumSupportNodeVersion && answers.desiredNodeVersion !== answers.minimumSupportNodeVersion) {
 				editions.push(
 					new Edition({
-						directory: `edition:node:${answers.minimumSupportNodeVersion}`,
+						directory: `edition-node-${answers.minimumSupportNodeVersion}`,
 						entry: `${answers.mainEntry}.js`,
 						testEntry: `${answers.testEntry}.js`,
 						syntaxes: [
@@ -250,6 +250,7 @@ async function updateEditions (state) {
 	}
 
 	// log
+	console.log('editions:', state.editions.map((edition) => edition.directory).join(', '))
 	status('...updated editions')
 }
 

@@ -92,7 +92,7 @@
     "projectz": "^1.4.0"
   },
   "scripts": {
-    "our:clean": "rm -Rf ./docs ./edition:* ./es2015 ./es5 ./out",
+    "our:clean": "rm -Rf ./docs ./edition* ./es2015 ./es5 ./out",
     "our:compile": "echo no need for this project",
     "our:deploy": "echo no need for this project",
     "our:meta": "npm run our:meta:projectz",
