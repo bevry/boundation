@@ -396,6 +396,11 @@ async function updatePackageData (state) {
 		packageData.private = true
 	}
 
+	// prepare contributors
+	if (!packageData.contributors) {
+		packageData.contributors = []
+	}
+
 	// add maintainer if there aren't any
 	if (!packageData.maintainers || packageData.maintainers.length === 0) {
 		if (packageData.contributors.length === 1) {
@@ -441,7 +446,9 @@ async function updatePackageData (state) {
 			}
 		}
 	}
-	else if (!packageData.badges) {
+
+	// default badges
+	if (!packageData.badges || !packageData.badges.list || !packageData.badges.list.length) {
 		packageData.badges = {
 			list: [
 				'travisci',
@@ -452,6 +459,8 @@ async function updatePackageData (state) {
 			]
 		}
 	}
+
+	// remove badges relating to private
 	if (packageData.private) {
 		removeBadges.push(
 			'npmversion',
@@ -460,6 +469,7 @@ async function updatePackageData (state) {
 			'daviddmdev'
 		)
 	}
+
 	// apply removals
 	packageData.badges.list = packageData.badges.list.without(removeBadges)
 	delete packageData.badges.gratipayUsername
