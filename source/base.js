@@ -21,11 +21,15 @@ async function download (opts) {
 			if (opts.overwrite === false) {
 				return Promise.resolve()
 			}
-			const localData = await read(file).toString()
-			const lines = localData.split('\n')
-			const customIndex = lines.findIndex((line) => (/^# CUSTOM/i).test(line))
-			if (customIndex !== -1) {
-				data += lines.slice(customIndex).join('\n')
+			const localData = (await read(file)).toString()
+			const localLines = localData.split('\n')
+			const localCustomIndex = localLines.findIndex((line) => (/^# CUSTOM/i).test(line))
+			if (localCustomIndex !== -1) {
+				const remoteLines = data.split('\n')
+				const remoteCustomIndex = remoteLines.findIndex((line) => (/^# CUSTOM/i).test(line))
+				data = remoteLines.slice(0, remoteCustomIndex).concat(
+					localLines.slice(localCustomIndex)
+				).join('\n')
 			}
 		}
 		return write(file, data)
