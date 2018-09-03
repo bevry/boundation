@@ -41,17 +41,46 @@ async function download (opts) {
 	}
 }
 
-async function updateBaseFiles ({ answers }) {
+async function updateBaseFiles ({ answers, packageData }) {
 	// rename old files
 	status('renaming old files...')
+
 	if (await exists('history.md')) {
 		await rename('history.md', 'HISTORY.md')
 	}
+
 	if (answers.sourceDirectory !== 'src') {
 		if (await exists('src')) {
 			await rename('src', answers.sourceDirectory)
 		}
 	}
+
+	if (answers.docpadPlugin) {
+		const docpadMainEntry = packageData.name.replace(/^docpad-plugin-/, '') + '.plugin'
+		if (await exists(`./source/${docpadMainEntry}.coffee`)) {
+			await rename(`./source/${docpadMainEntry}.coffee`, './source/index.coffee')
+		}
+		else if (await exists(`./source/${docpadMainEntry}.js`)) {
+			await rename(`./source/${docpadMainEntry}.js`, './source/index.js')
+		}
+
+		const docpadTestEntry = packageData.name.replace(/^docpad-plugin-/, '') + '.test'
+		if (await exists(`./source/${docpadTestEntry}.coffee`)) {
+			await rename(`./source/${docpadTestEntry}.coffee`, './source/index.coffee')
+		}
+		else if (await exists(`./source/${docpadTestEntry}.js`)) {
+			await rename(`./source/${docpadTestEntry}.js`, './source/index.js')
+		}
+
+		const docpadTesterEntry = packageData.name.replace(/^docpad-plugin-/, '') + '.tester'
+		if (await exists(`./source/${docpadTesterEntry}.coffee`)) {
+			await rename(`./source/${docpadTesterEntry}.coffee`, './source/index.coffee')
+		}
+		else if (await exists(`./source/${docpadTesterEntry}.js`)) {
+			await rename(`./source/${docpadTesterEntry}.js`, './source/index.js')
+		}
+	}
+
 	status('...renamed old files')
 
 
@@ -91,12 +120,6 @@ async function updateBaseFiles ({ answers }) {
 	}
 	else {
 		await unlink('coffeelint.json')
-	}
-	if (answers.docpadPlugin) {
-		downloads.push('https://raw.githubusercontent.com/bevry/base/master/docpad-setup.sh')
-	}
-	else {
-		await unlink('docpad-setup.sh')
 	}
 	await Promise.all(downloads.map((i) => download(i)))
 	status('...downloaded files')

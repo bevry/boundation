@@ -57,12 +57,14 @@ async function updateEngines (state) {
 	for (const edition of state.editions) {
 		if (edition.engines && edition.engines.node) {
 			status(`determining engines for edition [${edition.directory}]...`)
-			const testPath = pathUtil.join(edition.directory || '.', edition.testEntry)
+			const test = answers.docpadPlugin && state.editions.length === 1
+				? 'docpad-plugintester'
+				: `node --harmony ./${pathUtil.join(edition.directory || '.', edition.testEntry)} --joe-reporter=console`
 			const versions = new Versions(supportedNodeVersions.concat((edition.targets && edition.targets.node) || []))
 			await versions.load()
 			await versions.install()
 			const numbers = versions.map((version) => version.version)
-			await versions.test(`node --harmony ./${testPath} --joe-reporter=console`)
+			await versions.test(test)
 			const passed = versions.json.passed || []
 			const failed = versions.json.failed || []
 
@@ -141,6 +143,7 @@ async function updateEngines (state) {
 	// =================================
 	// figure out engines.node
 
+	// @todo skip if state.editions.length === 1
 	status('determining engines for project...')
 	const versions = new Versions(nodeVersions)
 	await versions.load()
@@ -200,16 +203,65 @@ async function scaffoldEditions (state) {
 			)
 		))
 
-		// Move original files to new locations if needed
+		// move or scaffold edition main path if needed
 		const sourceMainPathExists = await exists(sourceMainPath)
 		const sourceMainEntryExists = await exists(sourceMainEntry)
-		const sourceTestPathExists = await exists(sourceTestPath)
-		const sourceTestEntryExists = await exists(sourceTestEntry)
-		if (!sourceMainPathExists && sourceMainEntryExists) await rename(sourceMainEntry, sourceMainPath)
-		if (!sourceTestPathExists && sourceTestEntryExists) await rename(sourceTestEntry, sourceTestPath)
+		// edition entry doesn't exist, but the root entry does
+		if (!sourceMainPathExists && sourceMainEntryExists) {
+			await rename(sourceMainEntry, sourceMainPath)
+		}
+		// edition entry doesn't exist, but it is a docpad plugin
+		else if (!sourceMainPathExists && answers.docpadPlugin) {
+			write(sourceMainPath, [
+				"'use strict'",
+				'',
+				"module.exports = class MyPlugin extends require('docpad-baseplugin') {",
+				"\tget name () { return 'myplugin' }",
+				'\tget initialConfig () { return {} }',
+				'}',
+				''
+			].join('\n'))
+		}
+		// edition entry doesn't exist, so create an empty file
+		else await spawn(['touch', sourceMainPath])
 
-		// scaffold above paths if non existent
-		await spawn(['touch', sourceMainPath, sourceTestPath])
+		// move or scaffold edition test path if needed
+		if (answers.docpadPlugin === false || editions.length > 1) {
+			const sourceTestPathExists = await exists(sourceTestPath)
+			const sourceTestEntryExists = await exists(sourceTestEntry)
+			// edition entry doesn't exist, but the root entry does
+			if (!sourceTestPathExists && sourceTestEntryExists) {
+				await rename(sourceTestEntry, sourceTestPath)
+			}
+			// edition entry doesn't exist, but it is a docpad plugin
+			else if (!sourceTestPathExists && answers.docpadPlugin) {
+				await write(sourceTestPath, [
+					"'use strict'",
+					'',
+					"require('docpad-plugintester').test({",
+					"\tpluginPath: require('path').join(__dirname, '..')",
+					"\tPluginClass: require('./')",
+					'})',
+					''
+				].join('\n'))
+			}
+			// edition entry doesn't exist, so create a basic test file
+			else {
+				await write(sourceTestPath, [
+					"'use strict'",
+					'',
+					"const {equal} = require('assert-helpers')",
+					"const joe = require('joe')",
+					'',
+					`joe.suite('${packageData.name}', function (suite, test) {`,
+					"\ttest('no tests yet', function () {",
+					"\t\tconsole.log('no tests yet')",
+					'\t})',
+					'})',
+					''
+				].join('\n'))
+			}
+		}
 
 		// setup main and test paths
 		if (useEditionAutoloader) {
@@ -289,6 +341,8 @@ async function updateRuntime (state) {
 		'yuidocjs': false,
 		'biscotto': false,
 		'eslint': false,
+		'docpad-baseplugin': false,
+		'docpad-plugintester': false,
 		'stylelint': false,
 		'coffeelint': false,
 		'coffeescript':
@@ -332,8 +386,13 @@ async function updateRuntime (state) {
 
 	// add the various scripts
 	if (answers.docpadPlugin) {
-		packages.docpad = 'dev'
-		state.scripts['our:setup:docpad'] = 'bash ./docpad-setup.sh'
+		packages['docpad-baseplugin'] = true
+		packages['docpad-plugintester'] = packages.docpad = 'dev'
+		state.scripts.test = 'docpad-plugintester'
+		if (packageData.peerDependencies) {
+			// it is readded later
+			delete packageData.peerDependencies.docpad
+		}
 	}
 	else if (answers.docpadWebsite) {
 		packages.docpad = 'dev'
@@ -435,7 +494,9 @@ async function updateRuntime (state) {
 		'Cakefile',
 		'cyclic.js',
 		'.jshintrc',
-		'.jscrc'
+		'.jscrc',
+		'docpad-setup.sh',
+		'.babelrc'
 	].map((file) => unlink(file)))
 	status('...removed old files')
 
@@ -456,6 +517,11 @@ async function updateRuntime (state) {
 
 	// read the updated package.json file
 	await readPackage(state)
+
+	// this will get written at a later point
+	if (answers.docpadPlugin) {
+		packageData.peerDependencies.docpad = '^6.81.0'
+	}
 
 	// continue
 	await updateEngines(state)

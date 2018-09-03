@@ -130,7 +130,7 @@ function isPackageDocPadWebsite (packageData) {
 function getPackageMainEntry (packageData) {
 	if (packageData) {
 		if (isPackageDocPadPlugin(packageData)) {
-			return packageData.name.replace(/^docpad-plugin-/, '') + '.plugin'
+			return 'index'
 		}
 		else {
 			return (packageData.main && packageData.main
@@ -145,7 +145,7 @@ function getPackageMainEntry (packageData) {
 function getPackageTestEntry (packageData) {
 	if (packageData) {
 		if (isPackageDocPadPlugin(packageData)) {
-			return packageData.name.replace(/^docpad-plugin-/, '') + '.test'
+			return 'test'
 		}
 		else if (packageData.scripts && packageData.scripts.test) {
 			const result = packageData.scripts.test.match(/^node(?: --[a-zA-Z0-9_]+)* (?:[^/]+\/)*([^.]+)\.js/) /* fetches filename without ext */
