@@ -1,5 +1,8 @@
 'use strict'
 
+// External
+const pathUtil = require('path')
+
 // Local
 const defaults = require('./data')
 const _getAnswers = require('./answers').getAnswers
@@ -53,7 +56,7 @@ async function getQuestions ({ packageData = {}, cwd }) {
 		{
 			name: 'name',
 			message: 'What will be the package name?',
-			default: getPackageName(packageData),
+			default: getPackageName(packageData) || pathUtil.basename(cwd),
 			validate: isSpecified,
 			filter: trim
 		},
@@ -88,7 +91,7 @@ async function getQuestions ({ packageData = {}, cwd }) {
 		{
 			name: 'organisation',
 			message: 'What is the organisation username for the package?',
-			default: getPackageOrganisation(packageData) || await getGitOrganisation(cwd)
+			default: await getGitOrganisation(cwd) || getPackageOrganisation(packageData)
 		},
 		{
 			name: 'website',
