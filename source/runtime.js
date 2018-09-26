@@ -477,17 +477,23 @@ async function updateRuntime (state) {
 	const removeDependencies = Object.keys(packages).filter((key) => packages[key] === false && (packageData.dependencies[key] || packageData.devDependencies[key]))
 	if (addDependencies.length) {
 		status('adding the dependencies...')
-		await spawn(['npm', 'install', '--save'].concat(addLatest(addDependencies)))
+		const command = ['npm', 'install', '--save'].concat(addLatest(addDependencies))
+		console.log(command.join(' '))
+		await spawn(command)
 		status('...added the dependencies')
 	}
 	if (addDevDependencies.length) {
 		status('adding the development dependencies...')
-		await spawn(['npm', 'install', '--save-dev'].concat(addLatest(addDevDependencies)))
+		const command = ['npm', 'install', '--save-dev'].concat(addLatest(addDevDependencies))
+		console.log(command.join(' '))
+		await spawn(command)
 		status('...added the development dependencies')
 	}
 	if (removeDependencies.length) {
 		status('remove old dependencies...')
-		await spawn(['npm', 'uninstall', '--save', '--save-dev'].concat(addLatest(removeDependencies)))
+		const command = ['npm', 'uninstall', '-SDO'].concat(removeDependencies)
+		console.log(command.join(' '))
+		await spawn(command)
 		status('...removed old dependencies')
 	}
 
