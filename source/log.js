@@ -2,17 +2,17 @@
 
 const chalk = require('chalk')
 
-function status (message) {
-	process.stdout.write(chalk.bold.underline(message) + '\n')
+function status (...m) {
+	process.stdout.write(chalk.bold.underline(...m) + '\n')
 }
-function warn (message) {
-	process.stderr.write(chalk.bold.underline.magenta(message) + '\n')
+function warn (...m) {
+	process.stderr.write(chalk.bold.underline.magenta(...m) + '\n')
 }
-function error (message) {
-	process.stderr.write(chalk.bold.underline.red(message) + '\n')
+function error (...m) {
+	process.stderr.write(chalk.bold.underline.red(...m) + '\n')
 }
-function success (message) {
-	process.stderr.write(chalk.bold.underline.green(message) + '\n')
+function success (...m) {
+	process.stderr.write(chalk.bold.underline.green(...m) + '\n')
 }
 
 module.exports = { status, warn, error, success }
