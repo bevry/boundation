@@ -66,18 +66,18 @@ async function updateBaseFiles ({ answers, packageData }) {
 
 		const docpadTestEntry = packageData.name.replace(/^docpad-plugin-/, '') + '.test'
 		if (await exists(`./source/${docpadTestEntry}.coffee`)) {
-			await rename(`./source/${docpadTestEntry}.coffee`, './source/index.coffee')
+			await rename(`./source/${docpadTestEntry}.coffee`, './source/test.coffee')
 		}
 		else if (await exists(`./source/${docpadTestEntry}.js`)) {
-			await rename(`./source/${docpadTestEntry}.js`, './source/index.js')
+			await rename(`./source/${docpadTestEntry}.js`, './source/test.js')
 		}
 
 		const docpadTesterEntry = packageData.name.replace(/^docpad-plugin-/, '') + '.tester'
 		if (await exists(`./source/${docpadTesterEntry}.coffee`)) {
-			await rename(`./source/${docpadTesterEntry}.coffee`, './source/index.coffee')
+			await rename(`./source/${docpadTesterEntry}.coffee`, './source/tester.coffee')
 		}
 		else if (await exists(`./source/${docpadTesterEntry}.js`)) {
-			await rename(`./source/${docpadTesterEntry}.js`, './source/index.js')
+			await rename(`./source/${docpadTesterEntry}.js`, './source/tester.js')
 		}
 	}
 

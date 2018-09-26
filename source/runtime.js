@@ -57,8 +57,8 @@ async function updateEngines (state) {
 	for (const edition of state.editions) {
 		if (edition.engines && edition.engines.node) {
 			status(`determining engines for edition [${edition.directory}]...`)
-			const test = answers.docpadPlugin && state.editions.length === 1
-				? 'docpad-plugintester'
+			const test = answers.docpadPlugin
+				? `docpad-plugintester --edition=${edition.directory}`
 				: `node --harmony ./${pathUtil.join(edition.directory || '.', edition.testEntry)} --joe-reporter=console`
 			const versions = new Versions(supportedNodeVersions.concat((edition.targets && edition.targets.node) || []))
 			await versions.load()
@@ -252,25 +252,13 @@ async function scaffoldEditions (state) {
 		}
 
 		// move or scaffold edition test path if needed
-		if (answers.docpadPlugin === false || editions.length > 1) {
+		if (answers.docpadPlugin === false && editions.length > 1) {
 			const sourceTestPathExists = await exists(sourceTestPath)
 			const sourceTestEntryExists = await exists(sourceTestEntry)
 			if (!sourceTestPathExists) {
 				// edition entry doesn't exist, but the root entry does
 				if (sourceTestEntryExists) {
 					await rename(sourceTestEntry, sourceTestPath)
-				}
-				// edition entry doesn't exist, but it is a docpad plugin
-				else if (answers.docpadPlugin) {
-					await write(sourceTestPath, [
-						"'use strict'",
-						'',
-						"require('docpad-plugintester').test({",
-						"\tpluginPath: require('path').join(__dirname, '..')",
-						"\tPluginClass: require('./')",
-						'})',
-						''
-					].join('\n'))
 				}
 				// edition entry doesn't exist, so create a basic test file
 				else {
