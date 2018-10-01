@@ -553,7 +553,10 @@ async function updateRuntime (state) {
 
 	// this will get written at a later point
 	if (answers.docpadPlugin) {
-		packageData.peerDependencies.docpad = '^6.81.0'
+		if (packageData.peerDependencies == null) {
+			packageData.peerDependencies = {}
+		}
+		packageData.peerDependencies.docpad = '^6.82.0'
 	}
 
 	// continue
