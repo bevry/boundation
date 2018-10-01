@@ -471,6 +471,9 @@ async function updateRuntime (state) {
 		state.scripts['our:verify:directory'] = 'npx valid-directory'
 	}
 
+	// remove old scripts
+	delete state.scripts['our:setup:docpad']
+
 	// write the package.json file
 	await writePackage(state)
 
