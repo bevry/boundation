@@ -1,5 +1,19 @@
 # History
 
+## v1.18.2 2018 October 1
+- always output boundation location, version, and project location
+- fix custom sections in ignore files not being kept
+- update for latest docpad plugin conventions
+- trims `.babelrc` file, as we do it via `package.json`
+- help ensure contributors and badge defaults exist
+- prefer git details over package details, as package could be a template
+- ensure editions work on windows, and support unique compiled editions without autoloader
+- fix npm uninstalls not working
+- only write editions test loader if a test file exists
+- remove `our:setup:docpad` as it is no longer unneeded
+- move `upgradeAllDependencies` questions to a better order position
+- update dependencies
+
 ## v1.18.1 2018 August 19
 - Fixed edition descriptions like `coffeescript compiled for node.js true with require for modules`
     - will now be `coffeescript compiled for node.js with require for modules`
