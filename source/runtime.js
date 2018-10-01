@@ -281,6 +281,7 @@ async function scaffoldEditions (state) {
 
 		// setup main and test paths
 		if (state.useEditionAutoloader) {
+			const sourceTestPathExists = await exists(sourceTestPath)
 			// this is the case for any language that requires compilation
 			await write('index.js', [
 				"'use strict'",
@@ -289,15 +290,17 @@ async function scaffoldEditions (state) {
 				"module.exports = require('editions').requirePackage(__dirname, require)",
 				''
 			].join('\n'))
-			await write('test.js', [
-				"'use strict'",
-				'',
-				`/** @type {typeof import("./${sourceTestPath}") } */`,
-				`module.exports = require('editions').requirePackage(__dirname, require, '${answers.testEntry}')`,
-				''
-			].join('\n'))
 			packageData.main = 'index.js'
-			state.test = 'test.js'
+			if (sourceTestPathExists) {
+				await write('test.js', [
+					"'use strict'",
+					'',
+					`/** @type {typeof import("./${sourceTestPath}") } */`,
+					`module.exports = require('editions').requirePackage(__dirname, require, '${answers.testEntry}')`,
+					''
+				].join('\n'))
+				state.test = 'test.js'
+			}
 		}
 		else {
 			await unlink('index.js')
