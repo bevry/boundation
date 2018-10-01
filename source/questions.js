@@ -153,12 +153,6 @@ async function getQuestions ({ packageData = {}, cwd }) {
 			}
 		},
 		{
-			name: 'upgradeAllDependencies',
-			type: 'confirm',
-			message: 'Should all dependencies be upgraded to their latest versions?',
-			default: false
-		},
-		{
 			name: 'browser',
 			type: 'confirm',
 			message: 'Will it be used on the client-side inside web browsers?',
@@ -257,6 +251,12 @@ async function getQuestions ({ packageData = {}, cwd }) {
 			when ({ website, language }) {
 				return !website && language !== 'json'
 			}
+		},
+		{
+			name: 'upgradeAllDependencies',
+			type: 'confirm',
+			message: 'Should all dependencies be upgraded to their latest versions?',
+			default: false
 		},
 		{
 			name: 'docs',
