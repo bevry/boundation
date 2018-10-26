@@ -288,7 +288,7 @@ async function getQuestions ({ packageData = {}, cwd }) {
 		{
 			name: 'deploy',
 			type: 'list',
-			chocies: ['now-static', 'now-custom', 'surge', 'custom', 'other'],
+			choices: ['now-static', 'now-custom', 'surge', 'custom', 'other'],
 			message: 'Which website deployment strategy would you like to use?',
 			default: 'now-static',
 			when ({ website }) {

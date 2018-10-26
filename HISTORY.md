@@ -1,5 +1,8 @@
 # History
 
+## v1.18.3 2018 October 27
+- Fixed website types failing with `You must provide a "choices" parameter`
+
 ## v1.18.2 2018 October 1
 - always output boundation location, version, and project location
 - fix custom sections in ignore files not being kept
