@@ -331,7 +331,7 @@ async function getQuestions ({ packageData = {}, cwd }) {
 		{
 			name: 'nowName',
 			message: 'For deploying the website, what now name should be used?',
-			default: getNowName(packageData) || getGitProject() || null,
+			default: getNowName(packageData) || await getGitProject() || null,
 			validate: isSpecified,
 			filter: trim,
 			when ({ deploy }) {
