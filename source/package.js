@@ -430,18 +430,24 @@ async function updatePackageData (state) {
 				'daviddmdev',
 				'---',
 				'patreon',
-				'opencollective',
 				'flattr',
+				'liberapay',
+				'thanksapp',
+				'boostlab',
+				'buymeacoffee',
+				'opencollective',
+				'crypto',
 				'paypal',
-				'bitcoin',
 				'wishlist'
 			],
 			config: {
-				patreonUsername: 'bevry',
-				opencollectiveUsername: 'bevry',
+				buymeacoffeeUsername: 'balupton',
+				cryptoURL: 'https://bevry.me/crypto',
 				flattrUsername: 'balupton',
+				liberapayUsername: 'bevry',
+				opencollectiveUsername: 'bevry',
+				patreonUsername: 'bevry',
 				paypalURL: 'https://bevry.me/paypal',
-				bitcoinURL: 'https://bevry.me/bitcoin',
 				wishlistURL: 'https://bevry.me/wishlist'
 			}
 		}
