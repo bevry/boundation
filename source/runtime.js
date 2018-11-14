@@ -364,6 +364,7 @@ async function updateRuntime (state) {
 		'docpad-baseplugin': false,
 		'docpad-plugintester': false,
 		'stylelint': false,
+		'stylelint-config-standard': false,
 		'coffeelint': false,
 		'coffeescript':
 			packageData.devDependencies.coffeescript || packageData.devDependencies['coffee-script']
@@ -419,7 +420,8 @@ async function updateRuntime (state) {
 		state.scripts.test = 'docpad generate --env static'
 	}
 	if (answers.languages.has('css')) {
-		packages.coffeelint = 'stylelint'
+		packages.stylelint = 'dev'
+		packages['stylelint-config-standard'] = 'dev'
 		state.scripts['our:verify:stylelint'] = `stylelint --fix './${answers.sourceDirectory}/**/*.css'`
 	}
 	if (answers.languages.has('coffeescript')) {
