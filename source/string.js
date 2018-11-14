@@ -19,13 +19,19 @@ function repoToWebsite (input = '') {
 	return input.replace(/\.git$/, '').replace(/^(ssh[:/]+)?git@github\.com[:/]*/, 'https://github.com/')
 }
 function repoToSlug (input = '') {
-	return input.replace(/\.git$/, '').replace(/^.+?\.com[:/]*/, '')
+	return (
+		input && input.replace(/\.git$/, '').replace(/^.+?\.com[:/]*/, '')
+	) || ''
 }
 function repoToOrganisation (input = '') {
-	return repoToSlug(input).split('/')[0] || ''
+	return (
+		input && repoToSlug(input).split('/')[0]
+	) || ''
 }
 function repoToProject (input = '') {
-	return repoToSlug(input).split('/')[1] || ''
+	return (
+		input && repoToSlug(input).split('/')[1]
+	) || ''
 }
 
 module.exports = { trim, slugit, isSpecified, isNumber, isGitUrl, repoToWebsite, repoToSlug, repoToOrganisation, repoToProject }
