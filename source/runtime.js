@@ -160,35 +160,37 @@ async function updateEngines (state) {
 	// figure out engines.node
 
 	// @todo skip if state.editions.length === 1
-	status('determining engines for project...')
-	const versions = new Versions(nodeVersions)
-	await versions.load()
-	await versions.install()
-	const numbers = versions.map((version) => version.version)
-	await versions.test('npm test')
-	const passed = versions.json.passed || []
-	if (passed.length === 0) {
-		console.error(versions.messages.join('\n\n'))
-		throw new Error(`There were no node versions[${numbers.join(', ')}]which the project's tests passed`)
-	}
-	status('...determined engines for project')
+	if (state.editions.length >= 1) {
+		status('determining engines for project...')
+		const versions = new Versions(nodeVersions)
+		await versions.load()
+		await versions.install()
+		const numbers = versions.map((version) => version.version)
+		await versions.test('npm test')
+		const passed = versions.json.passed || []
+		if (passed.length === 0) {
+			console.error(versions.messages.join('\n\n'))
+			throw new Error(`There were no node versions [${numbers.join(', ')}] which the project's tests passed`)
+		}
+		status('...determined engines for project')
 
-	// check if minimum supported node version is still the minimum supported node version
-	if (versionComparator(passed[0], answers.minimumSupportNodeVersion) !== 0) {
-		console.error(versions.messages.join('\n\n'))
-		const message = [
-			`The project actually supports the minimum node version ${passed[0]} which is different than your specified minimum supported node version ${answers.minimumSupportNodeVersion}`,
-			'What would you like to do?'
-		].join('\n')
-		const query = await getAnswers([{
-			name: 'action',
-			type: 'list',
-			choices: ['ignore', 'fail'],
-			validate: isSpecified,
-			message
-		}])
-		if (query.action === 'fail') {
-			return process.exit(1)
+		// check if minimum supported node version is still the minimum supported node version
+		if (versionComparator(passed[0], answers.minimumSupportNodeVersion) !== 0) {
+			console.error(versions.messages.join('\n\n'))
+			const message = [
+				`The project actually supports the minimum node version ${passed[0]} which is different than your specified minimum supported node version ${answers.minimumSupportNodeVersion}`,
+				'What would you like to do?'
+			].join('\n')
+			const query = await getAnswers([{
+				name: 'action',
+				type: 'list',
+				choices: ['ignore', 'fail'],
+				validate: isSpecified,
+				message
+			}])
+			if (query.action === 'fail') {
+				return process.exit(1)
+			}
 		}
 	}
 
@@ -200,8 +202,8 @@ async function updateEngines (state) {
 
 async function scaffoldEditions (state) {
 	const { editions, packageData, answers } = state
-	state.useEditions = editions && editions.length
-	state.useEditionAutoloader = editions && editions.length > 1 && answers.name !== 'editions'
+	state.useEditions = editions.length
+	state.useEditionAutoloader = editions.length > 1 && answers.name !== 'editions'
 	if (state.useEditions) {
 		// source
 		const sourceEdition = editions[0]
@@ -401,7 +403,7 @@ async function updateRuntime (state) {
 	)
 
 	// merge in editions[scripts]
-	if (state.editions && state.editions.length) {
+	if (state.editions.length) {
 		Object.assign(state.scripts, ...state.editions.map((edition) => edition.scripts || {}))
 	}
 

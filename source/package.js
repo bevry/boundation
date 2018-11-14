@@ -46,10 +46,14 @@ function getPackageFlowtypeDependency (packageData) {
 	return (packageData && packageData.devDependencies && Boolean(packageData.devDependencies['flow-bin'])) || null
 }
 
+function hasSyntax (packageData, syntax) {
+	const edition = (packageData && packageData.editions && packageData.editions.length && packageData.editions[0])
+	const syntaxes = edition && edition.syntaxes
+	return syntaxes && syntaxes.has(syntax)
+}
+
 function getPackageModules (packageData) {
-	const edition = (packageData && packageData.editions && packageData.editions[0])
-	if (edition == null || edition.syntaxes == null) return null
-	return edition.syntaxes.has('import')
+	return hasSyntax(packageData, 'import')
 }
 
 function getPackageRepoUrl (packageData) {
@@ -76,7 +80,7 @@ function hasMultipleEditions (packageData) {
 }
 
 function isPackageJavaScript (packageData) {
-	return (packageData && packageData.editions && packageData.editions[0] && packageData.editions[0].syntaxes && packageData.editions[0].syntaxes.has('esnext')) || false
+	return hasSyntax(packageData, 'esnext')
 }
 
 function isPackageJSON (packageData) {
@@ -93,7 +97,7 @@ function isPackageCoffee (packageData) {
 				return true
 			}
 		}
-		if (packageData.editions && packageData.editions[0].syntaxes.has('coffeescript')) {
+		if (hasSyntax(packageData, 'coffeescript')) {
 			return true
 		}
 	}
@@ -163,7 +167,7 @@ function arrangePackage (state) {
 	const packageData = JSON.parse(JSON.stringify(state.packageData))
 
 	// inject edition properties into package data
-	if (state.editions && state.editions.length) {
+	if (state.editions.length) {
 		// add targets to babel
 		packageData.babel = {
 			env: {}
@@ -189,6 +193,9 @@ function arrangePackage (state) {
 
 		// arrange keys of editions
 		packageData.editions = packageData.editions.map((edition) => arrangekeys(edition, 'description directory entry syntaxes engines'))
+	}
+	else {
+		delete packageData.editions
 	}
 
 	// package keys
