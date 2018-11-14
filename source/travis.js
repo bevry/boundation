@@ -82,6 +82,12 @@ async function updateTravis (state) {
 		if (answers.surgeToken) {
 			await spawn(['travis', 'env', 'set', 'SURGE_TOKEN', answers.surgeToken])
 		}
+		if (answers.nowToken) {
+			await spawn(['travis', 'env', 'set', 'NOW_TOKEN', answers.nowToken])
+		}
+		if (answers.nowTeam) {
+			await spawn(['travis', 'env', 'set', 'NOW_TEAM', answers.nowTeam, '--public'])
+		}
 	}
 	if (answers.docs) {
 		travis.after_success.push(
