@@ -11,7 +11,7 @@ const { readPackage, updatePackageData } = require('./package')
 const { updateTravis } = require('./travis')
 const { getAnswers } = require('./questions')
 const { updateBaseFiles } = require('./base')
-const { updateEditions } = require('./editions')
+const { generateEditions } = require('./editions')
 const { updateWebsite } = require('./website')
 const { updateRuntime } = require('./runtime')
 
@@ -22,7 +22,7 @@ async function init (state) {
 
 	await updatePackageData(state)
 
-	await updateEditions(state)
+	await generateEditions(state)
 
 	await updateWebsite(state)
 

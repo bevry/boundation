@@ -23,18 +23,24 @@
       "daviddmdev",
       "---",
       "patreon",
-      "opencollective",
       "flattr",
+      "liberapay",
+      "thanksapp",
+      "boostlab",
+      "buymeacoffee",
+      "opencollective",
+      "crypto",
       "paypal",
-      "bitcoin",
       "wishlist"
     ],
     "config": {
-      "patreonUsername": "bevry",
-      "opencollectiveUsername": "bevry",
+      "buymeacoffeeUsername": "balupton",
+      "cryptoURL": "https://bevry.me/crypto",
       "flattrUsername": "balupton",
+      "liberapayUsername": "bevry",
+      "opencollectiveUsername": "bevry",
+      "patreonUsername": "bevry",
       "paypalURL": "https://bevry.me/paypal",
-      "bitcoinURL": "https://bevry.me/bitcoin",
       "wishlistURL": "https://bevry.me/wishlist"
     }
   },
@@ -80,16 +86,16 @@
     "chalk": "^2.4.1",
     "inquirer": "^6.2.0",
     "js-yaml": "^3.12.0",
-    "node-fetch": "^2.2.0",
+    "node-fetch": "^2.3.0",
     "safeps": "^7.0.1",
     "semver": "^5.6.0"
   },
   "devDependencies": {
     "assert-helpers": "^4.5.1",
-    "eslint": "^5.8.0",
+    "eslint": "^5.9.0",
     "joe": "^2.0.2",
     "joe-reporter-console": "^2.0.2",
-    "projectz": "^1.4.0"
+    "projectz": "^1.5.3"
   },
   "scripts": {
     "our:clean": "rm -Rf ./docs ./edition* ./es2015 ./es5 ./out",

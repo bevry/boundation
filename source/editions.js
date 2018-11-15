@@ -1,6 +1,9 @@
 /* eslint no-console:0 */
 'use strict'
 
+// External
+const pathUtil = require('path')
+
 // Local
 const { status } = require('./log')
 
@@ -17,17 +20,51 @@ class Edition {
 			writable: true
 		})
 
-		Object.defineProperty(this, 'testEntry', {
+		Object.defineProperty(this, 'babel', {
 			enumerable: false,
 			writable: true
 		})
 
-		Object.assign(this, opts)
+		Object.defineProperty(this, 'active', {
+			enumerable: false,
+			writable: true
+		})
+
+		Object.defineProperty(this, 'main', {
+			enumerable: false,
+			get () {
+				return this.entry
+			},
+			set (value) {
+				this.entry = value
+			}
+		})
+
+		Object.defineProperty(this, 'test', {
+			enumerable: false,
+			writable: true
+		})
+
+		Object.defineProperty(this, 'mainPath', {
+			enumerable: false,
+			get () {
+				return pathUtil.join(this.directory || '.', this.main)
+			}
+		})
+
+		Object.defineProperty(this, 'testPath', {
+			enumerable: false,
+			get () {
+				return pathUtil.join(this.directory || '.', this.test)
+			}
+		})
+
+		Object.assign(this, { active: true }, opts)
 	}
 }
 
 // Actions
-async function updateEditions (state) {
+async function generateEditions (state) {
 	const { answers, packageData } = state
 
 	// log
@@ -46,9 +83,9 @@ async function updateEditions (state) {
 		if (answers.language === 'esnext') {
 			editions.push(new Edition({
 				directory: answers.sourceDirectory,
-				entry: `${answers.mainEntry}.js`,
-				testEntry: `${answers.testEntry}.js`,
-				syntaxes: [
+				main: `${answers.mainEntry}.js`,
+				test: `${answers.testEntry}.js`,
+				tags: [
 					'javascript',
 					'esnext'
 				],
@@ -58,22 +95,60 @@ async function updateEditions (state) {
 				}
 			}))
 			if (answers.modules) {
-				editions[0].syntaxes.push('import')
+				editions[0].tags.push('import')
 			}
 			else {
-				editions[0].syntaxes.push('require')
+				editions[0].tags.push('require')
 			}
 			if (answers.flowtype) {
-				editions[0].syntaxes.push('flow type comments')
+				editions[0].tags.push('flow type comments')
 			}
+		}
+		else if (answers.language === 'typescript') {
+			editions.push(
+				new Edition({
+					directory: answers.sourceDirectory,
+					main: `${answers.mainEntry}.ts`,
+					test: `${answers.testEntry}.ts`,
+					tags: [
+						'typescript',
+						'import'
+					],
+					engines: false
+				})
+
+				/*
+				...['ES3', 'ES5', 'ES2015', 'ES2016', 'ES2017', 'ES2018', 'ESNEXT'].reverse().map(function (target) {
+					const syntax = target.toLocaleLowerCase()
+					const directory = `edition-${syntax}`
+					return new Edition({
+						directory,
+						main: `${answers.mainEntry}.js`,
+						test: `${answers.testEntry}.js`,
+						tags: [
+							'javascript',
+							syntax,
+							'require'
+						],
+						engines: {
+							node: true,
+							browsers: false
+						},
+						scripts: {
+							[`our:compile:${directory}`]: `tsc --module commonjs --target ${target} --outDir ./${directory}`
+						}
+					})
+				})
+				*/
+			)
 		}
 		else if (answers.language === 'coffeescript') {
 			editions.push(
 				new Edition({
 					directory: answers.sourceDirectory,
-					entry: `${answers.mainEntry}.coffee`,
-					testEntry: `${answers.testEntry}.coffee`,
-					syntaxes: [
+					main: `${answers.mainEntry}.coffee`,
+					test: `${answers.testEntry}.coffee`,
+					tags: [
 						'coffeescript',
 						'require'
 					],
@@ -81,9 +156,9 @@ async function updateEditions (state) {
 				}),
 				new Edition({
 					directory: 'edition-esnext',
-					entry: `${answers.mainEntry}.js`,
-					testEntry: `${answers.testEntry}.js`,
-					syntaxes: [
+					main: `${answers.mainEntry}.js`,
+					test: `${answers.testEntry}.js`,
+					tags: [
 						'javascript',
 						'esnext',
 						'require'
@@ -103,9 +178,9 @@ async function updateEditions (state) {
 				new Edition({
 					description: 'JSON',
 					directory: answers.sourceDirectory,
-					entry: `${answers.mainEntry}.json`,
-					testEntry: `${answers.testEntry}.js`,
-					syntaxes: [
+					main: `${answers.mainEntry}.json`,
+					test: `${answers.testEntry}.js`,
+					tags: [
 						'json'
 					],
 					engines: {
@@ -124,9 +199,9 @@ async function updateEditions (state) {
 			editions.push(
 				new Edition({
 					directory: 'edition-browsers',
-					entry: `${answers.mainEntry}.js`,
-					testEntry: `${answers.testEntry}.js`,
-					syntaxes: [
+					main: `${answers.mainEntry}.js`,
+					test: `${answers.testEntry}.js`,
+					tags: [
 						'javascript',
 						'require'
 					],
@@ -146,9 +221,9 @@ async function updateEditions (state) {
 			editions.push(
 				new Edition({
 					directory: `edition-node-${answers.maximumSupportNodeVersion}`,
-					entry: `${answers.mainEntry}.js`,
-					testEntry: `${answers.testEntry}.js`,
-					syntaxes: [
+					main: `${answers.mainEntry}.js`,
+					test: `${answers.testEntry}.js`,
+					tags: [
 						'javascript',
 						'require'
 					],
@@ -165,9 +240,9 @@ async function updateEditions (state) {
 				editions.push(
 					new Edition({
 						directory: `edition-node-${answers.desiredNodeVersion}`,
-						entry: `${answers.mainEntry}.js`,
-						testEntry: `${answers.testEntry}.js`,
-						syntaxes: [
+						main: `${answers.mainEntry}.js`,
+						test: `${answers.testEntry}.js`,
+						tags: [
 							'javascript',
 							'require'
 						],
@@ -185,9 +260,9 @@ async function updateEditions (state) {
 				editions.push(
 					new Edition({
 						directory: `edition-node-${answers.minimumSupportNodeVersion}`,
-						entry: `${answers.mainEntry}.js`,
-						testEntry: `${answers.testEntry}.js`,
-						syntaxes: [
+						main: `${answers.mainEntry}.js`,
+						test: `${answers.testEntry}.js`,
+						tags: [
 							'javascript',
 							'require'
 						],
@@ -205,6 +280,7 @@ async function updateEditions (state) {
 
 		// autogenerate various fields
 		editions.forEach(function (edition) {
+			// ensure description exists
 			if (!edition.description) {
 				if (edition.directory === answers.sourceDirectory) {
 					edition.description = `${answers.language} source code`
@@ -224,22 +300,52 @@ async function updateEditions (state) {
 				else {
 					edition.description = `${answers.language} compiled` // for node.js >=${answers.minimumSupportNodeVersion}`
 				}
-				if (edition.syntaxes.has('require')) {
+				if (edition.tags.has('require')) {
 					edition.description += ' with require for modules'
 				}
-				else if (edition.syntaxes.has('import')) {
+				else if (edition.tags.has('import')) {
 					edition.description += ' with import for modules'
 				}
 			}
+
+			// add compilation details
 			if (edition.directory !== answers.sourceDirectory && edition.targets && !edition.scripts) {
 				if (answers.language === 'coffeescript') {
+					// add coffee compile script
 					edition.scripts = {
 						[`our:compile:${edition.directory}`]: `env BABEL_ENV=${edition.directory} coffee -bcto ./${edition.directory}/ ./${answers.sourceDirectory}`
 					}
 				}
 				else {
+					// add custom babel env
+					if (edition.targets && answers.language === 'typescript') {
+						edition.babel = {
+							presets: [
+								[
+									'@babel/preset-env',
+									{
+										targets: edition.targets
+									}
+								],
+								'@babel/preset-typescript'
+							],
+							plugins: [
+								'@babel/proposal-class-properties',
+								'@babel/proposal-object-rest-spread'
+							]
+						}
+					}
+
+					// add babel compile script
+					const parts = [
+						`env BABEL_ENV=${edition.directory}`,
+						'babel',
+						answers.language === 'typescript' ? '--extensions ".ts,.tsx"' : '',
+						`--out-dir ./${edition.directory}`,
+						`./${answers.sourceDirectory}`
+					].filter((part) => part)
 					edition.scripts = {
-						[`our:compile:${edition.directory}`]: `env BABEL_ENV=${edition.directory} babel --out-dir ./${edition.directory} ./${answers.sourceDirectory}`
+						[`our:compile:${edition.directory}`]: parts.join(' ')
 					}
 				}
 			}
@@ -254,4 +360,4 @@ async function updateEditions (state) {
 	status('...updated editions')
 }
 
-module.exports = { updateEditions }
+module.exports = { generateEditions }

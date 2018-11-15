@@ -40,6 +40,10 @@ function read (file) {
 	})
 }
 
+async function contains (file, data) {
+	return (await read(file)).toString().includes(data)
+}
+
 function rename (source, target) {
 	source = pathUtil.resolve(cwd, source)
 	target = pathUtil.resolve(cwd, target)
@@ -82,4 +86,4 @@ function exec (command, opts = {}) {
 	})
 }
 
-module.exports = { exists, unlink, read, rename, write, spawn, exec }
+module.exports = { exists, unlink, read, rename, write, spawn, exec, contains }

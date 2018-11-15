@@ -1,5 +1,15 @@
 # History
 
+## v1.19.0 2018 November 16
+- Added support for editions v2.1
+- Added support for TypeScript
+- Added edition testing for node v11
+- Added support for custom babel configuration in `package.json`
+- More effecient edition support
+- Automatic babel detection and removal if not needed
+- Safer autoloader cleanup of `index.js` and `test.js` if they were not autoloader files
+- Updated dependencies, base files, and readme
+
 ## v1.18.4 2018 November 16
 - Fix crash when git remote is empty
 - Fixed nowName being an object for a new now project

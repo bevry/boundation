@@ -26,7 +26,6 @@ const {
 	getPackageProperty,
 	getPackageAuthor,
 	getPackageDescription,
-	getPackageDocumentationDependency,
 	getPackageFlowtypeDependency,
 	getPackageKeywords,
 	getPackageMainEntry,
@@ -41,6 +40,7 @@ const {
 	isPackageDocPadPlugin,
 	isPackageDocPadWebsite,
 	isPackageJavaScript,
+	isPackageTypeScript,
 	isPackageJSON,
 	isPackageWebsite
 } = require('./package')
@@ -111,11 +111,12 @@ async function getQuestions ({ packageData = {}, cwd }) {
 		{
 			name: 'languages',
 			type: 'checkbox',
-			choices: ['esnext', 'coffeescript', 'json', 'html', 'css'],
+			choices: ['esnext', 'typescript', 'coffeescript', 'json', 'html', 'css'],
 			message: 'What programming languages will the source code be written in?',
 			validate: isSpecified,
 			default: ([
 				(isPackageJavaScript(packageData) && 'esnext'),
+				(isPackageTypeScript(packageData) && 'typescript'),
 				(isPackageCoffee(packageData) && 'coffeescript'),
 				(isPackageJSON(packageData) && 'json'),
 				(isPackageWebsite(packageData) && 'html'),
@@ -248,8 +249,8 @@ async function getQuestions ({ packageData = {}, cwd }) {
 				const result = hasMultipleEditions(packageData)
 				return result == null ? true : result
 			},
-			when ({ website, language }) {
-				return !website && language !== 'json'
+			when ({ browsers, website, language }) {
+				return !browsers && !website && language !== 'json'
 			}
 		},
 		{
@@ -262,9 +263,9 @@ async function getQuestions ({ packageData = {}, cwd }) {
 			name: 'docs',
 			type: 'confirm',
 			message: 'Will there be inline source code documentation?',
-			default: getPackageDocumentationDependency(packageData) || false,
-			when ({ website }) {
-				return !website
+			default: true,
+			when ({ website, language }) {
+				return !website && language !== 'typescript'
 			}
 		},
 		{
@@ -394,7 +395,7 @@ async function getQuestions ({ packageData = {}, cwd }) {
 		{
 			name: 'travisUpdateEnvironment',
 			type: 'confirm',
-			message: 'Would you like to update the travis environment variables?',
+			message: 'Would you like to update the remote travis environment variables?',
 			default: true
 		}
 	]
@@ -403,7 +404,17 @@ async function getQuestions ({ packageData = {}, cwd }) {
 async function getAnswers (state) {
 	const answers = await _getAnswers(await getQuestions(state))
 
-	// Website projects should only support the desired node version
+	// if browers ensure babel
+	if (answers.browsers) {
+		answers.babel = true
+	}
+
+	// if typescript ensure babel, modules, docs
+	if (answers.language === 'typescript') {
+		answers.babel = answers.modules = answers.docs = true
+	}
+
+	// if website, ensure support for only the desired node version
 	if (answers.website) {
 		answers.minimumSupportNodeVersion
 			= answers.maximumSupportNodeVersion

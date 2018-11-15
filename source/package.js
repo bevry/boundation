@@ -83,6 +83,23 @@ function isPackageJavaScript (packageData) {
 	return hasSyntax(packageData, 'esnext')
 }
 
+function isPackageTypeScript (packageData) {
+	if (packageData) {
+		if ((/\.ts$/).test(packageData.main)) {
+			return true
+		}
+		if (packageData.devDependencies) {
+			if (packageData.devDependencies.typescript) {
+				return true
+			}
+		}
+		if (hasSyntax(packageData, 'typescript')) {
+			return true
+		}
+	}
+	return false
+}
+
 function isPackageJSON (packageData) {
 	return (packageData && (/\.json$/).test(packageData.main)) || false
 }
@@ -163,27 +180,26 @@ function getPackageTestEntry (packageData) {
 // Helpers
 
 function arrangePackage (state) {
-	state.packageData.editions = state.editions
 	const packageData = JSON.parse(JSON.stringify(state.packageData))
+	const activeEditions = state.activeEditions
 
 	// inject edition properties into package data
-	if (state.editions.length) {
-		// add targets to babel
-		packageData.babel = {
-			env: {}
-		}
-		for (const edition of state.editions) {
+	if (state.activeEditions.length) {
+		// add targets to babel, while supporting custom configuration
+		packageData.babel = packageData.babel || {}
+		packageData.babel.env = {}
+		for (const edition of activeEditions) {
 			if (!edition.targets) continue
-			packageData.babel.env[edition.directory] = ({
+			packageData.babel.env[edition.directory] = edition.babel || {
 				presets: [
 					[
-						'env',
+						'@babel/preset-env',
 						{
 							targets: edition.targets
 						}
 					]
 				]
-			})
+			}
 		}
 
 		// trim babel if empty
@@ -192,7 +208,7 @@ function arrangePackage (state) {
 		}
 
 		// arrange keys of editions
-		packageData.editions = packageData.editions.map((edition) => arrangekeys(edition, 'description directory entry syntaxes engines'))
+		packageData.editions = activeEditions.map((edition) => arrangekeys(edition, 'description directory entry syntaxes engines'))
 	}
 	else {
 		delete packageData.editions
@@ -203,6 +219,9 @@ function arrangePackage (state) {
 
 	// scripts
 	let scripts = Object.assign({}, state.userScripts, state.scripts)
+
+	// merge in editions[].scripts
+	Object.assign(scripts, ...activeEditions.map((edition) => edition.scripts || {}))
 
 	// inject empty mandatory scripts if they don't exist
 	// to ensure they are sorted correctly
@@ -518,6 +537,7 @@ module.exports = {
 	isPackageDocPadPlugin,
 	isPackageDocPadWebsite,
 	isPackageJavaScript,
+	isPackageTypeScript,
 	isPackageJSON,
 	isPackageWebsite,
 	updatePackageData

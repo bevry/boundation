@@ -106,7 +106,7 @@ async function updateBaseFiles ({ answers, packageData }) {
 	else {
 		await unlink('.stylelintrc.js')
 	}
-	if (answers.languages.has('esnext')) {
+	if (answers.languages.has('esnext') || answers.languages.has('typescript')) {
 		downloads.push('https://raw.githubusercontent.com/bevry/base/master/.eslintrc.js')
 	}
 	if (answers.flowtype) {
