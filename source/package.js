@@ -188,17 +188,21 @@ function arrangePackage (state) {
 		// add targets to babel, while supporting custom configuration
 		packageData.babel = packageData.babel || {}
 		packageData.babel.env = {}
-		for (const edition of activeEditions) {
-			if (!edition.targets) continue
-			packageData.babel.env[edition.directory] = edition.babel || {
-				presets: [
-					[
-						'@babel/preset-env',
-						{
-							targets: edition.targets
-						}
+		for (const edition of state.babelEditions) {
+			if (edition.babel === true) {
+				packageData.babel.env[edition.directory] = {
+					presets: [
+						[
+							'@babel/preset-env',
+							{
+								targets: edition.targets
+							}
+						]
 					]
-				]
+				}
+			}
+			else {
+				packageData.babel.env[edition.directory] = edition.babel
 			}
 		}
 

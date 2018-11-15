@@ -1,6 +1,7 @@
 'use strict'
 
 module.exports = {
+	answers: null,
 	cwd: process.cwd(),
 	packageData: null,
 	nodeVersions: null,
@@ -10,6 +11,9 @@ module.exports = {
 	get activeEditions () {
 		return this.editions.filter((edition) => edition.active !== false)
 	},
+	get babelEditions () {
+		return this.activeEditions.filter((edition) => edition.babel)
+	},
 	get compiledEditions () {
 		return this.activeEditions.filter((edition) => edition.engines && (edition.engines.node || edition.engines.browsers))
 	},
@@ -17,7 +21,7 @@ module.exports = {
 		return this.activeEditions.filter((edition) => edition.engines && edition.engines.node)
 	},
 	get browserEditions () {
-		return this.activeEditions.find((edition) => edition.engines && edition.engines.browsers)
+		return this.activeEditions.filter((edition) => edition.engines && edition.engines.browsers)
 	},
 	get useEditionAutoloader () {
 		return this.nodeEditions.length >= 2
@@ -26,7 +30,11 @@ module.exports = {
 		return this.nodeEditions[0]
 	},
 	get browserEdition () {
-		return this.browserEditions[0]
+		const browserEditions = this.browserEditions
+		if (browserEditions.length > 1) {
+			throw new Error('there is more than one edition catered towards browsers, not sure what to do here...')
+		}
+		return browserEditions[0]
 	},
 	get compiledEdition () {
 		return this.compiledEditions[this.compiledEditions.length - 1]

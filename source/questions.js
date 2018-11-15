@@ -35,7 +35,6 @@ const {
 	getPackageOrganisation,
 	getPackageRepoUrl,
 	getPackageTestEntry,
-	hasMultipleEditions,
 	isPackageCoffee,
 	isPackageDocPadPlugin,
 	isPackageDocPadWebsite,
@@ -242,18 +241,6 @@ async function getQuestions ({ packageData = {}, cwd }) {
 			}
 		},
 		{
-			name: 'babel',
-			type: 'confirm',
-			message: 'Will you use babel to support older environments?',
-			default () {
-				const result = hasMultipleEditions(packageData)
-				return result == null ? true : result
-			},
-			when ({ browsers, website, language }) {
-				return !browsers && !website && language !== 'json'
-			}
-		},
-		{
 			name: 'upgradeAllDependencies',
 			type: 'confirm',
 			message: 'Should all dependencies be upgraded to their latest versions?',
@@ -366,7 +353,7 @@ async function getQuestions ({ packageData = {}, cwd }) {
 			validate: isSpecified,
 			filter: trim,
 			default: defaults.surgeLogin,
-			when ({ docs, deploy }) { return (docs || deploy === 'surge') }
+			when ({ docs, deploy, language }) { return (docs || deploy === 'surge' || language === 'typescript') }
 		},
 		{
 			name: 'surgeToken',
@@ -375,7 +362,7 @@ async function getQuestions ({ packageData = {}, cwd }) {
 			validate: isSpecified,
 			filter: trim,
 			default: defaults.surgeToken,
-			when ({ docs, deploy }) { return (docs || deploy === 'surge') }
+			when ({ docs, deploy, language }) { return (docs || deploy === 'surge' || language === 'typescript') }
 		},
 		{
 			name: 'npmAuthToken',
@@ -404,14 +391,9 @@ async function getQuestions ({ packageData = {}, cwd }) {
 async function getAnswers (state) {
 	const answers = await _getAnswers(await getQuestions(state))
 
-	// if browers ensure babel
-	if (answers.browsers) {
-		answers.babel = true
-	}
-
-	// if typescript ensure babel, modules, docs
+	// if typescript ensure modules, docs
 	if (answers.language === 'typescript') {
-		answers.babel = answers.modules = answers.docs = true
+		answers.modules = answers.docs = true
 	}
 
 	// if website, ensure support for only the desired node version

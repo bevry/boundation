@@ -187,7 +187,8 @@ async function scaffoldEditions (state) {
 	if (activeEditions.length) {
 		// fetch
 		const sourceEdition = state.sourceEdition
-		const compiledEdition = state.compiledEdition || sourceEdition
+		const nodeEdition = state.nodeEdition || sourceEdition
+		const browserEdition = state.browserEdition || sourceEdition
 
 		// log
 		status('scaffolding edition files...')
@@ -265,7 +266,7 @@ async function scaffoldEditions (state) {
 					"'use strict'",
 					'',
 					`/** @type {typeof import("./${sourceEdition.testPath}") } */`,
-					`module.exports = require('editions').requirePackage(__dirname, require, '${compiledEdition.test}')`,
+					`module.exports = require('editions').requirePackage(__dirname, require, '${nodeEdition.test}')`,
 					''
 				].join('\n'))
 				state.test = 'test.js'
@@ -280,13 +281,12 @@ async function scaffoldEditions (state) {
 				await unlink('test.js')
 			}
 
-			packageData.main = compiledEdition.mainPath
-			state.test = compiledEdition.testPath
+			packageData.main = nodeEdition.mainPath
+			state.test = nodeEdition.testPath
 		}
 
 		// browser path
 		if (answers.browser) {
-			const browserEdition = state.browserEdition || sourceEdition
 			packageData.browser = pathUtil.join(browserEdition.directory || '.', browserEdition.main)
 		}
 		else {
@@ -444,14 +444,15 @@ async function updateRuntime (state) {
 		packages['flow-bin'] = 'dev'
 		state.scripts['our:verify:flow'] = 'flow check'
 	}
-	if (answers.babel) {
+	if (state.babelEditions.length) {
 		packages['@babel/core'] = packages['@babel/cli'] = packages['@babel/preset-env'] = 'dev'
-		if (answers.language === 'typescript') {
+	}
+	if (answers.language === 'typescript') {
+		packages['@babel/core'] =
 			packages['@babel/preset-typescript'] =
-				packages['@babel/plugin-proposal-class-properties'] =
-				packages['@babel/plugin-proposal-object-rest-spread'] =
-				'dev'
-		}
+			packages['@babel/plugin-proposal-class-properties'] =
+			packages['@babel/plugin-proposal-object-rest-spread'] =
+			'dev'
 	}
 	if (answers.deploy) {
 		if (answers.deploy === 'surge') {

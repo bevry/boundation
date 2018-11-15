@@ -66,6 +66,7 @@ class Edition {
 // Actions
 async function generateEditions (state) {
 	const { answers, packageData } = state
+	let babel = false
 
 	// log
 	status('updating editions...')
@@ -81,6 +82,7 @@ async function generateEditions (state) {
 
 		// Generate base editions based on language
 		if (answers.language === 'esnext') {
+			babel = true
 			editions.push(new Edition({
 				directory: answers.sourceDirectory,
 				main: `${answers.mainEntry}.js`,
@@ -105,6 +107,7 @@ async function generateEditions (state) {
 			}
 		}
 		else if (answers.language === 'typescript') {
+			babel = true
 			editions.push(
 				new Edition({
 					directory: answers.sourceDirectory,
@@ -143,6 +146,7 @@ async function generateEditions (state) {
 			)
 		}
 		else if (answers.language === 'coffeescript') {
+			babel = true
 			editions.push(
 				new Edition({
 					directory: answers.sourceDirectory,
@@ -196,6 +200,7 @@ async function generateEditions (state) {
 
 		// Add the browser edition if necessary
 		if (answers.browsers) {
+			babel = true
 			editions.push(
 				new Edition({
 					directory: 'edition-browsers',
@@ -217,7 +222,7 @@ async function generateEditions (state) {
 		}
 
 		// Add the compiled editions if necessary
-		if (answers.babel) {
+		if (babel) {
 			editions.push(
 				new Edition({
 					directory: `edition-node-${answers.maximumSupportNodeVersion}`,
@@ -312,12 +317,14 @@ async function generateEditions (state) {
 			if (edition.directory !== answers.sourceDirectory && edition.targets && !edition.scripts) {
 				if (answers.language === 'coffeescript') {
 					// add coffee compile script
+					edition.babel = true
 					edition.scripts = {
 						[`our:compile:${edition.directory}`]: `env BABEL_ENV=${edition.directory} coffee -bcto ./${edition.directory}/ ./${answers.sourceDirectory}`
 					}
 				}
 				else {
 					// add custom babel env
+					edition.babel = true
 					if (edition.targets && answers.language === 'typescript') {
 						edition.babel = {
 							presets: [
