@@ -92,10 +92,11 @@ secret env GITHUB_CLIENT_ID GITHUB_CLIENT_SECRET NPM_AUTHTOKEN TRAVIS_NOTIFICATI
 - Optional automatic Travis CI setup to release your project to npm when tests pass, and to test on older environments
     - Powered by [Awesome Travis](https://github.com/bevry/awesome-travis)
 - Optional JSDoc for JavaScript projects
+- Automatic TypeDoc for TypeScript projects
 - Optional YUIDoc for new CoffeeScript projects, and Biscotto for old
 - Optional Flow Type for type checking of JavaScript projects
 - Optional ES6 Import module support
-- Optional Babel support when deploying to browsers and older targets
+- Automatic Babel support when needing to support browsers and older targets
 - Optional DocPad Plugin support
 - Automatic package dependency upgrades
 
