@@ -293,6 +293,14 @@ async function scaffoldEditions (state) {
 			delete packageData.browser
 		}
 
+		// types
+		if (answers.language === 'typescript') {
+			packageData.types = sourceEdition.mainPath
+		}
+		else {
+			delete packageData.types
+		}
+
 		// log
 		status('...scaffolded edition files')
 	}
@@ -418,6 +426,7 @@ async function updateRuntime (state) {
 	}
 	if (answers.languages.has('typescript')) {
 		packages.typescript = packages['typescript-eslint-parser'] = 'dev'
+		state.scripts['our:verify:typescript'] = 'tsc --project .'
 	}
 	if (answers.docs) {
 		if (answers.language === 'typescript') {
@@ -537,6 +546,7 @@ async function updateRuntime (state) {
 	].map((file) => unlink(file)))
 	status('...removed old files')
 
+	// tsconfig
 	if (answers.language === 'typescript') {
 		status('writing tsconfig file...')
 		const tsconfig = {

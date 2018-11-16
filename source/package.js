@@ -219,7 +219,7 @@ function arrangePackage (state) {
 	}
 
 	// package keys
-	const arrangedPackage = arrangekeys(packageData, 'title name version private description homepage license keywords badges author sponsors maintainers contributors bugs repository engines editions bin preferGlobal main browser dependencies devDependencies optionalDependencies peerDependencies scripts babel')
+	const arrangedPackage = arrangekeys(packageData, 'title name version private description homepage license keywords badges author sponsors maintainers contributors bugs repository engines editions bin preferGlobal types main browser dependencies devDependencies optionalDependencies peerDependencies scripts babel')
 
 	// scripts
 	let scripts = Object.assign({}, state.userScripts, state.scripts)
