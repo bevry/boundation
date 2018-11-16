@@ -69,11 +69,11 @@ secret env GITHUB_CLIENT_ID GITHUB_CLIENT_SECRET NPM_AUTHTOKEN TRAVIS_NOTIFICATI
 
 ## Features
 
-- Supports JavaScript, CoffeeScript, and Website projects, more project types to come
+- Supports JavaScript, TypeScript, CoffeeScript, and Website projects
 - Automatic [Editions](https://github.com/bevry/editions) setup and upgrades for automatic selection of the best edition for the environment, allowing you to develop for the latest environment with the latest technology, then automatically test on and support older environments
 - Uses [Projectz](https://github.com/bevry/projectz) to automatically generate and maintain your readme, license, badges, and the contributing file
 - Uses [Bevry's Base Files](https://github.com/bevry/base) which provides linting configurations that automatically detect the features of your projects, and adjusts the linting accordingly, as well as pulling down files like `.gitignore` and `.npmignore` with respect for custom sections
-- ESLint for JavaScript projects, and CoffeeLint for CoffeeScript projects
+- ESLint for JavaScript and TypeScript projects, and CoffeeLint for CoffeeScript projects
 - Powerful NPM Scripts
     - `npm run our:setup` for setting up the project for development
         - automatic addition of your `my:setup:*` scripts
@@ -91,11 +91,11 @@ secret env GITHUB_CLIENT_ID GITHUB_CLIENT_SECRET NPM_AUTHTOKEN TRAVIS_NOTIFICATI
         - automatic addition of your `my:release:*` scripts
 - Optional automatic Travis CI setup to release your project to npm when tests pass, and to test on older environments
     - Powered by [Awesome Travis](https://github.com/bevry/awesome-travis)
-- Optional DocumentationJS for JavaScript projects
+- Optional JSDoc for JavaScript projects
 - Optional YUIDoc for new CoffeeScript projects, and Biscotto for old
 - Optional Flow Type for type checking of JavaScript projects
 - Optional ES6 Import module support
-- Optional Babel support for older porjects
+- Optional Babel support when deploying to browsers and older targets
 - Optional DocPad Plugin support
 - Automatic package dependency upgrades
 
