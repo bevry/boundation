@@ -2,7 +2,7 @@
 
 ## v1.19.0 2018 November 16
 - Added support for editions v2.1
-- Added support for TypeScript
+- Added support for TypeScript, with babel and eslint integration, and types field set for consumption
 - Added edition testing for node v11
 - Added support for custom babel configuration in `package.json`
 - More effecient edition support
