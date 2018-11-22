@@ -13,8 +13,8 @@
 ## v1.18.4 2018 November 16
 - Fix crash when git remote is empty
 - Fixed nowName being an object for a new now project
-— Update badges for bevry
-— Set nowToken and NowTeam for travis if desired
+- Update badges for bevry
+- Set nowToken and NowTeam for travis if desired
 - Fixed stylelint install (for websites) and removals for non-websites
 - Allow boundation to work without editions, which is the case for websites
 
