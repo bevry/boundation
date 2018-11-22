@@ -7,13 +7,14 @@ const { stackOrMessage } = require('./error')
 const inquirer = require('inquirer')
 
 // Action
-async function getAnswers (questions) {
+async function getAnswers(questions) {
 	try {
 		return await inquirer.prompt(questions)
-	}
-	catch (err) {
+	} catch (err) {
 		return Promise.reject(
-			new Error(`Failed to fetch the answers from the user: ${stackOrMessage(err)}`)
+			new Error(
+				`Failed to fetch the answers from the user: ${stackOrMessage(err)}`
+			)
 		)
 	}
 }

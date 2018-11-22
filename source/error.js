@@ -5,15 +5,15 @@
  * @param {Error} error
  * @returns {string}
  */
-function stackOrMessage (error) {
+function stackOrMessage(error) {
 	return error.stack ? `\n${error.stack}` : error.toString()
 }
 
 /**
  * @param {Error} reason
  * @returns {void}
-*/
-function unhandledRejection (reason) {
+ */
+function unhandledRejection(reason) {
 	console.error(`\nA promise FAILED with: ${stackOrMessage(reason)}`)
 	process.exit(-1)
 }

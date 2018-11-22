@@ -8,38 +8,47 @@ module.exports = {
 	supportedNodeVersions: null,
 	unsupportedNodeVersions: null,
 	editions: [],
-	get activeEditions () {
-		return this.editions.filter((edition) => edition.active !== false)
+	get activeEditions() {
+		return this.editions.filter(edition => edition.active !== false)
 	},
-	get babelEditions () {
-		return this.activeEditions.filter((edition) => edition.babel)
+	get babelEditions() {
+		return this.activeEditions.filter(edition => edition.babel)
 	},
-	get compiledEditions () {
-		return this.activeEditions.filter((edition) => edition.engines && (edition.engines.node || edition.engines.browsers))
+	get compiledEditions() {
+		return this.activeEditions.filter(
+			edition =>
+				edition.engines && (edition.engines.node || edition.engines.browsers)
+		)
 	},
-	get nodeEditions () {
-		return this.activeEditions.filter((edition) => edition.engines && edition.engines.node)
+	get nodeEditions() {
+		return this.activeEditions.filter(
+			edition => edition.engines && edition.engines.node
+		)
 	},
-	get browserEditions () {
-		return this.activeEditions.filter((edition) => edition.engines && edition.engines.browsers)
+	get browserEditions() {
+		return this.activeEditions.filter(
+			edition => edition.engines && edition.engines.browsers
+		)
 	},
-	get useEditionAutoloader () {
+	get useEditionAutoloader() {
 		return this.nodeEditions.length >= 2
 	},
-	get nodeEdition () {
+	get nodeEdition() {
 		return this.nodeEditions[0]
 	},
-	get browserEdition () {
+	get browserEdition() {
 		const browserEditions = this.browserEditions
 		if (browserEditions.length > 1) {
-			throw new Error('there is more than one edition catered towards browsers, not sure what to do here...')
+			throw new Error(
+				'there is more than one edition catered towards browsers, not sure what to do here...'
+			)
 		}
 		return browserEditions[0]
 	},
-	get compiledEdition () {
+	get compiledEdition() {
 		return this.compiledEditions[this.compiledEditions.length - 1]
 	},
-	get sourceEdition () {
+	get sourceEdition() {
 		const sourceEdition = this.editions[0]
 		if (sourceEdition.active === false) {
 			throw new Error('source edition had .active=false which is not allowed')

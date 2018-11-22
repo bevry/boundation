@@ -2,7 +2,7 @@
 
 // Compare to versions simplify
 // Works for 1, 1.1, or 1.1.1, or 1.1.1 - sadasd
-function versionComparator (a, b) {
+function versionComparator(a, b) {
 	// https://github.com/substack/versionComparator-compare/pull/4
 	const pa = a.split('.')
 	const pb = b.split('.')

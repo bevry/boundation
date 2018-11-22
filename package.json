@@ -66,15 +66,15 @@
       "description": "esnext source code with require for modules",
       "directory": "source",
       "entry": "index.js",
-      "syntaxes": [
+      "engines": {
+        "node": "8 || 10 || 11",
+        "browsers": false
+      },
+      "tags": [
         "javascript",
         "esnext",
         "require"
-      ],
-      "engines": {
-        "node": ">=8",
-        "browsers": false
-      }
+      ]
     }
   ],
   "bin": "bin.js",
@@ -93,9 +93,14 @@
   "devDependencies": {
     "assert-helpers": "^4.5.1",
     "eslint": "^5.9.0",
+    "eslint-config-bevry": "^1.0.1",
+    "eslint-config-prettier": "^3.3.0",
+    "eslint-plugin-prettier": "^3.0.0",
     "joe": "^2.0.2",
     "joe-reporter-console": "^2.0.2",
-    "projectz": "^1.5.3"
+    "prettier": "^1.15.2",
+    "projectz": "^1.5.3",
+    "valid-directory": "^1.0.0"
   },
   "scripts": {
     "our:clean": "rm -Rf ./docs ./edition* ./es2015 ./es5 ./out",
@@ -112,8 +117,18 @@
     "our:setup": "npm run our:setup:npm",
     "our:setup:npm": "npm install",
     "our:test": "npm run our:verify && npm test",
-    "our:verify": "npm run our:verify:eslint",
-    "our:verify:eslint": "eslint --fix ./source",
+    "our:verify": "npm run our:verify:directory && npm run our:verify:eslint",
+    "our:verify:directory": "npx valid-directory",
+    "our:verify:eslint": "eslint --fix --ignore-pattern '**/*.d.ts' './source/**'",
     "test": "node --harmony ./source/test.js --joe-reporter=console"
+  },
+  "eslintConfig": {
+    "extends": [
+      "bevry"
+    ]
+  },
+  "prettier": {
+    "semi": false,
+    "singleQuote": true
   }
 }

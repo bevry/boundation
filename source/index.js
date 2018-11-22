@@ -15,7 +15,7 @@ const { generateEditions } = require('./editions')
 const { updateWebsite } = require('./website')
 const { updateRuntime } = require('./runtime')
 
-async function init (state) {
+async function init(state) {
 	await readPackage(state)
 
 	await getAnswers(state)

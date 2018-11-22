@@ -2,8 +2,12 @@
 'use strict'
 
 // Prepare
-const mandatoryScriptsList = 'our:setup our:compile our:meta our:verify our:deploy our:release'.split(' ')
-const bevryOrganisationsList = 'balupton bevry bevry-trading docpad browserstate webwrite chainyjs interconnectapp'.split(' ')
+const mandatoryScriptsList = 'our:setup our:compile our:meta our:verify our:deploy our:release'.split(
+	' '
+)
+const bevryOrganisationsList = 'balupton bevry bevry-trading docpad browserstate webwrite chainyjs interconnectapp'.split(
+	' '
+)
 
 // Local
 const { status } = require('./log')
@@ -17,75 +21,106 @@ const pathUtil = require('path')
 // ====================================
 // Fetchers
 
-function getPackageName (packageData) {
+function getPackageName(packageData) {
 	return (packageData && packageData.name) || null
 }
 
-function getPackageDescription (packageData) {
+function getPackageDescription(packageData) {
 	return (packageData && packageData.description) || null
 }
 
-function getPackageKeywords (packageData) {
-	return (packageData && packageData.keywords && packageData.keywords.join(', ')) || null
+function getPackageKeywords(packageData) {
+	return (
+		(packageData && packageData.keywords && packageData.keywords.join(', ')) ||
+		null
+	)
 }
 
-function getPackageNodeEngineVersion (packageData) {
-	return (packageData && packageData.engines && packageData.engines.node && packageData.engines.node.replace(/[^0-9]+/, '')) || null
+function getPackageNodeEngineVersion(packageData) {
+	return (
+		(packageData &&
+			packageData.engines &&
+			packageData.engines.node &&
+			packageData.engines.node.replace(/[^0-9]+/, '')) ||
+		null
+	)
 }
 
-function getPackageDocumentationDependency (packageData) {
+function getPackageDocumentationDependency(packageData) {
 	if (packageData && packageData.devDependencies) {
-		if (packageData.devDependencies.documentation || packageData.devDependencies.yuidocjs || packageData.devDependencies.biscotto) {
+		if (
+			packageData.devDependencies.documentation ||
+			packageData.devDependencies.yuidocjs ||
+			packageData.devDependencies.biscotto
+		) {
 			return true
 		}
 	}
 	return false
 }
 
-function getPackageFlowtypeDependency (packageData) {
-	return (packageData && packageData.devDependencies && Boolean(packageData.devDependencies['flow-bin'])) || null
+function getPackageFlowtypeDependency(packageData) {
+	return (
+		(packageData &&
+			packageData.devDependencies &&
+			Boolean(packageData.devDependencies['flow-bin'])) ||
+		null
+	)
 }
 
-function hasSyntax (packageData, syntax) {
-	const edition = (packageData && packageData.editions && packageData.editions.length && packageData.editions[0])
+function hasSyntax(packageData, syntax) {
+	const edition =
+		packageData &&
+		packageData.editions &&
+		packageData.editions.length &&
+		packageData.editions[0]
 	const syntaxes = edition && edition.syntaxes
 	return syntaxes && syntaxes.has(syntax)
 }
 
-function getPackageModules (packageData) {
+function getPackageModules(packageData) {
 	return hasSyntax(packageData, 'import')
 }
 
-function getPackageRepoUrl (packageData) {
-	return (packageData && packageData.repository && packageData.repository.url) || null
+function getPackageRepoUrl(packageData) {
+	return (
+		(packageData && packageData.repository && packageData.repository.url) ||
+		null
+	)
 }
 
-function getPackageAuthor (packageData) {
+function getPackageAuthor(packageData) {
 	return (packageData && packageData.author) || null
 }
 
-function getNowName (packageData) {
+function getNowName(packageData) {
 	return (packageData && packageData.now && packageData.now.name) || null
 }
 
-function getNowAliases (packageData) {
-	return (packageData && packageData.now && Array.isArray(packageData.now.alias) && packageData.now.alias.join(' ')) || null
+function getNowAliases(packageData) {
+	return (
+		(packageData &&
+			packageData.now &&
+			Array.isArray(packageData.now.alias) &&
+			packageData.now.alias.join(' ')) ||
+		null
+	)
 }
 
-function hasMultipleEditions (packageData) {
+function hasMultipleEditions(packageData) {
 	if (packageData && packageData.editions) {
 		return packageData.editions.length > 1
 	}
 	return null
 }
 
-function isPackageJavaScript (packageData) {
+function isPackageJavaScript(packageData) {
 	return hasSyntax(packageData, 'esnext')
 }
 
-function isPackageTypeScript (packageData) {
+function isPackageTypeScript(packageData) {
 	if (packageData) {
-		if ((/\.ts$/).test(packageData.main)) {
+		if (/\.ts$/.test(packageData.main)) {
 			return true
 		}
 		if (packageData.devDependencies) {
@@ -100,17 +135,20 @@ function isPackageTypeScript (packageData) {
 	return false
 }
 
-function isPackageJSON (packageData) {
-	return (packageData && (/\.json$/).test(packageData.main)) || false
+function isPackageJSON(packageData) {
+	return (packageData && /\.json$/.test(packageData.main)) || false
 }
 
-function isPackageCoffee (packageData) {
+function isPackageCoffee(packageData) {
 	if (packageData) {
-		if ((/\.coffee$/).test(packageData.main)) {
+		if (/\.coffee$/.test(packageData.main)) {
 			return true
 		}
 		if (packageData.devDependencies) {
-			if (packageData.devDependencies['coffee-script'] || packageData.devDependencies.coffeescript) {
+			if (
+				packageData.devDependencies['coffee-script'] ||
+				packageData.devDependencies.coffeescript
+			) {
 				return true
 			}
 		}
@@ -121,55 +159,67 @@ function isPackageCoffee (packageData) {
 	return false
 }
 
-function getPackageProperty (packageData, key) {
+function getPackageProperty(packageData, key) {
 	return packageData && packageData[key]
 }
 
-function getPackageOrganisation (packageData) {
+function getPackageOrganisation(packageData) {
 	return repoToOrganisation(getPackageRepoUrl(packageData) || '') || null
 }
 
-function isPackageDocPadPlugin (packageData) {
-	return packageData && packageData.name && packageData.name.startsWith('docpad-plugin-')
+function isPackageDocPadPlugin(packageData) {
+	return (
+		packageData &&
+		packageData.name &&
+		packageData.name.startsWith('docpad-plugin-')
+	)
 }
 
-function isPackageWebsite (packageData) {
-	return (packageData && packageData.scripts && packageData.scripts.start) || false
+function isPackageWebsite(packageData) {
+	return (
+		(packageData && packageData.scripts && packageData.scripts.start) || false
+	)
 }
 
-function getPackageDependencies (packageData) {
+function getPackageDependencies(packageData) {
 	if (packageData) {
-		return [].concat(Object.keys(packageData.dependencies || {}), Object.keys(packageData.devDependencies || {}))
+		return [].concat(
+			Object.keys(packageData.dependencies || {}),
+			Object.keys(packageData.devDependencies || {})
+		)
 	}
 	return []
 }
 
-function isPackageDocPadWebsite (packageData) {
+function isPackageDocPadWebsite(packageData) {
 	return getPackageDependencies(packageData).has('docpad')
 }
 
-function getPackageMainEntry (packageData) {
+function getPackageMainEntry(packageData) {
 	if (packageData) {
 		if (isPackageDocPadPlugin(packageData)) {
 			return 'index'
-		}
-		else {
-			return (packageData.main && packageData.main
-				.replace(/^.+\//, '') /* remove dirname */
-				.replace(/\.[^.]+$/, '') /* remove extension */
-			) || null
+		} else {
+			return (
+				(packageData.main &&
+					packageData.main
+						.replace(/^.+\//, '') /* remove dirname */
+						.replace(/\.[^.]+$/, '')) /* remove extension */ ||
+				null
+			)
 		}
 	}
 	return null
 }
 
-function getPackageTestEntry (packageData) {
+function getPackageTestEntry(packageData) {
 	if (packageData) {
 		if (isPackageDocPadPlugin(packageData)) {
 			return 'test'
-		}
-		else if (packageData.scripts && packageData.scripts.test) {
-			const result = packageData.scripts.test.match(/^node(?: --[a-zA-Z0-9_]+)* (?:[^/]+\/)*([^.]+)\.js/) /* fetches filename without ext */
+		} else if (packageData.scripts && packageData.scripts.test) {
+			const result = packageData.scripts.test.match(
+				/^node(?: --[a-zA-Z0-9_]+)* (?:[^/]+\/)*([^.]+)\.js/
+			) /* fetches filename without ext */
 			return (result && result[1]) || null
 		}
 	}
@@ -179,7 +229,7 @@ function getPackageTestEntry (packageData) {
 // ====================================
 // Helpers
 
-function arrangePackage (state) {
+function arrangePackage(state) {
 	const packageData = JSON.parse(JSON.stringify(state.packageData))
 	const activeEditions = state.activeEditions
 
@@ -200,8 +250,7 @@ function arrangePackage (state) {
 						]
 					]
 				}
-			}
-			else {
+			} else {
 				packageData.babel.env[edition.directory] = edition.babel
 			}
 		}
@@ -212,20 +261,27 @@ function arrangePackage (state) {
 		}
 
 		// arrange keys of editions
-		packageData.editions = activeEditions.map((edition) => arrangekeys(edition, 'description directory entry syntaxes engines'))
-	}
-	else {
+		packageData.editions = activeEditions.map(edition =>
+			arrangekeys(edition, 'description directory entry syntaxes engines')
+		)
+	} else {
 		delete packageData.editions
 	}
 
 	// package keys
-	const arrangedPackage = arrangekeys(packageData, 'title name version private description homepage license keywords badges author sponsors maintainers contributors bugs repository engines editions bin preferGlobal types main browser dependencies devDependencies optionalDependencies peerDependencies scripts babel')
+	const arrangedPackage = arrangekeys(
+		packageData,
+		'title name version private description homepage license keywords badges author sponsors maintainers contributors bugs repository engines editions bin preferGlobal types main browser dependencies devDependencies optionalDependencies peerDependencies scripts babel'
+	)
 
 	// scripts
 	let scripts = Object.assign({}, state.userScripts, state.scripts)
 
 	// merge in editions[].scripts
-	Object.assign(scripts, ...activeEditions.map((edition) => edition.scripts || {}))
+	Object.assign(
+		scripts,
+		...activeEditions.map(edition => edition.scripts || {})
+	)
 
 	// inject empty mandatory scripts if they don't exist
 	// to ensure they are sorted correctly
@@ -252,8 +308,7 @@ function arrangePackage (state) {
 						scripts[ourKey] = `npm run ${key}`
 						list.add(ourKey)
 					}
-				}
-				else {
+				} else {
 					delete scripts[key]
 				}
 			}
@@ -261,7 +316,10 @@ function arrangePackage (state) {
 			// mark the prefixes as empty strings if not already set
 			// so that we can fill them in later once everything is sorted in the right spots
 			// and note which keys need to merged into what prefixes
-			else if (parts.length >= 3 /* don't concat down to `our` */ && parts[0] === 'our') {
+			else if (
+				parts.length >= 3 /* don't concat down to `our` */ &&
+				parts[0] === 'our'
+			) {
 				const prefix = parts.slice(0, -1).join(':')
 				if (!scripts[prefix]) {
 					scripts[prefix] = false
@@ -273,8 +331,12 @@ function arrangePackage (state) {
 	}
 
 	// perform the alpha sort, with my: scripts first, then our: scripts, then everything else
-	const myScripts = Array.from(list).filter((key) => key.startsWith('my:')).sort()
-	const ourScripts = Array.from(list).filter((key) => key.startsWith('our:')).sort()
+	const myScripts = Array.from(list)
+		.filter(key => key.startsWith('my:'))
+		.sort()
+	const ourScripts = Array.from(list)
+		.filter(key => key.startsWith('our:'))
+		.sort()
 	scripts = arrangekeys(scripts, myScripts.concat(ourScripts))
 
 	// use new order, to merge scripts into a set, to prevent duplicates
@@ -286,8 +348,7 @@ function arrangePackage (state) {
 			const value = scripts[prefix] || false
 			if (typeof value === 'string') {
 				// ignore, keep the user override
-			}
-			else {
+			} else {
 				if (!value) scripts[prefix] = new Set()
 				scripts[prefix].add(`npm run ${key}`)
 			}
@@ -312,11 +373,10 @@ function arrangePackage (state) {
 	return arrangedPackage
 }
 
-
 // ====================================
 // Update
 
-async function readPackage (state) {
+async function readPackage(state) {
 	const { cwd } = state
 	const path = pathUtil.resolve(cwd, 'package.json')
 
@@ -341,7 +401,7 @@ async function readPackage (state) {
 				}
 
 				// keep my:* scripts
-				Object.keys(packageDataLocal.scripts).forEach(function (key) {
+				Object.keys(packageDataLocal.scripts).forEach(function(key) {
 					if (key.startsWith('my:')) {
 						const value = packageDataLocal.scripts[key]
 						userScripts[key] = value
@@ -353,25 +413,22 @@ async function readPackage (state) {
 			// return
 			return packageDataLocal
 		}
-	}
-	catch (err) {
+	} catch (err) {
 		status('...skipped the package.json file')
 		return null
 	}
 }
 
-async function writePackage (state) {
+async function writePackage(state) {
 	const { cwd } = state
 	const path = pathUtil.resolve(cwd, 'package.json')
 
 	status('writing the package.json file...')
-	await write(path,
-		JSON.stringify(arrangePackage(state), null, '  ')
-	)
+	await write(path, JSON.stringify(arrangePackage(state), null, '  '))
 	status('...wrote the package.json file')
 }
 
-async function updatePackageData (state) {
+async function updatePackageData(state) {
 	const packageDataLocal = state.packageData
 	const { answers } = state
 
@@ -408,8 +465,7 @@ async function updatePackageData (state) {
 	// engines
 	if (answers.website) {
 		packageData.engines.node = `${answers.desiredNodeVersion}`
-	}
-	else {
+	} else {
 		packageData.engines.node = `>=${answers.minimumSupportNodeVersion}`
 	}
 
@@ -421,8 +477,7 @@ async function updatePackageData (state) {
 	// private
 	if (answers.npm) {
 		delete packageData.private
-	}
-	else {
+	} else {
 		packageData.private = true
 	}
 
@@ -435,10 +490,13 @@ async function updatePackageData (state) {
 	if (!packageData.maintainers || packageData.maintainers.length === 0) {
 		if (packageData.contributors.length === 1) {
 			packageData.maintainers = [].concat(packageData.contributors)
-		}
-		else {
+		} else {
 			packageData.maintainers = [
-				packageData.author.split(/, +/).sort().slice(-1)[0].replace(/^[\d-+]+ +/, '')
+				packageData.author
+					.split(/, +/)
+					.sort()
+					.slice(-1)[0]
+					.replace(/^[\d-+]+ +/, '')
 			]
 		}
 	}
@@ -484,26 +542,19 @@ async function updatePackageData (state) {
 	}
 
 	// default badges
-	if (!packageData.badges || !packageData.badges.list || !packageData.badges.list.length) {
+	if (
+		!packageData.badges ||
+		!packageData.badges.list ||
+		!packageData.badges.list.length
+	) {
 		packageData.badges = {
-			list: [
-				'travisci',
-				'npmversion',
-				'npmdownloads',
-				'daviddm',
-				'daviddmdev'
-			]
+			list: ['travisci', 'npmversion', 'npmdownloads', 'daviddm', 'daviddmdev']
 		}
 	}
 
 	// remove badges relating to private
 	if (packageData.private) {
-		removeBadges.push(
-			'npmversion',
-			'npmdownloads',
-			'daviddm',
-			'daviddmdev'
-		)
+		removeBadges.push('npmversion', 'npmdownloads', 'daviddm', 'daviddmdev')
 	}
 
 	// apply removals

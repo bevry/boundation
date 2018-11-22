@@ -20,7 +20,7 @@ const { spawn, write } = require('./fs')
 const yaml = require('js-yaml')
 
 // Thing
-async function updateTravis (state) {
+async function updateTravis(state) {
 	const { answers } = state
 
 	// =================================
@@ -29,20 +29,20 @@ async function updateTravis (state) {
 	status('customising travis...')
 
 	// fetch node versions
-	state.nodeVersions = allNodeVersions.filter((version) =>
-		versionComparator(version, answers.minimumTestNodeVersion) >= 0
-		&&
-		versionComparator(version, answers.maximumTestNodeVersion) <= 0
+	state.nodeVersions = allNodeVersions.filter(
+		version =>
+			versionComparator(version, answers.minimumTestNodeVersion) >= 0 &&
+			versionComparator(version, answers.maximumTestNodeVersion) <= 0
 	)
-	state.unsupportedNodeVersions = state.nodeVersions.filter((version) =>
-		versionComparator(version, answers.minimumSupportNodeVersion) < 0
-		||
-		versionComparator(version, answers.maximumSupportNodeVersion) > 0
+	state.unsupportedNodeVersions = state.nodeVersions.filter(
+		version =>
+			versionComparator(version, answers.minimumSupportNodeVersion) < 0 ||
+			versionComparator(version, answers.maximumSupportNodeVersion) > 0
 	)
-	state.supportedNodeVersions = state.nodeVersions.filter((version) =>
-		versionComparator(version, answers.minimumSupportNodeVersion) >= 0
-		&&
-		versionComparator(version, answers.maximumSupportNodeVersion) <= 0
+	state.supportedNodeVersions = state.nodeVersions.filter(
+		version =>
+			versionComparator(version, answers.minimumSupportNodeVersion) >= 0 &&
+			versionComparator(version, answers.maximumSupportNodeVersion) <= 0
 	)
 
 	// prepare
@@ -54,13 +54,12 @@ async function updateTravis (state) {
 		node_js: state.nodeVersions,
 		matrix: {
 			fast_finish: true,
-			allow_failures: state.unsupportedNodeVersions.map((version) => ({ node_js: version }))
+			allow_failures: state.unsupportedNodeVersions.map(version => ({
+				node_js: version
+			}))
 		},
 		cache: {
-			directories: [
-				'$HOME/.npm',
-				'$HOME/.yarn-cache'
-			]
+			directories: ['$HOME/.npm', '$HOME/.yarn-cache']
 		},
 		install: [
 			`eval "$(curl ${curlFlags} https://raw.githubusercontent.com/bevry/awesome-travis/${awesomeTravisCommit}/scripts/node-install.bash)"`
@@ -75,9 +74,23 @@ async function updateTravis (state) {
 	// these spawns must be run serially, as otherwise not all variables may be written, which is annoying
 	if (answers.travisUpdateEnvironment) {
 		await spawn(['travis', 'enable'])
-		await spawn(['travis', 'env', 'set', 'DESIRED_NODE_VERSION', answers.desiredNodeVersion, '--public'])
+		await spawn([
+			'travis',
+			'env',
+			'set',
+			'DESIRED_NODE_VERSION',
+			answers.desiredNodeVersion,
+			'--public'
+		])
 		if (answers.surgeLogin) {
-			await spawn(['travis', 'env', 'set', 'SURGE_LOGIN', answers.surgeLogin, '--public'])
+			await spawn([
+				'travis',
+				'env',
+				'set',
+				'SURGE_LOGIN',
+				answers.surgeLogin,
+				'--public'
+			])
 		}
 		if (answers.surgeToken) {
 			await spawn(['travis', 'env', 'set', 'SURGE_TOKEN', answers.surgeToken])
@@ -86,7 +99,14 @@ async function updateTravis (state) {
 			await spawn(['travis', 'env', 'set', 'NOW_TOKEN', answers.nowToken])
 		}
 		if (answers.nowTeam) {
-			await spawn(['travis', 'env', 'set', 'NOW_TEAM', answers.nowTeam, '--public'])
+			await spawn([
+				'travis',
+				'env',
+				'set',
+				'NOW_TEAM',
+				answers.nowTeam,
+				'--public'
+			])
 		}
 	}
 	if (answers.docs) {
@@ -98,8 +118,8 @@ async function updateTravis (state) {
 		const deployScripts = {
 			'now-custom': 'deploy-now.bash',
 			'now-static': 'deploy-now.bash',
-			'surge': 'deploy-custom.bash',
-			'custom': 'deploy-custom.bash'
+			surge: 'deploy-custom.bash',
+			custom: 'deploy-custom.bash'
 		}
 		const deployScript = deployScripts[answers.deploy]
 		if (deployScript) {
@@ -110,8 +130,21 @@ async function updateTravis (state) {
 	}
 	if (answers.npm) {
 		if (answers.npmAuthToken && answers.travisUpdateEnvironment) {
-			await spawn(['travis', 'env', 'set', 'NPM_AUTHTOKEN', answers.npmAuthToken])
-			await spawn(['travis', 'env', 'unset', 'NPM_USERNAME', 'NPM_PASSWORD', 'NPM_EMAIL'])
+			await spawn([
+				'travis',
+				'env',
+				'set',
+				'NPM_AUTHTOKEN',
+				answers.npmAuthToken
+			])
+			await spawn([
+				'travis',
+				'env',
+				'unset',
+				'NPM_USERNAME',
+				'NPM_PASSWORD',
+				'NPM_EMAIL'
+			])
 		}
 		travis.after_success.push(
 			`eval "$(curl ${curlFlags} https://raw.githubusercontent.com/bevry/awesome-travis/${awesomeTravisCommit}/scripts/node-publish.bash)"`
@@ -126,7 +159,13 @@ async function updateTravis (state) {
 	status('writing the travis file...')
 	await write('.travis.yml', yaml.dump(travis))
 	if (answers.travisEmail) {
-		await spawn(['travis', 'encrypt', answers.travisEmail, '--add', 'notifications.email.recipients'])
+		await spawn([
+			'travis',
+			'encrypt',
+			answers.travisEmail,
+			'--add',
+			'notifications.email.recipients'
+		])
 	}
 	status('...wrote the travis file')
 

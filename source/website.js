@@ -1,6 +1,6 @@
 'use strict'
 
-async function updateWebsite (state) {
+async function updateWebsite(state) {
 	const { answers, packageData } = state
 
 	// add website deployment strategies
@@ -11,9 +11,7 @@ async function updateWebsite (state) {
 				type: 'static',
 				public: true,
 				alias: answers.nowAliases || [],
-				files: [
-					answers.deployDirectory
-				],
+				files: [answers.deployDirectory],
 				static: {
 					directoryListing: false,
 					cleanUrls: true,
