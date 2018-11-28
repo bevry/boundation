@@ -69,18 +69,65 @@ async function updateTravis(state) {
 		],
 		after_success: []
 	}
+	let com, org, used, clearFlag, usedFlag, unusedFlag
 
 	// travis env variables
 	// these spawns must be run serially, as otherwise not all variables may be written, which is annoying
 	if (answers.travisUpdateEnvironment) {
-		await spawn(['travis', 'enable'])
+		// Detect which travis environments we are configured for
+		try {
+			await spawn(['travis', 'status', '--com'])
+			com = true
+		} catch (err) {}
+		try {
+			await spawn(['travis', 'status', '--org'])
+			org = true
+		} catch (err) {}
+
+		// Based on the above, set the used and unused
+		if (com || !org) {
+			state.travisTLD = 'com'
+			usedFlag = '--com'
+			unusedFlag = '--org'
+			if (org) {
+				clearFlag = '--org'
+			}
+		} else {
+			state.travisTLD = 'org'
+			usedFlag = '--org'
+			unusedFlag = '--com'
+			if (com) {
+				clearFlag = '--com'
+			}
+		}
+
+		// update the user
+		status(
+			`determined travis env to be ${usedFlag}, enabling ${usedFlag}, and disabling ${unusedFlag}...`
+		)
+
+		// enable the used, disable the unused
+		await spawn(['travis', 'enable', usedFlag])
+		try {
+			await spawn(['travis', 'disable', unusedFlag])
+		} catch (err) {}
+
+		// clear the env of the unused
+		if (clearFlag) {
+			status(`clearing the old travis env of ${clearFlag}...`)
+			spawn(['travis', 'env', 'clear', '--force', clearFlag])
+			status(`...cleared`)
+		}
+
+		// set the env vars
 		await spawn([
 			'travis',
 			'env',
 			'set',
 			'DESIRED_NODE_VERSION',
 			answers.desiredNodeVersion,
-			'--public'
+			'--public',
+			usedFlag
 		])
 		if (answers.surgeLogin) {
 			await spawn([
@@ -89,14 +136,29 @@ async function updateTravis(state) {
 				'set',
 				'SURGE_LOGIN',
 				answers.surgeLogin,
-				'--public'
+				'--public',
+				usedFlag
 			])
 		}
 		if (answers.surgeToken) {
-			await spawn(['travis', 'env', 'set', 'SURGE_TOKEN', answers.surgeToken])
+			await spawn([
+				'travis',
+				'env',
+				'set',
+				'SURGE_TOKEN',
+				answers.surgeToken,
+				usedFlag
+			])
 		}
 		if (answers.nowToken) {
-			await spawn(['travis', 'env', 'set', 'NOW_TOKEN', answers.nowToken])
+			await spawn([
+				'travis',
+				'env',
+				'set',
+				'NOW_TOKEN',
+				answers.nowToken,
+				usedFlag
+			])
 		}
 		if (answers.nowTeam) {
 			await spawn([
@@ -105,7 +167,8 @@ async function updateTravis(state) {
 				'set',
 				'NOW_TEAM',
 				answers.nowTeam,
-				'--public'
+				'--public',
+				usedFlag
 			])
 		}
 	}
@@ -116,10 +179,10 @@ async function updateTravis(state) {
 	}
 	if (answers.deploy) {
 		const deployScripts = {
-			'now-custom': 'deploy-now.bash',
-			'now-static': 'deploy-now.bash',
-			surge: 'deploy-custom.bash',
-			custom: 'deploy-custom.bash'
+			'now-custom': 'deploy-now',
+			'now-static': 'deploy-now',
+			surge: 'deploy-custom',
+			custom: 'deploy-custom'
 		}
 		const deployScript = deployScripts[answers.deploy]
 		if (deployScript) {
@@ -135,7 +198,8 @@ async function updateTravis(state) {
 				'env',
 				'set',
 				'NPM_AUTHTOKEN',
-				answers.npmAuthToken
+				answers.npmAuthToken,
+				usedFlag
 			])
 			await spawn([
 				'travis',
@@ -143,7 +207,8 @@ async function updateTravis(state) {
 				'unset',
 				'NPM_USERNAME',
 				'NPM_PASSWORD',
-				'NPM_EMAIL'
+				'NPM_EMAIL',
+				usedFlag
 			])
 		}
 		travis.after_success.push(
@@ -151,8 +216,9 @@ async function updateTravis(state) {
 		)
 	}
 
-	// output the variables
-	if (answers.travisUpdateEnvironment) await spawn(['travis', 'env', 'list'])
+	// output the resul env vars
+	if (answers.travisUpdateEnvironment)
+		await spawn(['travis', 'env', 'list', usedFlag])
 
 	// write the .travis.yml file
 	// these spawns must be run serially, as otherwise not all variables may be written, which is annoying
@@ -164,7 +230,8 @@ async function updateTravis(state) {
 			'encrypt',
 			answers.travisEmail,
 			'--add',
-			'notifications.email.recipients'
+			'notifications.email.recipients',
+			usedFlag
 		])
 	}
 	status('...wrote the travis file')

@@ -231,6 +231,10 @@ function getPackageTestEntry(packageData) {
 
 function arrangePackage(state) {
 	const packageData = JSON.parse(JSON.stringify(state.packageData))
+
+	// ---------------------------------
+	// Editions
+
 	const activeEditions = state.activeEditions
 
 	// inject edition properties into package data
@@ -268,11 +272,30 @@ function arrangePackage(state) {
 		delete packageData.editions
 	}
 
+	// ---------------------------------
+	// Badges
+
+	// set travisTLD if it is com
+	// we don't set it explicity to org
+	// so that when the official migration happens, there will be no manual changes
+	if (
+		packageData.badges.list.includes('travisci') &&
+		state.travisTLD === 'com'
+	) {
+		packageData.badges.config.travisTLD = state.travisTLD
+	}
+
+	// ---------------------------------
+	// Arrange
+
 	// package keys
 	const arrangedPackage = arrangekeys(
 		packageData,
 		'title name version private description homepage license keywords badges author sponsors maintainers contributors bugs repository engines editions bin preferGlobal types main browser dependencies devDependencies optionalDependencies peerDependencies scripts babel'
 	)
+
+	// ---------------------------------
+	// Scripts
 
 	// scripts
 	let scripts = Object.assign({}, state.userScripts, state.scripts)
@@ -370,6 +393,10 @@ function arrangePackage(state) {
 
 	// result
 	arrangedPackage.scripts = scripts
+
+	// ---------------------------------
+	// Done
+
 	return arrangedPackage
 }
 

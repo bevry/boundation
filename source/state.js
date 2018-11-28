@@ -1,6 +1,7 @@
 'use strict'
 
 module.exports = {
+	travisTLD: null, // or "org" or "com"
 	answers: null,
 	cwd: process.cwd(),
 	packageData: null,
