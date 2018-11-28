@@ -380,43 +380,35 @@ async function readPackage(state) {
 	const { cwd } = state
 	const path = pathUtil.resolve(cwd, 'package.json')
 
-	status('reading the package.json file...')
-	try {
-		if (await exists(path)) {
-			const packageDataLocal = JSON.parse(await read(path))
-			status('...read the package.json file')
-			state.packageData = packageDataLocal
+	const packageDataLocal = await parse(path)
+	if (!packageDataLocal) return packageDataLocal
+	state.packageData = packageDataLocal
 
-			// user scripts
-			const userScripts = {}
-			if (packageDataLocal && packageDataLocal.scripts) {
-				// start
-				if (packageDataLocal.scripts.start) {
-					userScripts.start = packageDataLocal.scripts.start
-				}
-
-				// deploy to my:deploy
-				if (packageDataLocal.scripts.deploy) {
-					userScripts['my:deploy'] = packageDataLocal.scripts.deploy
-				}
-
-				// keep my:* scripts
-				Object.keys(packageDataLocal.scripts).forEach(function(key) {
-					if (key.startsWith('my:')) {
-						const value = packageDataLocal.scripts[key]
-						userScripts[key] = value
-					}
-				})
-			}
-			state.userScripts = userScripts
-
-			// return
-			return packageDataLocal
+	// user scripts
+	const userScripts = {}
+	if (packageDataLocal && packageDataLocal.scripts) {
+		// start
+		if (packageDataLocal.scripts.start) {
+			userScripts.start = packageDataLocal.scripts.start
 		}
-	} catch (err) {
-		status('...skipped the package.json file')
-		return null
+
+		// deploy to my:deploy
+		if (packageDataLocal.scripts.deploy) {
+			userScripts['my:deploy'] = packageDataLocal.scripts.deploy
+		}
+
+		// keep my:* scripts
+		Object.keys(packageDataLocal.scripts).forEach(function(key) {
+			if (key.startsWith('my:')) {
+				const value = packageDataLocal.scripts[key]
+				userScripts[key] = value
+			}
+		})
 	}
+	state.userScripts = userScripts
+
+	// return
+	return packageDataLocal
 }
 
 async function writePackage(state) {
