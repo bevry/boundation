@@ -8,6 +8,9 @@ const pathUtil = require('path')
 const fsUtil = require('fs')
 const safeps = require('safeps')
 
+// Local
+const { status } = require('./log')
+
 function exists(file) {
 	file = pathUtil.resolve(cwd, file)
 	return new Promise(function(resolve) {
@@ -86,4 +89,29 @@ function exec(command, opts = {}) {
 	})
 }
 
-module.exports = { exists, unlink, read, rename, write, spawn, exec, contains }
+async function parse(path) {
+	const basename = pathUtil.basename(path)
+	status(`reading the ${basename} file...`)
+	try {
+		if (await exists(path)) {
+			const data = JSON.parse(await read(path))
+			status(`...read the ${basename} file...`)
+			return data
+		}
+	} catch (err) {
+		status(`...skipped the ${basename} file`)
+		return null
+	}
+}
+
+module.exports = {
+	exists,
+	unlink,
+	read,
+	rename,
+	write,
+	spawn,
+	exec,
+	contains,
+	parse
+}
