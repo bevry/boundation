@@ -41,7 +41,8 @@
       "opencollectiveUsername": "bevry",
       "patreonUsername": "bevry",
       "paypalURL": "https://bevry.me/paypal",
-      "wishlistURL": "https://bevry.me/wishlist"
+      "wishlistURL": "https://bevry.me/wishlist",
+      "travisTLD": "org"
     }
   },
   "author": "2017+ Bevry <us@bevry.me> (http://bevry.me)",
