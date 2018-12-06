@@ -5,6 +5,7 @@ async function updateWebsite(state) {
 
 	// add website deployment strategies
 	if (answers.deploy && answers.deploy.startsWith('now')) {
+		// @todo move to now.json as package.json is no longer supported
 		// @todo add support for now v2
 		// https://zeit.co/docs/v2/deployments/official-builders/node-js-now-node/
 		// https://zeit.co/docs/v2/deployments/official-builders/static-now-static/
