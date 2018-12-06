@@ -11,12 +11,13 @@ const bevryOrganisationsList = 'balupton bevry bevry-trading docpad browserstate
 
 // Local
 const { status } = require('./log')
-const { repoToWebsite, repoToOrganisation } = require('./string')
-const { exists, write, read } = require('./fs')
+const { repoToWebsite, repoToOrganisation, without } = require('./util')
+const { exists, write, read, parse } = require('./fs')
 
 // External
 const arrangekeys = require('arrangekeys')
 const pathUtil = require('path')
+const typeChecker = require('typechecker')
 
 // ====================================
 // Fetchers
@@ -74,8 +75,8 @@ function hasSyntax(packageData, syntax) {
 		packageData.editions &&
 		packageData.editions.length &&
 		packageData.editions[0]
-	const syntaxes = edition && edition.syntaxes
-	return syntaxes && syntaxes.has(syntax)
+	const tags = (edition && (edition.tags || edition.syntaxes)) || []
+	return tags.includes(syntax)
 }
 
 function getPackageModules(packageData) {
@@ -97,6 +98,7 @@ function getNowName(packageData) {
 	return (packageData && packageData.now && packageData.now.name) || null
 }
 
+// @todo add support for now.json
 function getNowAliases(packageData) {
 	return (
 		(packageData &&
@@ -104,6 +106,20 @@ function getNowAliases(packageData) {
 			Array.isArray(packageData.now.alias) &&
 			packageData.now.alias.join(' ')) ||
 		null
+	)
+}
+
+function hasEditions(packageData) {
+	return (
+		packageData && packageData.editions && Boolean(packageData.editions.length)
+	)
+}
+
+function hasDocumentation(packageData) {
+	return (
+		packageData &&
+		packageData.scripts &&
+		Boolean(packageData.scripts['our:meta:docs'])
 	)
 }
 
@@ -192,7 +208,12 @@ function getPackageDependencies(packageData) {
 }
 
 function isPackageDocPadWebsite(packageData) {
-	return getPackageDependencies(packageData).has('docpad')
+	return getPackageDependencies(packageData).includes('docpad')
+}
+
+function getBasename(path) {
+	// remove dirname, then remove extension
+	return (path && path.replace(/^.+\//, '').replace(/\.[^.]+$/, '')) || null
 }
 
 function getPackageMainEntry(packageData) {
@@ -200,13 +221,7 @@ function getPackageMainEntry(packageData) {
 		if (isPackageDocPadPlugin(packageData)) {
 			return 'index'
 		} else {
-			return (
-				(packageData.main &&
-					packageData.main
-						.replace(/^.+\//, '') /* remove dirname */
-						.replace(/\.[^.]+$/, '')) /* remove extension */ ||
-				null
-			)
+			return getBasename(packageData.main)
 		}
 	}
 	return null
@@ -226,6 +241,10 @@ function getPackageTestEntry(packageData) {
 	return null
 }
 
+function getPackageBinEntry(packageData) {
+	return (packageData && getBasename(packageData.bin)) || null
+}
+
 // ====================================
 // Helpers
 
@@ -243,20 +262,7 @@ function arrangePackage(state) {
 		packageData.babel = packageData.babel || {}
 		packageData.babel.env = {}
 		for (const edition of state.babelEditions) {
-			if (edition.babel === true) {
-				packageData.babel.env[edition.directory] = {
-					presets: [
-						[
-							'@babel/preset-env',
-							{
-								targets: edition.targets
-							}
-						]
-					]
-				}
-			} else {
-				packageData.babel.env[edition.directory] = edition.babel
-			}
+			packageData.babel.env[edition.directory] = edition.babel
 		}
 
 		// trim babel if empty
@@ -266,10 +272,26 @@ function arrangePackage(state) {
 
 		// arrange keys of editions
 		packageData.editions = activeEditions.map(edition =>
-			arrangekeys(edition, 'description directory entry syntaxes engines')
+			arrangekeys(edition, 'description directory entry tags engines')
 		)
 	} else {
 		delete packageData.editions
+	}
+
+	// trim empty keys
+	for (const key in packageData) {
+		if (packageData.hasOwnProperty(key)) {
+			const value = packageData[key]
+			if (typeChecker.isArray(value)) {
+				if (value.length === 0) {
+					delete packageData[key]
+				}
+			} else if (typeChecker.isEmptyObject(value)) {
+				delete packageData[key]
+			} else if (!value) {
+				delete packageData[key]
+			}
+		}
 	}
 
 	// ---------------------------------
@@ -291,7 +313,7 @@ function arrangePackage(state) {
 	// package keys
 	const arrangedPackage = arrangekeys(
 		packageData,
-		'title name version private description homepage license keywords badges author sponsors maintainers contributors bugs repository engines editions bin preferGlobal types main browser dependencies devDependencies optionalDependencies peerDependencies scripts babel'
+		'title name version private description homepage license keywords badges author sponsors maintainers contributors bugs repository engines editions bin preferGlobal types main browser dependencies optionalDependencies devDependencies peerDependencies scripts now eslintConfig prettier babel'
 	)
 
 	// ---------------------------------
@@ -527,7 +549,7 @@ async function updatePackageData(state) {
 
 	// badges
 	const removeBadges = ['gratipay']
-	if (bevryOrganisationsList.has(answers.organisation)) {
+	if (bevryOrganisationsList.includes(answers.organisation)) {
 		packageData.badges = {
 			list: [
 				'travisci',
@@ -576,9 +598,16 @@ async function updatePackageData(state) {
 		removeBadges.push('npmversion', 'npmdownloads', 'daviddm', 'daviddmdev')
 	}
 
-	// apply removals
-	packageData.badges.list = packageData.badges.list.without(removeBadges)
+	// apply badge removals
+	packageData.badges.list = without(packageData.badges.list, removeBadges)
 	delete packageData.badges.gratipayUsername
+
+	// apply preferGlobal if desired
+	if (answers.binEntry) {
+		packageData.preferGlobal = true
+	} else {
+		delete packageData.preferGlobal
+	}
 
 	// note
 	status('...customised package data')
@@ -599,14 +628,17 @@ module.exports = {
 	getPackageDocumentationDependency,
 	getPackageFlowtypeDependency,
 	getPackageKeywords,
-	getPackageMainEntry,
 	getPackageModules,
 	getPackageName,
 	getPackageNodeEngineVersion,
 	getPackageOrganisation,
 	getPackageRepoUrl,
+	getPackageMainEntry,
 	getPackageTestEntry,
+	getPackageBinEntry,
+	hasEditions,
 	hasMultipleEditions,
+	hasDocumentation,
 	isPackageCoffee,
 	isPackageDocPadPlugin,
 	isPackageDocPadWebsite,

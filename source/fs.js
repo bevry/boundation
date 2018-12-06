@@ -25,7 +25,7 @@ function unlink(file) {
 	return new Promise(function(resolve, reject) {
 		fsUtil.unlink(file, function(error) {
 			if (error) {
-				if (error.message && error.message.has('ENOENT')) return resolve()
+				if (error.message && error.message.includes('ENOENT')) return resolve()
 				return reject(error)
 			}
 			return resolve()

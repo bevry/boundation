@@ -45,6 +45,11 @@ class Edition {
 			writable: true
 		})
 
+		Object.defineProperty(this, 'bin', {
+			enumerable: false,
+			writable: true
+		})
+
 		Object.defineProperty(this, 'mainPath', {
 			enumerable: false,
 			get() {
@@ -56,6 +61,13 @@ class Edition {
 			enumerable: false,
 			get() {
 				return pathUtil.join(this.directory || '.', this.test)
+			}
+		})
+
+		Object.defineProperty(this, 'binPath', {
+			enumerable: false,
+			get() {
+				return pathUtil.join(this.directory || '.', this.bin)
 			}
 		})
 
@@ -72,7 +84,7 @@ async function generateEditions(state) {
 	status('updating editions...')
 
 	// handle
-	if (answers.website) {
+	if (answers.website || answers.sourceDirectory === '.') {
 		status('skipped editions')
 		delete packageData.main
 	} else {
@@ -87,6 +99,7 @@ async function generateEditions(state) {
 					directory: answers.sourceDirectory,
 					main: `${answers.mainEntry}.js`,
 					test: `${answers.testEntry}.js`,
+					bin: `${answers.binEntry}.js`,
 					tags: ['javascript', 'esnext'],
 					engines: {
 						node: true,
@@ -109,6 +122,7 @@ async function generateEditions(state) {
 					directory: answers.sourceDirectory,
 					main: `${answers.mainEntry}.ts`,
 					test: `${answers.testEntry}.ts`,
+					bin: `${answers.binEntry}.js`,
 					tags: ['typescript', 'import'],
 					engines: false
 				})
@@ -144,6 +158,7 @@ async function generateEditions(state) {
 					directory: answers.sourceDirectory,
 					main: `${answers.mainEntry}.coffee`,
 					test: `${answers.testEntry}.coffee`,
+					bin: `${answers.binEntry}.coffee`,
 					tags: ['coffeescript', 'require'],
 					engines: false
 				}),
@@ -151,6 +166,7 @@ async function generateEditions(state) {
 					directory: 'edition-esnext',
 					main: `${answers.mainEntry}.js`,
 					test: `${answers.testEntry}.js`,
+					bin: `${answers.binEntry}.js`,
 					tags: ['javascript', 'esnext', 'require'],
 					engines: {
 						node: true,
@@ -170,6 +186,7 @@ async function generateEditions(state) {
 					directory: answers.sourceDirectory,
 					main: `${answers.mainEntry}.json`,
 					test: `${answers.testEntry}.js`,
+					bin: `${answers.binEntry}.js`,
 					tags: ['json'],
 					engines: {
 						node: true,
@@ -189,6 +206,7 @@ async function generateEditions(state) {
 					directory: 'edition-browsers',
 					main: `${answers.mainEntry}.js`,
 					test: `${answers.testEntry}.js`,
+					bin: `${answers.binEntry}.js`,
 					tags: ['javascript', 'require'],
 					targets: {
 						browsers: answers.browsers
@@ -203,54 +221,26 @@ async function generateEditions(state) {
 
 		// Add the compiled editions if necessary
 		if (babel) {
-			editions.push(
-				new Edition({
-					directory: `edition-node-${answers.maximumSupportNodeVersion}`,
-					main: `${answers.mainEntry}.js`,
-					test: `${answers.testEntry}.js`,
-					tags: ['javascript', 'require'],
-					targets: {
-						node: answers.maximumSupportNodeVersion
-					},
-					engines: {
-						node: '>=' + answers.maximumSupportNodeVersion,
-						browsers: false
-					}
-				})
-			)
-			if (answers.maximumSupportNodeVersion !== answers.desiredNodeVersion) {
+			// max should be first, as it is our most desired compilation target for editions
+			// e.g. node 11 (max), node 10 (desired), node 0.12 (min)
+			const versions = new Set([
+				answers.maximumSupportNodeVersion,
+				answers.desiredNodeVersion,
+				answers.minimumSupportNodeVersion
+			])
+			for (const version of versions) {
 				editions.push(
 					new Edition({
-						directory: `edition-node-${answers.desiredNodeVersion}`,
+						directory: `edition-node-${version}`,
 						main: `${answers.mainEntry}.js`,
 						test: `${answers.testEntry}.js`,
+						bin: `${answers.binEntry}.js`,
 						tags: ['javascript', 'require'],
 						targets: {
-							node: answers.desiredNodeVersion
+							node: version
 						},
 						engines: {
-							node: '>=' + answers.desiredNodeVersion,
-							browsers: false
-						}
-					})
-				)
-			}
-			if (
-				answers.maximumSupportNodeVersion !==
-					answers.minimumSupportNodeVersion &&
-				answers.desiredNodeVersion !== answers.minimumSupportNodeVersion
-			) {
-				editions.push(
-					new Edition({
-						directory: `edition-node-${answers.minimumSupportNodeVersion}`,
-						main: `${answers.mainEntry}.js`,
-						test: `${answers.testEntry}.js`,
-						tags: ['javascript', 'require'],
-						targets: {
-							node: answers.minimumSupportNodeVersion
-						},
-						engines: {
-							node: '>=' + answers.minimumSupportNodeVersion,
+							node: true,
 							browsers: false
 						}
 					})
@@ -260,26 +250,35 @@ async function generateEditions(state) {
 
 		// autogenerate various fields
 		editions.forEach(function(edition) {
+			const browserVersion =
+				(edition.targets && edition.targets.browsers) ||
+				(edition.engines && edition.engines.browsers)
+			const nodeVersion =
+				(edition.targets && edition.targets.node) ||
+				(edition.engines && edition.engines.node)
 			// ensure description exists
 			if (!edition.description) {
 				if (edition.directory === answers.sourceDirectory) {
 					edition.description = `${answers.language} source code`
-				} else if (edition.engines && edition.engines.browsers) {
+				} else if (browserVersion) {
 					edition.description = `${answers.language} compiled for browsers`
-					if (edition.engines.browsers !== 'defaults') {
-						edition.description += ` [${answers.browsers}]`
+					if (
+						typeof browserVersion === 'string' &&
+						browserVersion !== 'defaults'
+					) {
+						edition.description += ` [${browserVersion}]`
 					}
-				} else if (edition.engines && edition.engines.node) {
+				} else if (nodeVersion) {
 					edition.description = `${answers.language} compiled for node.js`
-					if (typeof edition.engines.node === 'string') {
-						edition.description += ` ${edition.engines.node}`
+					if (typeof nodeVersion === 'string') {
+						edition.description += ` ${nodeVersion}`
 					}
 				} else {
 					edition.description = `${answers.language} compiled` // for node.js >=${answers.minimumSupportNodeVersion}`
 				}
-				if (edition.tags.has('require')) {
+				if (edition.tags.includes('require')) {
 					edition.description += ' with require for modules'
-				} else if (edition.tags.has('import')) {
+				} else if (edition.tags.includes('import')) {
 					edition.description += ' with import for modules'
 				}
 			}
@@ -314,7 +313,8 @@ async function generateEditions(state) {
 							],
 							plugins: [
 								'@babel/proposal-class-properties',
-								'@babel/proposal-object-rest-spread'
+								'@babel/proposal-object-rest-spread',
+								'add-module-exports'
 							]
 						}
 					}
@@ -330,6 +330,21 @@ async function generateEditions(state) {
 					edition.scripts = {
 						[`our:compile:${edition.directory}`]: parts.join(' ')
 					}
+				}
+			}
+
+			// convert babel to default
+			if (edition.babel === true) {
+				edition.babel = {
+					presets: [
+						[
+							'@babel/preset-env',
+							{
+								targets: edition.targets
+							}
+						]
+					],
+					plugins: ['@babel/proposal-object-rest-spread']
 				}
 			}
 		})

@@ -1,21 +1,13 @@
 /* eslint no-console:0 */
 'use strict'
 
+const Errlop = require('errlop')
+
 /**
  * @param {Error} error
- * @returns {string}
- */
-function stackOrMessage(error) {
-	return error.stack ? `\n${error.stack}` : error.toString()
-}
-
-/**
- * @param {Error} reason
  * @returns {void}
  */
-function unhandledRejection(reason) {
-	console.error(`\nA promise FAILED with: ${stackOrMessage(reason)}`)
+function unhandledRejection(error) {
+	console.error(new Errlop('An unhandled promise failed', error))
 	process.exit(-1)
 }
-
-module.exports = { stackOrMessage, unhandledRejection }

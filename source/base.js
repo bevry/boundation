@@ -4,7 +4,7 @@
 // Local
 const { status } = require('./log')
 const { exists, write, read, rename, unlink } = require('./fs')
-const { stackOrMessage } = require('./error')
+const Errlop = require('errlop')
 
 // External
 const fetch = require('node-fetch')
@@ -40,9 +40,7 @@ async function download(opts) {
 		}
 		return write(file, data)
 	} catch (err) {
-		return Promise.reject(
-			new Error(`Download of ${opts.url} FAILED due to: ${stackOrMessage(err)}`)
-		)
+		return Promise.reject(new Errlop(`Download of ${opts.url} FAILED`, err))
 	}
 }
 
@@ -95,6 +93,7 @@ async function updateBaseFiles({ answers, packageData }) {
 	status('...renamed old files')
 
 	status('downloading files...')
+	/** @type {Array<string | Object<string, any>} */
 	const downloads = [
 		'https://raw.githubusercontent.com/bevry/base/master/.editorconfig',
 		{
@@ -118,17 +117,12 @@ async function updateBaseFiles({ answers, packageData }) {
 	} else {
 		await unlink('.npmignore')
 	}
-	if (answers.languages.has('css')) {
+	if (answers.languages.includes('css')) {
 		downloads.push(
 			'https://raw.githubusercontent.com/bevry/base/master/.stylelintrc.js'
 		)
 	} else {
 		await unlink('.stylelintrc.js')
-	}
-	if (answers.languages.has('esnext') || answers.languages.has('typescript')) {
-		downloads.push(
-			'https://raw.githubusercontent.com/bevry/base/master/.eslintrc.js'
-		)
 	}
 	if (answers.flowtype) {
 		downloads.push(
@@ -137,7 +131,7 @@ async function updateBaseFiles({ answers, packageData }) {
 	} else {
 		await unlink('.flowconfig')
 	}
-	if (answers.languages.has('coffeescript')) {
+	if (answers.languages.includes('coffeescript')) {
 		downloads.push(
 			'https://raw.githubusercontent.com/bevry/base/34fc820c8d87f1f21706ce7e26882b6cd5437368/coffeelint.json'
 		)

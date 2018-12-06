@@ -35,6 +35,10 @@ function repoToProject(input = '') {
 	return (input && repoToSlug(input).split('/')[1]) || ''
 }
 
+function without(list, blacklist) {
+	return list.filter(value => blacklist.includes(value) === false)
+}
+
 module.exports = {
 	trim,
 	slugit,
@@ -44,5 +48,6 @@ module.exports = {
 	repoToWebsite,
 	repoToSlug,
 	repoToOrganisation,
-	repoToProject
+	repoToProject,
+	without
 }

@@ -1,8 +1,9 @@
 /* eslint no-sync:0, camelcase:0, no-console:0 */
 'use strict'
 
-// Extend
-require('./extensions')
+// unhandledRejection
+const { unhandledRejection } = require('./error')
+process.on('unhandledRejection', unhandledRejection)
 
 // Local
 const { status, success } = require('./log')
@@ -14,11 +15,14 @@ const { updateBaseFiles } = require('./base')
 const { generateEditions } = require('./editions')
 const { updateWebsite } = require('./website')
 const { updateRuntime } = require('./runtime')
+const { updateVersions } = require('./versions')
 
 async function init(state) {
 	await readPackage(state)
 
 	await getAnswers(state)
+
+	await updateVersions(state)
 
 	await updatePackageData(state)
 

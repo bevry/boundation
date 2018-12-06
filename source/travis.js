@@ -11,8 +11,6 @@ const curlFlags = '-fsSL'
 
 // Local
 const { status } = require('./log')
-const { allNodeVersions } = require('./data')
-const { versionComparator } = require('./version')
 const { getGithubCommit } = require('./get-github-commit')
 const { spawn, write } = require('./fs')
 
@@ -21,29 +19,12 @@ const yaml = require('js-yaml')
 
 // Thing
 async function updateTravis(state) {
-	const { answers } = state
+	const { answers, nodeVersions, unsupportedNodeVersions } = state
 
 	// =================================
 	// customise travis
 
 	status('customising travis...')
-
-	// fetch node versions
-	state.nodeVersions = allNodeVersions.filter(
-		version =>
-			versionComparator(version, answers.minimumTestNodeVersion) >= 0 &&
-			versionComparator(version, answers.maximumTestNodeVersion) <= 0
-	)
-	state.unsupportedNodeVersions = state.nodeVersions.filter(
-		version =>
-			versionComparator(version, answers.minimumSupportNodeVersion) < 0 ||
-			versionComparator(version, answers.maximumSupportNodeVersion) > 0
-	)
-	state.supportedNodeVersions = state.nodeVersions.filter(
-		version =>
-			versionComparator(version, answers.minimumSupportNodeVersion) >= 0 &&
-			versionComparator(version, answers.maximumSupportNodeVersion) <= 0
-	)
 
 	// prepare
 	/* eslint camelcase:0 */
@@ -51,10 +32,10 @@ async function updateTravis(state) {
 	const travis = {
 		sudo: false,
 		language: 'node_js',
-		node_js: state.nodeVersions,
+		node_js: nodeVersions,
 		matrix: {
 			fast_finish: true,
-			allow_failures: state.unsupportedNodeVersions.map(version => ({
+			allow_failures: unsupportedNodeVersions.map(version => ({
 				node_js: version
 			}))
 		},
@@ -69,7 +50,7 @@ async function updateTravis(state) {
 		],
 		after_success: []
 	}
-	let com, org, used, clearFlag, usedFlag, unusedFlag
+	let com, org, clearFlag, usedFlag, unusedFlag
 
 	// travis env variables
 	// these spawns must be run serially, as otherwise not all variables may be written, which is annoying
