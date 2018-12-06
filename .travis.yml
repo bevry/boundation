@@ -12,12 +12,12 @@ cache:
   - "$HOME/.npm"
   - "$HOME/.yarn-cache"
 install:
-- eval "$(curl -fsSL https://raw.githubusercontent.com/bevry/awesome-travis/780c2ca06741f08229e40609614a0d045bcfdc6a/scripts/node-install.bash)"
+- eval "$(curl -fsSL https://raw.githubusercontent.com/bevry/awesome-travis/166faa4ea598a807629e87949e6085ef467e6560/scripts/node-install.bash)"
 before_script:
-- eval "$(curl -fsSL https://raw.githubusercontent.com/bevry/awesome-travis/780c2ca06741f08229e40609614a0d045bcfdc6a/scripts/node-verify.bash)"
+- eval "$(curl -fsSL https://raw.githubusercontent.com/bevry/awesome-travis/166faa4ea598a807629e87949e6085ef467e6560/scripts/node-verify.bash)"
 after_success:
-- eval "$(curl -fsSL https://raw.githubusercontent.com/bevry/awesome-travis/780c2ca06741f08229e40609614a0d045bcfdc6a/scripts/node-publish.bash)"
+- eval "$(curl -fsSL https://raw.githubusercontent.com/bevry/awesome-travis/166faa4ea598a807629e87949e6085ef467e6560/scripts/node-publish.bash)"
 notifications:
   email:
     recipients:
-      secure: JeCaEyMX48Wy40eLSITWW7lp7tw+Y48IIrWl+rUiuDsjssR2Z0m62cs7tiE9rkKTQNOYHL6e4fNQH6rcWbsZGcHA5VpwyddagfeQqMDTbAHjqbIWjYdtL47zeZm+tllly5EpbehQZIYLGrZdNi5w4nFMUlAQTRTuvP/YfGvhz6XHUr7Mn0vDGEak6vJOjdogEhO+tRpuZq/zyd2QReg0GsKZZFeIld2zcZuikI2WWqPLpgVnXyOlobs5QyXj01tvhEI383VMrfo4b5R+O0dsU6K0n8v9tUYN0HUs8sU09ClTQYsvPTFNoT56TuRGePeKJmZugzyCveIc8xy/3d3BqVZ8KV+DLi+Pm0KTHq5GdkVGKnsPacEyjWvq0FLIsYanOIPAIC8fWAF9U1tJ+ik/mYt7xUcSMg1zPiLVtTrwvTCk/cIpbMXVtfj1iPJXwoHyeCIgqUk+XnYZ8V5CmhVgW7xj9Zkv5M19+N+4JVuZ0Lnltjq+rUQ1KfhUGsPQgZvb6WLm/1B8f+WKeyGOKaCSCSmIpSWACu//HlFzilIh4muCswya/mUoF1LNylQpE10wmFdWcHGbWd8mz5s4gxKprPJVVYtBWG5GdTqGnKTEuiC9hfuqmV1x6wGIvBD2nedl8H/kANvIkrtLDcWfknur0qzZzrEURqocRriijEgLvWk=
+      secure: UqQuazt4u6Ip6Ii/oO0ePnBZ1DG36iGymeG58DCP5metGiRcmXJC4pUSqXbajjWu2mR9Xi7Djk1lvfVEeJYX75GSY8ATV8nFoukFQK16VlRgOEYS+DOPRCkg0SwDsPwYFVQ2mPi0tiYwQdH6JwTv6nvIvnaYtgmTOnGkiMzDgY21Jp+jRfVXVzQJwsthzJVf3Arm/RoybU8xonEFb51IyCC5r83Y9mQuQa0V0BOF3+GUdT47/8p069mZiXp2l/uptY4hJBMCioye1UitF2IUPrLBYAwDJE2C9sICrOsDeQuG0eOmrq6Zu7elP2cINMVEcHJC0lg9uAk8/kKk8XOsz/1LZdP/lE4yX1Ga/Q7EhQg064soc3NUBP/aWFt/f6PvmxSfIrm45it7qBnP2gSWGPKYaj2n/eDNJGV0BGQn8V7FuaOLqVxzlOJn//lBFejcrnxScColRI1E+YuHq7zl3SQi57yJW7CHl/CxESzTQhX4U1k+35aO1RpKAQy1huYXEnOvf9b54YLtzTNJ4y6D6Li68jxRDmwrWfIPx50BV/ulenJoqutri0KqE2rLHThWDzoOydIuh+6c7xBP2cuTzKVA9+96iZWDnolWfdZDx3lk14cSnVNkQobUphV+D3B+suJHDZfHI/WTc2bqDBQkshDPebdUwFZP3wTxZJjEsFU=

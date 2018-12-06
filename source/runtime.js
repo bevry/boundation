@@ -423,11 +423,11 @@ async function updateRuntime(state) {
 	const packages = {
 		projectz: 'dev',
 		'assert-helpers': false,
-		kava: false,
 		joe: false,
-		'joe-examples': false,
-		'joe-reporter-console': false,
-		'joe-reporter-list': false,
+		kava: false,
+		'kava-examples': false,
+		'kava-reporter-console': false,
+		'kava-reporter-list': false,
 		editions: state.useEditionAutoloader,
 		surge: false,
 		now: false,
@@ -792,13 +792,13 @@ async function updateRuntime(state) {
 	)
 	status('...removed old files')
 
-	// joe to kava
+	// kava to kava
 	if (packageData.name !== 'kava') {
-		status('renaming joe to kava...')
+		status('renaming kava to kava...')
 		await exec(
-			`bash -O nullglob -O globstar -c "sed -i '' -e 's/joe/kava/g' ${sourceGlob}"`
+			`bash -O nullglob -O globstar -c "sed -i '' -e 's/kava/kava/g' ${sourceGlob}"`
 		)
-		status('...renamed joe to kava')
+		status('...renamed kava to kava')
 	}
 
 	// tsconfig
