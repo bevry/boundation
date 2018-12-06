@@ -1,5 +1,41 @@
 # History
 
+## v1.20.0 2018 December 7
+
+-   question flow now skips questions which we already know the answer to, and ignores questions that are not applicable, while outputting their inferred result, this offers greater reliability and comprehension and speeds things up for the user
+-   updated travis to support travis .com and .org, with appropriate detection of availability
+-   added support for bin entries
+
+-   tooling changes
+
+    -   adaopted prettier
+    -   move to eslint-config-bevry
+        -   support the plugins it adapts to
+        -   remove the old eslintrc file
+    -   add babel-plugin-add-module-exports to ensure compatibility between import/require
+    -   move from joe to kava, which simplifies test running, also do code renames accordingly
+
+-   package changes
+
+    -   fix scripts that utilise globs
+    -   added documentation detection
+    -   better basename detection
+    -   trim empty objects in package.json writes
+    -   add sorting for new keys
+    -   support preferGlobal if bin entry was provided
+    -   remove the installation of self altogether, rather than just for specific instances
+    -   remove dependencies before adding dependencies
+        -   fixes adding babel, then removing the old babel, which makes the babel cli unavailable
+    -   fix scripts that utilise globs
+
+-   editions changes
+    -   support for `.` source directory
+    -   better desription support for node and browser targets
+    -   better non-edition support for entry, browser, test, and bin
+    -   edition detection is now more accurate, reliable, and less complicated
+        -   fixes case where say edition-0.12 runs only for node 0.12, before its engines would be set to >=0.12, when now its engines are just what it supports
+        -   also fixes issue where editions that support older versions, but not their target, were getting trimmed, despite their need
+
 ## v1.19.0 2018 November 16
 
 -   Added support for editions v2.1

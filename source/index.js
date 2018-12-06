@@ -2,8 +2,7 @@
 'use strict'
 
 // unhandledRejection
-const { unhandledRejection } = require('./error')
-process.on('unhandledRejection', unhandledRejection)
+require('./extensions')
 
 // Local
 const { status, success } = require('./log')
