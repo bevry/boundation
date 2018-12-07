@@ -215,7 +215,11 @@ async function updateEngines(state) {
 		console.log(`The project supports the extra versions: ${extra.join(', ')}`)
 	}
 
-	packageData.engines.node = '>=' + passed[0]
+	if (answers.website && passed.length === 1) {
+		packageData.engines.node = passed[0]
+	} else {
+		packageData.engines.node = '>=' + passed[0]
+	}
 
 	// =================================
 	// update the package.json file
@@ -522,7 +526,7 @@ async function updateRuntime(state) {
 	}
 	// docpad website
 	else if (answers.docpadWebsite) {
-		packages.docpad = 'dev'
+		packages.docpad = true
 		state.scripts.test = 'docpad generate --env static'
 	}
 
@@ -793,7 +797,7 @@ async function updateRuntime(state) {
 	status('...removed old files')
 
 	// kava to kava
-	if (packageData.name !== 'kava') {
+	if (packageData.name !== 'kava' && answers.website === false) {
 		status('renaming kava to kava...')
 		await exec(
 			`bash -O nullglob -O globstar -c "sed -i '' -e 's/kava/kava/g' ${sourceGlob}"`

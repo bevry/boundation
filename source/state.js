@@ -4,7 +4,8 @@ module.exports = {
 	travisTLD: null, // or "org" or "com"
 	answers: null,
 	cwd: process.cwd(),
-	packageData: null,
+	packageData: {},
+	nowData: {},
 	nodeVersions: null,
 	supportedNodeVersions: null,
 	unsupportedNodeVersions: null,

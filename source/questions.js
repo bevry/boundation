@@ -21,8 +21,6 @@ const {
 	getMinimumNodeLTSVersion
 } = require('./get-node')
 const {
-	getNowAliases,
-	getNowName,
 	getPackageProperty,
 	getPackageAuthor,
 	getPackageDescription,
@@ -38,19 +36,19 @@ const {
 	getPackageBinEntry,
 	isPackageCoffee,
 	isPackageDocPadPlugin,
-	isPackageDocPadWebsite,
 	isPackageJavaScript,
 	isPackageTypeScript,
 	isPackageJSON,
-	isPackageWebsite,
 	hasEditions,
 	hasDocumentation
 } = require('./package')
+const { getWebsiteType, getNowAliases, getNowName } = require('./website')
 
 // ====================================
 // Questions
 
-async function getQuestions({ packageData = {}, cwd }) {
+async function getQuestions(state) {
+	const { packageData, nowData, cwd } = state
 	const browsers = getPackageProperty(packageData, 'browsers')
 	const browser = Boolean(
 		browsers || getPackageProperty(packageData, 'browser')
@@ -63,6 +61,7 @@ async function getQuestions({ packageData = {}, cwd }) {
 	const maximumSupportNodeVersion = allNodeVersions[allNodeVersions.length - 1]
 	const minimumTestNodeVersion = allNodeVersions[0]
 	const maximumTestNodeVersion = allNodeVersions[allNodeVersions.length - 1]
+	const websiteType = getWebsiteType(state)
 	return [
 		{
 			name: 'name',
@@ -115,7 +114,7 @@ async function getQuestions({ packageData = {}, cwd }) {
 			name: 'website',
 			type: 'confirm',
 			message: 'Will this project be a website?',
-			default: isPackageWebsite(packageData) || false,
+			default: Boolean(websiteType),
 			skip({ website }) {
 				return website || editioned
 			}
@@ -124,7 +123,7 @@ async function getQuestions({ packageData = {}, cwd }) {
 			name: 'docpadWebsite',
 			type: 'confirm',
 			message: 'Will this website be generated using DocPad?',
-			default: isPackageDocPadWebsite(packageData) || false,
+			default: websiteType === 'docpad',
 			skip({ docpadWebsite }) {
 				return docpadWebsite || editioned
 			},
@@ -144,8 +143,8 @@ async function getQuestions({ packageData = {}, cwd }) {
 					isPackageTypeScript(packageData) && 'typescript',
 					isPackageCoffee(packageData) && 'coffeescript',
 					isPackageJSON(packageData) && 'json',
-					isPackageWebsite(packageData) && 'html',
-					isPackageWebsite(packageData) && 'css'
+					getWebsiteType(state) && 'html',
+					getWebsiteType(state) && 'css'
 				]
 					.filter(value => value)
 					.join(' ') || 'esnext'
@@ -413,8 +412,8 @@ async function getQuestions({ packageData = {}, cwd }) {
 			message: 'For deploying the website, what now name should be used?',
 			validate: isSpecified,
 			filter: trim,
-			default: getNowName(packageData) || (await getGitProject()),
-			skip: getNowName(packageData),
+			default: getNowName(nowData) || (await getGitProject()),
+			skip: getNowName(nowData),
 			ignore({ deploy }) {
 				return !deploy || !deploy.startsWith('now')
 			}
@@ -423,7 +422,7 @@ async function getQuestions({ packageData = {}, cwd }) {
 			name: 'nowAliases',
 			message: 'For deploying the website, what now aliases should be used?',
 			filter: trim,
-			default: getNowAliases(packageData),
+			default: getNowAliases(nowData).join(', '),
 			ignore({ deploy }) {
 				return !deploy || !deploy.startsWith('now')
 			}

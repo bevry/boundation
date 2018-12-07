@@ -12,12 +12,14 @@ const { updateTravis } = require('./travis')
 const { getAnswers } = require('./questions')
 const { updateBaseFiles } = require('./base')
 const { generateEditions } = require('./editions')
-const { updateWebsite } = require('./website')
+const { readWebsite, updateWebsite } = require('./website')
 const { updateRuntime } = require('./runtime')
 const { updateVersions } = require('./versions')
 
 async function init(state) {
 	await readPackage(state)
+
+	await readWebsite(state)
 
 	await getAnswers(state)
 

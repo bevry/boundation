@@ -23,24 +23,20 @@ const typeChecker = require('typechecker')
 // Fetchers
 
 function getPackageName(packageData) {
-	return (packageData && packageData.name) || null
+	return packageData.name || null
 }
 
 function getPackageDescription(packageData) {
-	return (packageData && packageData.description) || null
+	return packageData.description || null
 }
 
 function getPackageKeywords(packageData) {
-	return (
-		(packageData && packageData.keywords && packageData.keywords.join(', ')) ||
-		null
-	)
+	return (packageData.keywords && packageData.keywords.join(', ')) || null
 }
 
 function getPackageNodeEngineVersion(packageData) {
 	return (
-		(packageData &&
-			packageData.engines &&
+		(packageData.engines &&
 			packageData.engines.node &&
 			packageData.engines.node.replace(/[^0-9]+/, '')) ||
 		null
@@ -48,7 +44,7 @@ function getPackageNodeEngineVersion(packageData) {
 }
 
 function getPackageDocumentationDependency(packageData) {
-	if (packageData && packageData.devDependencies) {
+	if (packageData.devDependencies) {
 		if (
 			packageData.devDependencies.documentation ||
 			packageData.devDependencies.yuidocjs ||
@@ -62,8 +58,7 @@ function getPackageDocumentationDependency(packageData) {
 
 function getPackageFlowtypeDependency(packageData) {
 	return (
-		(packageData &&
-			packageData.devDependencies &&
+		(packageData.devDependencies &&
 			Boolean(packageData.devDependencies['flow-bin'])) ||
 		null
 	)
@@ -71,7 +66,6 @@ function getPackageFlowtypeDependency(packageData) {
 
 function hasSyntax(packageData, syntax) {
 	const edition =
-		packageData &&
 		packageData.editions &&
 		packageData.editions.length &&
 		packageData.editions[0]
@@ -84,47 +78,31 @@ function getPackageModules(packageData) {
 }
 
 function getPackageRepoUrl(packageData) {
-	return (
-		(packageData && packageData.repository && packageData.repository.url) ||
-		null
-	)
+	return (packageData.repository && packageData.repository.url) || null
 }
 
 function getPackageAuthor(packageData) {
-	return (packageData && packageData.author) || null
-}
-
-function getNowName(packageData) {
-	return (packageData && packageData.now && packageData.now.name) || null
-}
-
-// @todo add support for now.json
-function getNowAliases(packageData) {
-	return (
-		(packageData &&
-			packageData.now &&
-			Array.isArray(packageData.now.alias) &&
-			packageData.now.alias.join(' ')) ||
-		null
-	)
+	return packageData.author || null
 }
 
 function hasEditions(packageData) {
-	return (
-		packageData && packageData.editions && Boolean(packageData.editions.length)
-	)
+	return packageData.editions && Boolean(packageData.editions.length)
+}
+
+function getPackageScript(packageData, key) {
+	return (packageData.scripts && packageData.scripts[key]) || null
+}
+
+function hasPackageScript(packageData, key) {
+	return Boolean(getPackageScript(packageData, key))
 }
 
 function hasDocumentation(packageData) {
-	return (
-		packageData &&
-		packageData.scripts &&
-		Boolean(packageData.scripts['our:meta:docs'])
-	)
+	return hasPackageScript(packageData, 'our:meta:docs')
 }
 
 function hasMultipleEditions(packageData) {
-	if (packageData && packageData.editions) {
+	if (packageData.editions) {
 		return packageData.editions.length > 1
 	}
 	return null
@@ -152,7 +130,7 @@ function isPackageTypeScript(packageData) {
 }
 
 function isPackageJSON(packageData) {
-	return (packageData && /\.json$/.test(packageData.main)) || false
+	return /\.json$/.test(packageData.main) || false
 }
 
 function isPackageCoffee(packageData) {
@@ -176,7 +154,7 @@ function isPackageCoffee(packageData) {
 }
 
 function getPackageProperty(packageData, key) {
-	return packageData && packageData[key]
+	return packageData[key]
 }
 
 function getPackageOrganisation(packageData) {
@@ -184,31 +162,12 @@ function getPackageOrganisation(packageData) {
 }
 
 function isPackageDocPadPlugin(packageData) {
-	return (
-		packageData &&
-		packageData.name &&
-		packageData.name.startsWith('docpad-plugin-')
-	)
+	return packageData.name && packageData.name.startsWith('docpad-plugin-')
 }
 
-function isPackageWebsite(packageData) {
-	return (
-		(packageData && packageData.scripts && packageData.scripts.start) || false
-	)
-}
-
-function getPackageDependencies(packageData) {
-	if (packageData) {
-		return [].concat(
-			Object.keys(packageData.dependencies || {}),
-			Object.keys(packageData.devDependencies || {})
-		)
-	}
-	return []
-}
-
-function isPackageDocPadWebsite(packageData) {
-	return getPackageDependencies(packageData).includes('docpad')
+function hasPackageDependency(packageData, key) {
+	const { dependencies = {}, devDependencies = {} } = packageData
+	return Boolean(dependencies[key]) || Boolean(devDependencies[key])
 }
 
 function getBasename(path) {
@@ -242,7 +201,7 @@ function getPackageTestEntry(packageData) {
 }
 
 function getPackageBinEntry(packageData) {
-	return (packageData && getBasename(packageData.bin)) || null
+	return getBasename(packageData.bin) || null
 }
 
 // ====================================
@@ -429,35 +388,40 @@ async function readPackage(state) {
 	const { cwd } = state
 	const path = pathUtil.resolve(cwd, 'package.json')
 
-	const packageDataLocal = await parse(path)
-	if (!packageDataLocal) return packageDataLocal
-	state.packageData = packageDataLocal
+	// read
+	let packageData = {}
+	try {
+		if (await exists(path)) packageData = (await parse(path)) || {}
+	} catch (err) {}
 
-	// user scripts
+	// adjust
 	const userScripts = {}
-	if (packageDataLocal && packageDataLocal.scripts) {
+	if (packageData.scripts) {
 		// start
-		if (packageDataLocal.scripts.start) {
-			userScripts.start = packageDataLocal.scripts.start
+		if (packageData.scripts.start) {
+			userScripts.start = packageData.scripts.start
 		}
 
 		// deploy to my:deploy
-		if (packageDataLocal.scripts.deploy) {
-			userScripts['my:deploy'] = packageDataLocal.scripts.deploy
+		if (packageData.scripts.deploy) {
+			userScripts['my:deploy'] = packageData.scripts.deploy
 		}
 
 		// keep my:* scripts
-		Object.keys(packageDataLocal.scripts).forEach(function(key) {
+		Object.keys(packageData.scripts).forEach(function(key) {
 			if (key.startsWith('my:')) {
-				const value = packageDataLocal.scripts[key]
+				const value = packageData.scripts[key]
 				userScripts[key] = value
 			}
 		})
 	}
+
+	// apply
+	state.packageData = packageData
 	state.userScripts = userScripts
 
 	// return
-	return packageDataLocal
+	return packageData
 }
 
 async function writePackage(state) {
@@ -546,6 +510,7 @@ async function updatePackageData(state) {
 	delete packageData.nakeConfiguration
 	delete packageData.cakeConfiguration
 	delete packageData.directories
+	delete packageData.now
 
 	// badges
 	const removeBadges = ['gratipay']
@@ -617,34 +582,32 @@ async function updatePackageData(state) {
 }
 
 module.exports = {
-	readPackage,
-	writePackage,
-	getNowAliases,
-	getNowName,
-	getPackageProperty,
 	getPackageAuthor,
-	getPackageDependencies,
+	getPackageBinEntry,
 	getPackageDescription,
 	getPackageDocumentationDependency,
 	getPackageFlowtypeDependency,
 	getPackageKeywords,
+	getPackageMainEntry,
 	getPackageModules,
 	getPackageName,
 	getPackageNodeEngineVersion,
 	getPackageOrganisation,
+	getPackageProperty,
 	getPackageRepoUrl,
-	getPackageMainEntry,
+	getPackageScript,
 	getPackageTestEntry,
-	getPackageBinEntry,
+	hasDocumentation,
 	hasEditions,
 	hasMultipleEditions,
-	hasDocumentation,
+	hasPackageDependency,
+	hasPackageScript,
 	isPackageCoffee,
 	isPackageDocPadPlugin,
-	isPackageDocPadWebsite,
 	isPackageJavaScript,
-	isPackageTypeScript,
 	isPackageJSON,
-	isPackageWebsite,
-	updatePackageData
+	isPackageTypeScript,
+	readPackage,
+	updatePackageData,
+	writePackage
 }
