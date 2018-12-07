@@ -1,5 +1,9 @@
 # History
 
+## v1.22.0 2018 December 7
+
+-   fix `joe` to `kava` rename being ineffective (feature introduced in v1.20.0)
+
 ## v1.21.0 2018 December 7
 
 -   better support for now.sh websites

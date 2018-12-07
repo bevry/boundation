@@ -796,13 +796,13 @@ async function updateRuntime(state) {
 	)
 	status('...removed old files')
 
-	// kava to kava
+	// joe to kava
 	if (packageData.name !== 'kava' && answers.website === false) {
-		status('renaming kava to kava...')
+		status('renaming joe to kava...')
 		await exec(
-			`bash -O nullglob -O globstar -c "sed -i '' -e 's/kava/kava/g' ${sourceGlob}"`
+			`bash -O nullglob -O globstar -c "sed -i '' -e 's/joe/kava/g' ${sourceGlob}"`
 		)
-		status('...renamed kava to kava')
+		status('...renamed joe to kava')
 	}
 
 	// tsconfig
