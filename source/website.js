@@ -8,15 +8,15 @@ function getNowName(nowData) {
 	return nowData.name || null
 }
 
-function getNowAliases(nowData) {
-	return parseNowAliases(nowData.alias) || []
-}
-
 function parseNowAliases(alias) {
 	if (alias) {
 		return Array.isArray(alias) ? alias : alias.split(/[,\s]+/)
 	}
 	return null
+}
+
+function getNowAliases(nowData) {
+	return parseNowAliases(nowData.alias) || []
 }
 
 function getWebsiteType({ packageData, nowData }) {
