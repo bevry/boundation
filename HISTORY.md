@@ -1,5 +1,9 @@
 # History
 
+## v1.21.0 2018 December 7
+
+-   better support for now.sh websites
+
 ## v1.20.0 2018 December 7
 
 -   question flow now skips questions which we already know the answer to, and ignores questions that are not applicable, while outputting their inferred result, this offers greater reliability and comprehension and speeds things up for the user
