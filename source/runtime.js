@@ -823,7 +823,10 @@ async function updateRuntime(state) {
 				// Disallow features that require cross-file information for emit.
 				isolatedModules: true,
 				// Import non-ES modules as default imports.
-				esModuleInterop: true
+				esModuleInterop: true,
+				// Allow .ts files to make use of jsdoc'd .js files.
+				// https://github.com/Microsoft/TypeScript/issues/29056#issuecomment-448386794
+				maxNodeModuleJsDepth: 5
 			},
 			include: [answers.sourceDirectory]
 		}
