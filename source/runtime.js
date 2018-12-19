@@ -26,9 +26,6 @@ function nodeMajorVersion(value) {
 function nodeMajorVersions(array) {
 	return array.map(version => nodeMajorVersion(version))
 }
-function addLatest(array) {
-	return array.map(item => `${item}@latest`)
-}
 
 // function completeVersion (value) {
 // 	const version = value.toString()
@@ -371,13 +368,6 @@ async function scaffoldEditions(state) {
 			delete packageData.browser
 		}
 
-		// types
-		if (answers.language === 'typescript') {
-			packageData.types = sourceEdition.mainPath
-		} else {
-			delete packageData.types
-		}
-
 		// log
 		status('...scaffolded edition files')
 	} else {
@@ -482,6 +472,7 @@ async function updateRuntime(state) {
 				? 'dev'
 				: false
 	}
+	const versions = {}
 
 	// add our default scripts
 	state.scripts = {
@@ -520,7 +511,7 @@ async function updateRuntime(state) {
 		packages['docpad-plugintester'] = packages.docpad = 'dev'
 		state.scripts.test = 'docpad-plugintester'
 		if (packageData.peerDependencies) {
-			// it is readded later, @todo why?
+			// it is read later, @todo why?
 			delete packageData.peerDependencies.docpad
 		}
 	}
@@ -581,6 +572,9 @@ async function updateRuntime(state) {
 			'eslint',
 			'--fix',
 			"--ignore-pattern '**/*.d.ts'",
+			"--ignore-pattern '**/vendor/'",
+			"--ignore-pattern '**/node_modules/'",
+			'--ext .mjs,.js,.jsx,.ts,.tsx',
 			`'${sourceGlob}'`
 		].join(' ')
 	}
@@ -592,28 +586,47 @@ async function updateRuntime(state) {
 		] = 'dev'
 		state.scripts['our:verify:typescript'] = 'tsc --project .'
 	}
+	if (answers.language === 'typescript') {
+		state.scripts['our:compile:types'] =
+			'tsc --isolatedModules false --noEmit false --allowJs false --declaration  --emitDeclarationOnly --outFile index --project .'
+		packageData.types = 'index.d.ts'
+	} else {
+		delete packageData.types
+	}
 
 	// documentation
 	if (answers.docs) {
 		// typescript
-		if (answers.language === 'typescript') {
+		if (answers.languages.includes('typescript')) {
 			packages.typedoc = 'dev'
-			state.scripts['our:meta:docs'] = [
+			// https://github.com/TypeStrong/typedoc/issues/913
+			if (answers.language !== 'typescript') {
+				versions.typedoc = 'TypeStrong/typedoc#fix/ignore-excluded-imports'
+			}
+			state.scripts['our:meta:docs:typedoc'] = [
+				'rm -Rf ./docs',
+				'&&',
 				'typedoc',
+				// use includeDeclarations if we are not a typescript project
+				answers.language === 'typescript' ? '' : '--includeDeclarations',
 				'--mode file',
-				"--exclude '**/*test*'",
+				"--exclude '**/+(*test*|node_modules)/**'",
 				'--name "$npm_package_name"',
 				'--readme ./README.md',
 				'--out ./docs',
 				`${sourcePath}`
-			].join(' ')
+			]
+				.filter(v => v)
+				.join(' ')
 		}
 		// coffeescript
-		else if (answers.language === 'coffescript') {
+		if (answers.languages.includes('coffescript')) {
 			// biscotto
 			if (packageData.devDependencies.biscotto) {
 				packages.biscotto = 'dev'
-				state.scripts['our:meta:biscotto'] = [
+				state.scripts['our:meta:docs:biscotto'] = [
+					'rm -Rf ./docs',
+					'&&',
 					'biscotto',
 					'-n "$npm_package_name"',
 					'--title "$npm_package_name API Documentation"',
@@ -626,7 +639,9 @@ async function updateRuntime(state) {
 			// yuidoc
 			else {
 				packages.yuidocjs = 'dev'
-				state.scripts['our:meta:yuidoc'] = [
+				state.scripts['our:meta:docs:yuidoc'] = [
+					'rm -Rf ./docs',
+					'&&',
 					'yuidoc',
 					'-o ./docs',
 					'--syntaxtype coffee',
@@ -636,10 +651,10 @@ async function updateRuntime(state) {
 			}
 		}
 		// esnext
-		else if (answers.language === 'esnext') {
+		if (answers.languages.includes('esnext')) {
 			packages.jsdoc = 'dev'
 			packages.minami = 'dev'
-			state.scripts['our:meta:docs'] = [
+			state.scripts['our:meta:docs:jsdoc'] = [
 				'rm -Rf ./docs',
 				'&&',
 				'jsdoc',
@@ -732,6 +747,11 @@ async function updateRuntime(state) {
 			(packageData.dependencies[key] || packageData.devDependencies[key])
 	)
 
+	// helper
+	function addVersion(array) {
+		return array.map(item => `${item}@${versions[item] || 'latest'}`)
+	}
+
 	// remove deps
 	if (removeDependencies.length) {
 		status('remove old dependencies...')
@@ -744,7 +764,7 @@ async function updateRuntime(state) {
 	if (addDependencies.length) {
 		status('adding the dependencies...')
 		const command = ['npm', 'install', '--save'].concat(
-			addLatest(addDependencies)
+			addVersion(addDependencies)
 		)
 		console.log(command.join(' '))
 		await spawn(command)
@@ -754,7 +774,7 @@ async function updateRuntime(state) {
 	if (addDevDependencies.length) {
 		status('adding the development dependencies...')
 		const command = ['npm', 'install', '--save-dev'].concat(
-			addLatest(addDevDependencies)
+			addVersion(addDevDependencies)
 		)
 		console.log(command.join(' '))
 		await spawn(command)
@@ -806,9 +826,10 @@ async function updateRuntime(state) {
 	}
 
 	// tsconfig
-	if (answers.language === 'typescript') {
+	if (answers.languages.includes('typescript')) {
 		status('writing tsconfig file...')
 		const tsconfig = {
+			// https://blogs.msdn.microsoft.com/typescript/2018/08/27/typescript-and-babel-7/
 			compilerOptions: {
 				// Target latest version of ECMAScript.
 				target: 'esnext',
@@ -821,7 +842,7 @@ async function updateRuntime(state) {
 				// Enable strictest settings like strictNullChecks & noImplicitAny.
 				strict: true,
 				// Disallow features that require cross-file information for emit.
-				isolatedModules: true,
+				isolatedModules: answers.language === 'typescript',
 				// Import non-ES modules as default imports.
 				esModuleInterop: true,
 				// Allow .ts files to make use of jsdoc'd .js files.

@@ -207,10 +207,8 @@ async function generateEditions(state) {
 					main: `${answers.mainEntry}.js`,
 					test: `${answers.testEntry}.js`,
 					bin: `${answers.binEntry}.js`,
-					tags: ['javascript', 'require'],
-					targets: {
-						browsers: answers.browsers
-					},
+					tags: ['javascript', answers.modules ? 'import' : 'require'],
+					targets: answers.browsers,
 					engines: {
 						node: false,
 						browsers: answers.browsers
@@ -256,6 +254,63 @@ async function generateEditions(state) {
 			const nodeVersion =
 				(edition.targets && edition.targets.node) ||
 				(edition.engines && edition.engines.node)
+
+			// add compilation details
+			if (
+				edition.directory !== answers.sourceDirectory &&
+				edition.targets &&
+				!edition.scripts
+			) {
+				if (answers.language === 'coffeescript') {
+					// add coffee compile script
+					edition.babel = true
+					edition.scripts = {
+						[`our:compile:${edition.directory}`]: `env BABEL_ENV=${
+							edition.directory
+						} coffee -bcto ./${edition.directory}/ ./${answers.sourceDirectory}`
+					}
+				} else {
+					// add custom babel env
+					edition.babel = true
+
+					// add babel compile script
+					const parts = [
+						`env BABEL_ENV=${edition.directory}`,
+						'babel',
+						answers.language === 'typescript' ? '--extensions ".ts,.tsx"' : '',
+						`--out-dir ./${edition.directory}`,
+						`./${answers.sourceDirectory}`
+					].filter(part => part)
+					edition.scripts = {
+						[`our:compile:${edition.directory}`]: parts.join(' ')
+					}
+				}
+			}
+
+			// populate babel
+			if (edition.babel === true) {
+				edition.babel = {
+					sourceType: answers.modules ? 'module' : 'script',
+					presets: [
+						[
+							'@babel/preset-env',
+							{
+								targets: edition.targets,
+								modules: edition.tags.includes('import') ? false : 'commonjs'
+							}
+						]
+					],
+					plugins: ['@babel/proposal-object-rest-spread']
+				}
+				if (answers.language === 'typescript') {
+					edition.babel.presets.push('@babel/preset-typescript')
+					edition.babel.plugins.push(
+						'@babel/proposal-class-properties',
+						'add-module-exports'
+					)
+				}
+			}
+
 			// ensure description exists
 			if (!edition.description) {
 				if (edition.directory === answers.sourceDirectory) {
@@ -280,71 +335,6 @@ async function generateEditions(state) {
 					edition.description += ' with require for modules'
 				} else if (edition.tags.includes('import')) {
 					edition.description += ' with import for modules'
-				}
-			}
-
-			// add compilation details
-			if (
-				edition.directory !== answers.sourceDirectory &&
-				edition.targets &&
-				!edition.scripts
-			) {
-				if (answers.language === 'coffeescript') {
-					// add coffee compile script
-					edition.babel = true
-					edition.scripts = {
-						[`our:compile:${edition.directory}`]: `env BABEL_ENV=${
-							edition.directory
-						} coffee -bcto ./${edition.directory}/ ./${answers.sourceDirectory}`
-					}
-				} else {
-					// add custom babel env
-					edition.babel = true
-					if (edition.targets && answers.language === 'typescript') {
-						edition.babel = {
-							presets: [
-								[
-									'@babel/preset-env',
-									{
-										targets: edition.targets
-									}
-								],
-								'@babel/preset-typescript'
-							],
-							plugins: [
-								'@babel/proposal-class-properties',
-								'@babel/proposal-object-rest-spread',
-								'add-module-exports'
-							]
-						}
-					}
-
-					// add babel compile script
-					const parts = [
-						`env BABEL_ENV=${edition.directory}`,
-						'babel',
-						answers.language === 'typescript' ? '--extensions ".ts,.tsx"' : '',
-						`--out-dir ./${edition.directory}`,
-						`./${answers.sourceDirectory}`
-					].filter(part => part)
-					edition.scripts = {
-						[`our:compile:${edition.directory}`]: parts.join(' ')
-					}
-				}
-			}
-
-			// convert babel to default
-			if (edition.babel === true) {
-				edition.babel = {
-					presets: [
-						[
-							'@babel/preset-env',
-							{
-								targets: edition.targets
-							}
-						]
-					],
-					plugins: ['@babel/proposal-object-rest-spread']
 				}
 			}
 		})

@@ -97,6 +97,12 @@ function hasPackageScript(packageData, key) {
 	return Boolean(getPackageScript(packageData, key))
 }
 
+function hasPackageScriptPrefix(packageData, key) {
+	return Boolean(
+		Object.keys(packageData.scripts || {}).find(value => value.startsWith(key))
+	)
+}
+
 function hasDocumentation(packageData) {
 	return hasPackageScript(packageData, 'our:meta:docs')
 }

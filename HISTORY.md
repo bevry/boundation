@@ -1,5 +1,20 @@
 # History
 
+## v1.23.0 2018 December 19
+
+-   Documentation detection is more reliable
+-   Documentation will now be generated based on secondary language, instead of primary
+-   TypeDoc will now ignore `node_modules` and test files
+-   ESLint will now ignore `vendor` and `node_modules`
+-   If the source edition used `import`, then the browser edition will too
+    -   As expected, edition tags and descriptions are correctly adjusted
+-   For projects where TypeScript is a secondary language:
+    -   TypeDoc documentation will be generated
+    -   `tsconfig.json:isolatedModules` will be disabled to allow stop `use strict` from erroring
+-   For projects that are TypeScript:
+    -   Adjusted `tsconfig.json:maxNodeModuleJsDepth` to support dependencies that have JSDoc comments
+    -   `package.json:types` will now point to a generated declaration file, instead of the source code
+
 ## v1.22.0 2018 December 7
 
 -   fix `joe` to `kava` rename being ineffective (feature introduced in v1.20.0)
