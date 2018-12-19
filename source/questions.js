@@ -207,6 +207,18 @@ async function getQuestions(state) {
 			}
 		},
 		{
+			name: 'adaptive',
+			type: 'confirm',
+			message: 'Would you like adaptive support for older environments?',
+			default: true,
+			skip({ browser }) {
+				return browser
+			},
+			ignore({ website }) {
+				return website
+			}
+		},
+		{
 			name: 'sourceDirectory',
 			message: 'Which directory will the source code be located in?',
 			validate: isSpecified,
@@ -294,8 +306,8 @@ async function getQuestions(state) {
 			name: 'minimumTestNodeVersion',
 			message: 'What is the minimum node version for testing?',
 			validate: isNumber,
-			default({ website, desiredNodeVersion }) {
-				return website ? desiredNodeVersion : minimumTestNodeVersion
+			default({ website, desiredNodeVersion, minimumSupportNodeVersion }) {
+				return website ? desiredNodeVersion : minimumSupportNodeVersion
 			},
 			skip({ website }) {
 				return website
@@ -305,8 +317,8 @@ async function getQuestions(state) {
 			name: 'maximumTestNodeVersion',
 			message: 'What is the maximum node version for testing?',
 			validate: isNumber,
-			default({ website, desiredNodeVersion }) {
-				return website ? desiredNodeVersion : maximumTestNodeVersion
+			default({ website, desiredNodeVersion, maximumSupportNodeVersion }) {
+				return website ? desiredNodeVersion : maximumSupportNodeVersion
 			},
 			skip({ website }) {
 				return website

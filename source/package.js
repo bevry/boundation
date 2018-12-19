@@ -278,7 +278,7 @@ function arrangePackage(state) {
 	// package keys
 	const arrangedPackage = arrangekeys(
 		packageData,
-		'title name version private description homepage license keywords badges author sponsors maintainers contributors bugs repository engines editions bin preferGlobal types main browser dependencies optionalDependencies devDependencies peerDependencies scripts now eslintConfig prettier babel'
+		'title name version private description homepage license keywords badges author sponsors maintainers contributors bugs repository engines editions bin types main browser dependencies optionalDependencies devDependencies peerDependencies scripts now eslintConfig prettier babel'
 	)
 
 	// ---------------------------------
@@ -517,6 +517,7 @@ async function updatePackageData(state) {
 	delete packageData.cakeConfiguration
 	delete packageData.directories
 	delete packageData.now
+	delete packageData.preferGlobal
 
 	// badges
 	const removeBadges = ['gratipay']
@@ -572,13 +573,6 @@ async function updatePackageData(state) {
 	// apply badge removals
 	packageData.badges.list = without(packageData.badges.list, removeBadges)
 	delete packageData.badges.gratipayUsername
-
-	// apply preferGlobal if desired
-	if (answers.binEntry) {
-		packageData.preferGlobal = true
-	} else {
-		delete packageData.preferGlobal
-	}
 
 	// note
 	status('...customised package data')

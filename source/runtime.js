@@ -347,10 +347,16 @@ async function scaffoldEditions(state) {
 		}
 		// delete the edition autoloader if it is not needed
 		else {
-			if (await contains('index.js', 'requirePackage')) {
+			if (
+				(await exists('index.js')) &&
+				(await contains('index.js', 'requirePackage'))
+			) {
 				await unlink('index.js')
 			}
-			if (await contains('test.js', 'requirePackage')) {
+			if (
+				(await exists('test.js')) &&
+				(await contains('test.js', 'requirePackage'))
+			) {
 				await unlink('test.js')
 			}
 

@@ -218,7 +218,7 @@ async function generateEditions(state) {
 		}
 
 		// Add the compiled editions if necessary
-		if (babel) {
+		if (answers.adaptive && babel) {
 			// max should be first, as it is our most desired compilation target for editions
 			// e.g. node 11 (max), node 10 (desired), node 0.12 (min)
 			const versions = new Set([

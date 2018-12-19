@@ -1,5 +1,12 @@
 # History
 
+## v1.24.0 2018 December 19
+
+-   Remove usage of the deprecation `package.json` field `preferGlobal`
+-   Fix running when there are no editions
+-   Ask if we would like adaptive support for old versions, so that we can no opt out of it (say when we are writing source code that targets only our runtime node version)
+-   Test node versions now default to the supports node versions
+
 ## v1.23.1 2018 December 19
 
 -   Update typedoc

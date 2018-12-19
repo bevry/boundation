@@ -38,19 +38,27 @@ Automatic scaffolding and upgrading of your JavaScript ecosystem projects using 
 
 <h2>Install</h2>
 
-<a href="https://npmjs.com" title="npm is a package manager for javascript"><h3>NPM</h3></a><ul>
-<li>Install: <code>npm install --save boundation</code></li>
+<a href="https://npmjs.com" title="npm is a package manager for javascript"><h3>npm</h3></a>
+<h4>Install Globally</h4>
+<ul>
+<li>Install: <code>npm install --global boundation</code></li>
 <li>Executable: <code>boundation</code></li>
-<li>Module: <code>require('boundation')</code></li></ul>
+</ul>
+<h4>Install Locally</h4>
+<ul>
+<li>Install: <code>npm install --save boundation</code></li>
+<li>Executable: <code>npx boundation</code></li>
+<li>Require: <code>require('boundation')</code></li>
+</ul>
 
-<h3><a href="https://github.com/bevry/editions" title="Editions are the best way to produce and consume packages you care about.">Editions</a></h3>
+<h3><a href="https://editions.bevry.me" title="Editions are the best way to produce and consume packages you care about.">Editions</a></h3>
 
 <p>This package is published with the following editions:</p>
 
 <ul><li><code>boundation</code> aliases <code>boundation/source/index.js</code></li>
 <li><code>boundation/source/index.js</code> is esnext source code with require for modules</li></ul>
 
-<p>Older environments may need <a href="https://babeljs.io/docs/usage/polyfill/" title="A polyfill that emulates missing ECMAScript environment features">Babel's Polyfill</a> or something similar.</p>
+<p>Environments older than Node.js v8 may need <a href="https://babeljs.io/docs/usage/polyfill/" title="A polyfill that emulates missing ECMAScript environment features">Babel's Polyfill</a> or something similar.</p>
 
 <!-- /INSTALL -->
 
