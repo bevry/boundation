@@ -1,5 +1,9 @@
 # History
 
+## v1.24.1 2018 December 19
+
+-   Only do the `joe` to `kava` rename if `joe` was installed
+
 ## v1.24.0 2018 December 19
 
 -   Remove usage of the deprecation `package.json` field `preferGlobal`

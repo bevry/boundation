@@ -823,7 +823,11 @@ async function updateRuntime(state) {
 	status('...removed old files')
 
 	// joe to kava
-	if (packageData.name !== 'kava' && answers.website === false) {
+	if (
+		packageData.devDependencies.joe &&
+		packageData.name !== 'kava' &&
+		answers.website === false
+	) {
 		status('renaming joe to kava...')
 		await exec(
 			`bash -O nullglob -O globstar -c "sed -i '' -e 's/joe/kava/g' ${sourceGlob}"`
