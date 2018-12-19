@@ -601,7 +601,7 @@ async function updateRuntime(state) {
 			packages.typedoc = 'dev'
 			// https://github.com/TypeStrong/typedoc/issues/913
 			if (answers.language !== 'typescript') {
-				versions.typedoc = 'TypeStrong/typedoc#fix/ignore-excluded-imports'
+				versions.typedoc = 'TypeStrong/typedoc'
 			}
 			state.scripts['our:meta:docs:typedoc'] = [
 				'rm -Rf ./docs',

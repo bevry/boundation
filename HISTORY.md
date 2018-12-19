@@ -1,5 +1,9 @@
 # History
 
+## v1.23.1 2018 December 19
+
+-   Update typedoc
+
 ## v1.23.0 2018 December 19
 
 -   Documentation detection is more reliable
