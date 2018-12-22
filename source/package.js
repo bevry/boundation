@@ -178,7 +178,11 @@ function hasPackageDependency(packageData, key) {
 
 function getBasename(path) {
 	// remove dirname, then remove extension
-	return (path && path.replace(/^.+\//, '').replace(/\.[^.]+$/, '')) || null
+	return (
+		(typeof path === 'string' &&
+			path.replace(/^.+\//, '').replace(/\.[^.]+$/, '')) ||
+		null
+	)
 }
 
 function getPackageMainEntry(packageData) {
@@ -207,7 +211,14 @@ function getPackageTestEntry(packageData) {
 }
 
 function getPackageBinEntry(packageData) {
-	return getBasename(packageData.bin) || null
+	const entry = getBasename(packageData.bin) || null
+	if (entry && typeof entry !== 'string') {
+		throw new Error(
+			'Boundation currently cannot handle projects with multiple package.json:bin entries. Sorry.\n' +
+				'https://github.com/bevry/boundation/issues/24'
+		)
+	}
+	return entry
 }
 
 // ====================================
