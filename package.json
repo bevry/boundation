@@ -91,7 +91,7 @@
     "semver": "^5.6.0"
   },
   "devDependencies": {
-    "assert-helpers": "^4.9.2",
+    "assert-helpers": "^4.9.3",
     "eslint": "^5.10.0",
     "eslint-config-bevry": "^1.0.2",
     "eslint-config-prettier": "^3.3.0",
