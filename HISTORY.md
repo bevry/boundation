@@ -1,5 +1,9 @@
 # History
 
+## v1.24.2 2018 December 22
+
+-   If there are multiple `package.json:bin` entries, then exit with an explanation [of our lack of support](https://github.com/bevry/boundation/issues/24)
+
 ## v1.24.1 2018 December 19
 
 -   Only do the `joe` to `kava` rename if `joe` was installed
