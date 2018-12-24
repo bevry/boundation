@@ -12,10 +12,7 @@ const curlFlags = '-fsSL'
 // Local
 const { status } = require('./log')
 const { getGithubCommit } = require('./get-github-commit')
-const { spawn, write } = require('./fs')
-
-// External
-const yaml = require('js-yaml')
+const { spawn, readYAML, writeYAML } = require('./fs')
 
 // Thing
 async function updateTravis(state) {
@@ -29,6 +26,7 @@ async function updateTravis(state) {
 	// prepare
 	/* eslint camelcase:0 */
 	const awesomeTravisCommit = await getGithubCommit('bevry/awesome-travis')
+	const travisOriginal = await readYAML('.travis.yml')
 	const travis = {
 		sudo: false,
 		language: 'node_js',
@@ -158,14 +156,8 @@ async function updateTravis(state) {
 			`eval "$(curl ${curlFlags} https://raw.githubusercontent.com/bevry/awesome-travis/${awesomeTravisCommit}/scripts/surge.bash)"`
 		)
 	}
-	if (answers.deploy) {
-		const deployScripts = {
-			'now-custom': 'deploy-now',
-			'now-static': 'deploy-now',
-			surge: 'deploy-custom',
-			custom: 'deploy-custom'
-		}
-		const deployScript = deployScripts[answers.deploy]
+	if (answers.website) {
+		const deployScript = answers.nowWebsite ? 'deploy-now' : 'deploy-custom'
 		if (deployScript) {
 			travis.after_success.push(
 				`eval "$(curl ${curlFlags} https://raw.githubusercontent.com/bevry/awesome-travis/${awesomeTravisCommit}/scripts/${deployScript}.bash)"`
@@ -204,8 +196,11 @@ async function updateTravis(state) {
 	// write the .travis.yml file
 	// these spawns must be run serially, as otherwise not all variables may be written, which is annoying
 	status('writing the travis file...')
-	await write('.travis.yml', yaml.dump(travis))
-	if (answers.travisEmail) {
+	if (!answers.travisUpdateEnvironment && travisOriginal.notifications) {
+		travis.notifications = travisOriginal.notifications
+	}
+	await writeYAML('.travis.yml', travis)
+	if (answers.travisUpdateEnvironment && answers.travisEmail) {
 		await spawn([
 			'travis',
 			'encrypt',

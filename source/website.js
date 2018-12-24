@@ -2,7 +2,6 @@
 
 const pathUtil = require('path')
 const { exists, parse } = require('./fs')
-const { hasPackageScript, hasPackageDependency } = require('./package')
 
 function getNowName(nowData) {
 	return nowData.name || null
@@ -17,14 +16,6 @@ function parseNowAliases(alias) {
 
 function getNowAliases(nowData) {
 	return parseNowAliases(nowData.alias) || []
-}
-
-function getWebsiteType({ packageData, nowData }) {
-	return hasPackageDependency(packageData, 'docpad')
-		? 'docpad'
-		: getNowName(nowData)
-		? 'now'
-		: hasPackageScript(packageData, 'start')
 }
 
 async function readWebsite(state) {
@@ -46,34 +37,42 @@ async function updateWebsite(state) {
 
 	// add website deployment strategies
 	if (answers.deploy && answers.deploy.startsWith('now')) {
-		// @todo add support for now v2
-		// https://zeit.co/docs/v2/deployments/official-builders/node-js-now-node/
-		// https://zeit.co/docs/v2/deployments/official-builders/static-now-static/
-		// https://zeit.co/docs/v2/deployments/official-builders/next-js-now-next/
-		// @todo add support for
-		// https://zeit.co/docs/v1/static-deployments/configuration/#redirects-(array)
-		state.nowData = Object.assign(
-			{
-				version: 1,
-				name: answers.nowName,
-				type: 'static',
-				public: true,
-				alias: parseNowAliases(answers.nowAliases),
-				files: [answers.deployDirectory],
-				static: {
-					directoryListing: false,
-					cleanUrls: true,
-					trailingSlash: false,
-					public: 'out'
-				}
-			},
-			nowData
-		)
+		// add the versions we know
+		const now = Object.assign(nowData || {}, {
+			version: 2,
+			name: answers.nowName,
+			alias: parseNowAliases(answers.nowAliases)
+		})
+		// trim version 1 fields
+		if (nowData && nowData.version !== 2) {
+			delete now.type
+			delete now.public
+			delete now.files
+			delete now.static
+		}
+		// next.js builder
+		if (answers.website.includes('next.js')) {
+			if (!now.routes)
+				now.routes = [
+					{ src: '/favicon.ico', dest: '/static/favicon.ico' },
+					{ src: '/robots.txt', dest: '/static/robots.txt' }
+				]
+			if (!now.builds)
+				now.builds = [{ src: 'next.config.js', use: '@now/next' }]
+		}
+		// static builder
+		if (answers.staticWebsite) {
+			if (!now.builds)
+				now.builds = [
+					{ src: `${answers.deployDirectory}/**`, use: '@now/static' }
+				]
+		}
+		// export
+		state.nowData = now
 	}
 }
 
 module.exports = {
-	getWebsiteType,
 	readWebsite,
 	getNowAliases,
 	getNowName,

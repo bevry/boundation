@@ -1,5 +1,18 @@
 # History
 
+## v1.25.0 2018 December 24
+
+-   Streamlined the question and answer flow, surrounding project type, website type, and environment variables
+    -   Questions regarding environment variables are now optional
+    -   Support Now v2 deployments, and Next.js on Now types
+-   Internal changes
+    -   Travis configuration will only be updated if it is desired
+    -   Revised the inquirer extensions, such that:
+        -   The extensions operate reliably
+        -   That `when` still functions as when
+        -   That dim now dims correctly
+        -   That the reason for a bypass is not outputted
+
 ## v1.24.2 2018 December 22
 
 -   If there are multiple `package.json:bin` entries, then exit with an explanation [of our lack of support](https://github.com/bevry/boundation/issues/24)

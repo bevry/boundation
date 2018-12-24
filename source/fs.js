@@ -7,6 +7,7 @@ const cwd = process.cwd()
 const pathUtil = require('path')
 const fsUtil = require('fs')
 const safeps = require('safeps')
+const yaml = require('js-yaml')
 
 // Local
 const { status } = require('./log')
@@ -68,6 +69,15 @@ function write(file, data) {
 	})
 }
 
+async function readYAML(file) {
+	const data = await read(file)
+	return yaml.load(data)
+}
+
+function writeYAML(file, data) {
+	return write('.travis.yml', yaml.dump(data))
+}
+
 function spawn(command, opts = {}) {
 	opts.cwd = opts.cwd || cwd
 	opts.stdio = opts.stdio || 'inherit'
@@ -113,5 +123,7 @@ module.exports = {
 	spawn,
 	exec,
 	contains,
-	parse
+	parse,
+	readYAML,
+	writeYAML
 }

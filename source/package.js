@@ -13,6 +13,7 @@ const bevryOrganisationsList = 'balupton bevry bevry-trading docpad browserstate
 const { status } = require('./log')
 const { repoToWebsite, repoToOrganisation, without } = require('./util')
 const { exists, write, read, parse } = require('./fs')
+const { getNowName } = require('./website')
 
 // External
 const arrangekeys = require('arrangekeys')
@@ -221,11 +222,43 @@ function getPackageBinEntry(packageData) {
 	return entry
 }
 
+function getWebsiteType(packageData, nowData) {
+	if (hasPackageDependency(packageData, 'next')) {
+		return '@now/next'
+	}
+	if (hasPackageDependency(packageData, 'docpad')) {
+		return 'docpad on @now/static'
+	}
+	if (getNowName(nowData)) {
+		if (
+			nowData.builds &&
+			nowData.builds.length &&
+			nowData.builds[0].use === '@now/static'
+		)
+			return '@now/static'
+		return 'now'
+	}
+	if (hasPackageDependency(packageData, 'surge')) {
+		return 'surge'
+	}
+	return 'custom'
+}
+
+function getProjectType(packageData, nowData) {
+	if (isPackageDocPadPlugin(packageData) || hasEditions(packageData)) {
+		return 'package'
+	}
+	if (hasPackageScript(packageData, 'start') || getNowName(nowData)) {
+		return 'website'
+	}
+	return 'package'
+}
+
 // ====================================
 // Helpers
 
 function arrangePackage(state) {
-	const packageData = JSON.parse(JSON.stringify(state.packageData))
+	let packageData = JSON.parse(JSON.stringify(state.packageData))
 
 	// ---------------------------------
 	// Editions
@@ -287,7 +320,7 @@ function arrangePackage(state) {
 	// Arrange
 
 	// package keys
-	const arrangedPackage = arrangekeys(
+	packageData = arrangekeys(
 		packageData,
 		'title name version private description homepage license keywords badges author sponsors maintainers contributors bugs repository engines editions bin types main browser dependencies optionalDependencies devDependencies peerDependencies scripts now eslintConfig prettier babel'
 	)
@@ -390,12 +423,12 @@ function arrangePackage(state) {
 	}
 
 	// result
-	arrangedPackage.scripts = scripts
+	packageData.scripts = scripts
 
 	// ---------------------------------
 	// Done
 
-	return arrangedPackage
+	return packageData
 }
 
 // ====================================
@@ -608,6 +641,8 @@ module.exports = {
 	getPackageRepoUrl,
 	getPackageScript,
 	getPackageTestEntry,
+	getProjectType,
+	getWebsiteType,
 	hasDocumentation,
 	hasEditions,
 	hasMultipleEditions,

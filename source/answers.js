@@ -5,6 +5,11 @@ const inquirer = require('inquirer')
 const chalk = require('chalk')
 const Errlop = require('errlop')
 
+// Fetch
+function fetch(value, ...args) {
+	return typeof value === 'function' ? value(...args) : value
+}
+
 // Action
 async function getAnswers(questions) {
 	try {
@@ -12,70 +17,68 @@ async function getAnswers(questions) {
 		const defaults = {}
 		questions.forEach(function(question) {
 			const { name, skip, when, ignore } = question
-			if (question.default != null) {
-				if (typeof question.default === 'function') {
-					const fn = question.default
-					question.default = function(answers) {
-						const values = Object.assign({}, defaults, answers)
-						const value = fn(values)
-						defaults[name] = value
-						// console.log(name, 'defaults to', value)
-						return value
-					}
-				} else {
-					const value = question.default
-					question.default = function() {
-						defaults[name] = value
-						// console.log(name, 'defaults to', value)
-						return value
-					}
+			if (typeof question.default === 'function') {
+				const fn = question.default
+				question.default = function(answers) {
+					const values = Object.assign({}, defaults, answers)
+					const value = fn(values)
+					return value
 				}
 			}
-			if (skip || when || ignore)
-				question.when = function(answers) {
-					let values,
-						color,
-						proceed = true
+			question.when = async function(answers) {
+				let reason, result
+				// fetch values
+				const value = await Promise.resolve(fetch(question.default, answers))
+				const values = Object.assign({ [name]: value }, defaults, answers)
+				// check when and ignore
+				if (when || ignore) {
 					// check ignore
-					if (question.ignore) {
-						values = Object.assign(defaults, answers)
-						const ignore = question.ignore(values)
-						if (ignore) {
-							proceed = false
-							color = chalk.dim
-						}
+					if (when != null) {
+						result = fetch(when, values)
+						if (!result) reason = 'when'
 					}
-					// check skip and when
-					if (proceed) {
-						// apply default
-						if (question.default) question.default(answers)
-						// refresh values as default would have been applied
-						values = Object.assign(defaults, answers)
-						// check when
-						if (when && !when(values)) proceed = false
-						// check skip
-						if (skip) {
-							if (typeof skip === 'function') {
-								if (skip(values)) proceed = false
-							} else proceed = false
-						}
+					// check ignore
+					if (!reason && ignore != null) {
+						result = fetch(ignore, values)
+						if (result) reason = 'ignore'
 					}
-					// if we are not proceeding then ignore
-					if (!proceed) {
-						const value = values[name]
-						const humanName = chalk.bold.underline(name)
-						const humanValue = chalk.bold.green(
+				}
+				// check skip
+				if (!reason) {
+					// check skip
+					if (skip != null) {
+						result = fetch(skip, values)
+						if (result) reason = 'skip'
+					}
+					// store value
+					if (reason) {
+						defaults[name] = value
+					}
+				}
+				// if we are not proceeding then ignore
+				if (reason) {
+					const value = defaults[name]
+					const color = reason === 'skip' ? v => v : chalk.dim
+					const message = [
+						'Automated',
+						chalk.bold.underline(name),
+						'via',
+						reason,
+						'to',
+						chalk.bold.green(
 							value == null
 								? null
 								: question.type === 'password'
 								? '[hidden]'
 								: value
 						)
-						const message = `Skipped ${humanName} with value ${humanValue}`
-						console.log(color ? color(message) : message)
-					}
-					return proceed
+					]
+						.map(v => color(v))
+						.join(' ')
+					console.log(message)
 				}
+				return !reason
+			}
 		})
 
 		// get answers

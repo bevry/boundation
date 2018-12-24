@@ -52,12 +52,6 @@ async function updateBaseFiles({ answers, packageData }) {
 		await rename('history.md', 'HISTORY.md')
 	}
 
-	if (answers.sourceDirectory !== 'src') {
-		if (await exists('src')) {
-			await rename('src', answers.sourceDirectory)
-		}
-	}
-
 	if (answers.docpadPlugin) {
 		const docpadMainEntry =
 			packageData.name.replace(/^docpad-plugin-/, '') + '.plugin'
@@ -103,17 +97,17 @@ async function updateBaseFiles({ answers, packageData }) {
 		'https://raw.githubusercontent.com/bevry/base/master/LICENSE.md',
 		'https://raw.githubusercontent.com/bevry/base/master/CONTRIBUTING.md'
 	]
+	if (answers.type === 'package') {
+		downloads.push({
+			url: 'https://raw.githubusercontent.com/bevry/base/master/HISTORY.md',
+			overwrite: false
+		})
+	}
 	if (answers.npm) {
 		downloads.push({
 			url: 'https://raw.githubusercontent.com/bevry/base/master/.npmignore',
 			custom: true
 		})
-		if (!answers.website) {
-			downloads.push({
-				url: 'https://raw.githubusercontent.com/bevry/base/master/HISTORY.md',
-				overwrite: false
-			})
-		}
 	} else {
 		await unlink('.npmignore')
 	}

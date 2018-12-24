@@ -400,13 +400,9 @@ async function updateRuntime(state) {
 
 	// prepare
 	const sourcePath =
-		answers.sourceDirectory === '.' ? `.` : `./${answers.sourceDirectory}`
-	const sourceGlob =
-		sourcePath === '.'
-			? answers.language === 'typescript'
-				? '**/*.ts'
-				: '**/*.js'
-			: `${sourcePath}/**/*.*`
+		!answers.sourceDirectory || answers.sourceDirectory === '.'
+			? `.`
+			: `./${answers.sourceDirectory}`
 
 	// log
 	status('updating runtime...')
@@ -431,6 +427,10 @@ async function updateRuntime(state) {
 		editions: state.useEditionAutoloader,
 		surge: false,
 		now: false,
+		next: false,
+		'next-server': false,
+		'@types/next': false,
+		'@zeit/next-typescript': false,
 		'babel-cli': false,
 		'babel-core': false,
 		'babel-preset-es2015': false,
@@ -494,8 +494,12 @@ async function updateRuntime(state) {
 			'npm run our:meta'
 		].join(' && '),
 		'our:release:push': 'git push origin master && git push origin --tags',
-		'our:release': 'npm run our:release:push',
-		test: `node ./${state.test}`
+		'our:release': 'npm run our:release:push'
+	}
+
+	// add test script
+	if (state.test) {
+		state.scripts.test = `node ./${state.test}`
 	}
 
 	// add our package scripts
@@ -541,10 +545,9 @@ async function updateRuntime(state) {
 	// coffeescript
 	if (answers.languages.includes('coffeescript')) {
 		packages.coffeelint = 'dev'
-		state.scripts['our:verify:coffeelint'] = [
-			'coffeelint',
-			`${sourcePath}`
-		].join(' ')
+		state.scripts['our:verify:coffeelint'] = ['coffeelint', sourcePath].join(
+			' '
+		)
 	}
 
 	// javascript
@@ -581,7 +584,7 @@ async function updateRuntime(state) {
 			"--ignore-pattern '**/vendor/'",
 			"--ignore-pattern '**/node_modules/'",
 			'--ext .mjs,.js,.jsx,.ts,.tsx',
-			`'${sourceGlob}'`
+			sourcePath
 		].join(' ')
 	}
 
@@ -620,7 +623,7 @@ async function updateRuntime(state) {
 				'--name "$npm_package_name"',
 				'--readme ./README.md',
 				'--out ./docs',
-				`${sourcePath}`
+				sourcePath
 			]
 				.filter(v => v)
 				.join(' ')
@@ -638,7 +641,7 @@ async function updateRuntime(state) {
 					'--title "$npm_package_name API Documentation"',
 					'--readme README.md',
 					'--output-dir ./docs',
-					`${sourcePath}`,
+					sourcePath,
 					'- LICENSE.md HISTORY.md'
 				].join(' ')
 			}
@@ -652,7 +655,7 @@ async function updateRuntime(state) {
 					'-o ./docs',
 					'--syntaxtype coffee',
 					'-e .coffee',
-					`${sourcePath}`
+					sourcePath
 				]
 			}
 		}
@@ -703,15 +706,28 @@ async function updateRuntime(state) {
 	}
 
 	// deploy
-	if (answers.deploy) {
+	if (answers.website) {
 		// surge
-		if (answers.deploy === 'surge') {
+		if (answers.website === 'surge') {
 			packages.surge = 'dev'
 			state.scripts['my:deploy'] = `surge ./${answers.deployDirectory}`
 		}
 		// now
-		else if (answers.deploy.startsWith('now')) {
+		else if (answers.nowWebsite) {
 			packages.now = 'dev'
+			if (answers.website.includes('next')) {
+				Object.assign(state.scripts, {
+					test: 'npm run build',
+					dev: 'next',
+					build: 'next build',
+					start: 'next start'
+				})
+				if (answers.languages.includes('typescript')) {
+					packages['@types/next'] = packages['@zeit/next-typescript'] = 'dev'
+				}
+				packages.next = packages.react = packages['react-dom'] = true
+				versions.react = versions['react-dom'] = 'next'
+			}
 		}
 	}
 
@@ -754,36 +770,45 @@ async function updateRuntime(state) {
 	)
 
 	// helper
-	function addVersion(array) {
-		return array.map(item => `${item}@${versions[item] || 'latest'}`)
+	function latestDependencies(array) {
+		return array.filter(item => !versions[item]).map(item => `${item}@latest`)
+	}
+	function exactDependencies(array) {
+		return array
+			.filter(item => versions[item])
+			.map(item => `${item}@${versions[item]}`)
+	}
+	async function uninstall(dependencies) {
+		console.log('uninstalling:', dependencies.join(' '))
+		await spawn(['npm', 'uninstall', '-SDO'].concat(dependencies))
+	}
+
+	async function install(dependencies, flags) {
+		console.log('installing:', dependencies.join(' '))
+		await spawn(
+			['npm', 'install', `-${flags}`].concat(latestDependencies(dependencies))
+		)
+		await spawn(
+			['npm', 'install', `-E${flags}`].concat(exactDependencies(dependencies))
+		)
 	}
 
 	// remove deps
 	if (removeDependencies.length) {
 		status('remove old dependencies...')
-		const command = ['npm', 'uninstall', '-SDO'].concat(removeDependencies)
-		console.log(command.join(' '))
-		await spawn(command)
+		await uninstall(removeDependencies)
 		status('...removed old dependencies')
 	}
 	// add deps
 	if (addDependencies.length) {
 		status('adding the dependencies...')
-		const command = ['npm', 'install', '--save'].concat(
-			addVersion(addDependencies)
-		)
-		console.log(command.join(' '))
-		await spawn(command)
+		await install(addDependencies, 'P')
 		status('...added the dependencies')
 	}
 	// add dev deps
 	if (addDevDependencies.length) {
 		status('adding the development dependencies...')
-		const command = ['npm', 'install', '--save-dev'].concat(
-			addVersion(addDevDependencies)
-		)
-		console.log(command.join(' '))
-		await spawn(command)
+		await install(addDevDependencies, 'D')
 		status('...added the development dependencies')
 	}
 
@@ -817,6 +842,7 @@ async function updateRuntime(state) {
 			'docpad-setup.sh',
 			'esnextguardian.js',
 			'nakefile.js',
+			'next.config.js',
 			'tsconfig.json'
 		].map(file => unlink(file))
 	)
@@ -824,13 +850,13 @@ async function updateRuntime(state) {
 
 	// joe to kava
 	if (
+		answers.type === 'package' &&
 		packageData.devDependencies.joe &&
-		packageData.name !== 'kava' &&
-		answers.website === false
+		packageData.name !== 'kava'
 	) {
 		status('renaming joe to kava...')
 		await exec(
-			`bash -O nullglob -O globstar -c "sed -i '' -e 's/joe/kava/g' ${sourceGlob}"`
+			`bash -O nullglob -O globstar -c "sed -i '' -e 's/joe/kava/g' ${sourcePath}/**/*.*"`
 		)
 		status('...renamed joe to kava')
 	}
@@ -861,8 +887,63 @@ async function updateRuntime(state) {
 			},
 			include: [answers.sourceDirectory]
 		}
+		if (answers.website) {
+			// https://github.com/zeit/next-plugins/tree/master/packages/next-typescript
+			Object.assign(tsconfig.compilerOptions, {
+				allowSyntheticDefaultImports: true,
+				jsx: 'preserve',
+				lib: ['dom', 'esnext'],
+				module: 'esnext',
+				noUnusedLocals: true,
+				noUnusedParameters: true,
+				preserveConstEnums: true,
+				removeComments: false,
+				skipLibCheck: true,
+				sourceMap: true,
+				strict: true
+			})
+		}
+		if (answers.website.includes('next')) {
+			tsconfig.include = ['components', 'pages']
+		}
 		await write('tsconfig.json', JSON.stringify(tsconfig, null, '  ') + '\n')
 		status('...wrote tsconfig file')
+	}
+
+	// write next configuration
+	if (
+		answers.website.includes('next') &&
+		answers.languages.includes('typescript')
+	) {
+		// add typescript config
+		const next = [
+			'// 2018 December 22',
+			'// https://github.com/bevry/base',
+			'// https://spectrum.chat/zeit/general/unable-to-import-module-now-launcher-error~2662f0ba-4186-402f-b1db-2e3c43d8689a',
+			'const env =',
+			"process.env.NODE_ENV === 'development'",
+			`	? {} // We're never in "production server" phase when in development mode`,
+			`	: !process.env.NOW_REGION`,
+			"	? require('next/constants') // Get values from `next` package when building locally",
+			"	: require('next-server/constants') // Get values from `next-server` package when building on now v2",
+			'',
+			'module.exports = (phase, { defaultConfig }) => {',
+			'	if (phase === env.PHASE_PRODUCTION_SERVER) {',
+			'		// Config used to run in production',
+			'		return {}',
+			'	}',
+			'',
+			"	const withTypescript = require('@zeit/next-typescript')",
+			'	return withTypescript()',
+			'}'
+		]
+		await write('next.config.js', next.join('\n') + '\n')
+
+		// add babel rc file
+		const babel = {
+			presets: ['next/babel', '@zeit/next-typescript/babel']
+		}
+		await write('.babelrc', JSON.stringify(babel, null, '  ') + '\n')
 	}
 
 	// run setup

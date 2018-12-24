@@ -21,8 +21,8 @@ const {
 	getMinimumNodeLTSVersion
 } = require('./get-node')
 const {
-	getPackageProperty,
 	getPackageAuthor,
+	getPackageBinEntry,
 	getPackageDescription,
 	getPackageFlowtypeDependency,
 	getPackageKeywords,
@@ -31,18 +31,20 @@ const {
 	getPackageName,
 	getPackageNodeEngineVersion,
 	getPackageOrganisation,
+	getPackageProperty,
 	getPackageRepoUrl,
 	getPackageTestEntry,
-	getPackageBinEntry,
+	getProjectType,
+	getWebsiteType,
+	hasDocumentation,
+	hasEditions,
 	isPackageCoffee,
 	isPackageDocPadPlugin,
 	isPackageJavaScript,
-	isPackageTypeScript,
 	isPackageJSON,
-	hasEditions,
-	hasDocumentation
+	isPackageTypeScript
 } = require('./package')
-const { getWebsiteType, getNowAliases, getNowName } = require('./website')
+const { getNowAliases, getNowName } = require('./website')
 
 // ====================================
 // Questions
@@ -59,9 +61,6 @@ async function getQuestions(state) {
 	const nodeMinimumLTSVersion = await getMinimumNodeLTSVersion()
 	const minimumSupportNodeVersion = nodeEngineVersion || nodeMinimumLTSVersion
 	const maximumSupportNodeVersion = allNodeVersions[allNodeVersions.length - 1]
-	const minimumTestNodeVersion = allNodeVersions[0]
-	const maximumTestNodeVersion = allNodeVersions[allNodeVersions.length - 1]
-	const websiteType = getWebsiteType(state)
 	return [
 		{
 			name: 'name',
@@ -111,24 +110,84 @@ async function getQuestions(state) {
 				(await getGitOrganisation(cwd)) || getPackageOrganisation(packageData)
 		},
 		{
+			name: 'type',
+			type: 'list',
+			choices: ['package', 'website'],
+			message: 'What type of project will this be?',
+			validate: isSpecified,
+			default: getProjectType(packageData, nowData),
+			skip({ type }) {
+				return type
+			}
+		},
+		{
 			name: 'website',
 			type: 'confirm',
-			message: 'Will this project be a website?',
-			default: Boolean(websiteType),
+			choices: [
+				'@now/next',
+				'docpad on @now/static',
+				'@now/static',
+				'now',
+				'surge',
+				'custom'
+			],
+			message: 'What type of website will this be?',
+			default: getWebsiteType(packageData, nowData),
 			skip({ website }) {
-				return website || editioned
+				return Boolean(website)
+			},
+			when({ type }) {
+				return type === 'website'
 			}
 		},
 		{
 			name: 'docpadWebsite',
 			type: 'confirm',
-			message: 'Will this website be generated using DocPad?',
-			default: websiteType === 'docpad',
-			skip({ docpadWebsite }) {
-				return docpadWebsite || editioned
+			message: 'Will it be a DocPad website?',
+			default({ website }) {
+				return Boolean(website && website.includes('docpad'))
+			},
+			skip: true,
+			when({ docpadWebsite }) {
+				return docpadWebsite
+			}
+		},
+		{
+			name: 'staticWebsite',
+			type: 'confirm',
+			message: 'Will it be a static website?',
+			default({ website }) {
+				return Boolean(
+					website && (website.includes('static') || website === 'surge')
+				)
+			},
+			skip: true,
+			when({ staticWebsite }) {
+				return staticWebsite
+			}
+		},
+		{
+			name: 'nowWebsite',
+			type: 'confirm',
+			message: 'Will it be a Now by Zeit website?',
+			default({ website }) {
+				return Boolean(website && website.includes('now'))
+			},
+			skip: true,
+			when({ nowWebsite }) {
+				return nowWebsite
+			}
+		},
+		{
+			name: 'docpadPlugin',
+			type: 'confirm',
+			message: 'Will it be a DocPad plugin?',
+			default: isPackageDocPadPlugin(packageData),
+			skip({ docpadPlugin }) {
+				return docpadPlugin || editioned
 			},
 			ignore({ website }) {
-				return !website
+				return website
 			}
 		},
 		{
@@ -137,18 +196,18 @@ async function getQuestions(state) {
 			choices: ['esnext', 'typescript', 'coffeescript', 'json', 'html', 'css'],
 			message: 'What programming languages will the source code be written in?',
 			validate: isSpecified,
-			default: (
-				[
+			default({ website }) {
+				const types = [
 					isPackageJavaScript(packageData) && 'esnext',
 					isPackageTypeScript(packageData) && 'typescript',
 					isPackageCoffee(packageData) && 'coffeescript',
 					isPackageJSON(packageData) && 'json',
-					getWebsiteType(state) && 'html',
-					getWebsiteType(state) && 'css'
+					website && 'html',
+					website && 'css'
 				]
-					.filter(value => value)
-					.join(' ') || 'esnext'
-			).split(' ')
+				const typesString = types.filter(value => value).join(' ') || 'esnext'
+				return typesString.split(' ')
+			}
 		},
 		{
 			name: 'language',
@@ -163,15 +222,6 @@ async function getQuestions(state) {
 			},
 			skip({ languages }) {
 				return languages.length === 1
-			}
-		},
-		{
-			name: 'docpadPlugin',
-			type: 'confirm',
-			message: 'Will it be a DocPad plugin?',
-			default: isPackageDocPadPlugin(packageData) || false,
-			skip({ docpadPlugin }) {
-				return docpadPlugin || editioned
 			},
 			ignore({ website }) {
 				return website
@@ -223,8 +273,9 @@ async function getQuestions(state) {
 			message: 'Which directory will the source code be located in?',
 			validate: isSpecified,
 			filter: trim,
-			default({ docpadWebsite }) {
-				return docpadWebsite ? 'src' : 'source'
+			default: 'source',
+			ignore({ website }) {
+				return website
 			}
 		},
 		{
@@ -253,11 +304,12 @@ async function getQuestions(state) {
 			name: 'bin',
 			message: 'Will there be a binary/executable file?',
 			type: 'confirm',
-			default({ website }) {
-				return website ? false : Boolean(getPackageBinEntry(packageData))
+			default: Boolean(getPackageBinEntry(packageData)),
+			skip({ bin }) {
+				return bin
 			},
-			skip({ website, bin }) {
-				return website || bin
+			when({ npm }) {
+				return npm
 			}
 		},
 		{
@@ -265,20 +317,24 @@ async function getQuestions(state) {
 			message: 'What is the bin entry filename (without extension)?',
 			validate: isSpecified,
 			filter: trim,
-			default({ bin, website }) {
-				return !bin || website
-					? false
-					: getPackageBinEntry(packageData) || 'bin'
+			default: getPackageBinEntry(packageData) || 'bin',
+			skip() {
+				return getPackageBinEntry(packageData)
 			},
-			skip({ bin }) {
-				return !bin || getPackageBinEntry(packageData)
+			when({ npm }) {
+				return npm
 			}
 		},
 		{
 			name: 'desiredNodeVersion',
 			message: 'What is the desired node version?',
-			default: await getMaximumNodeLTSVersion(),
-			validate: isNumber
+			default({ nowWebsite }) {
+				return nowWebsite ? '8' : getMaximumNodeLTSVersion()
+			},
+			validate: isNumber,
+			skip({ nowWebsite }) {
+				return nowWebsite
+			}
 		},
 		{
 			name: 'minimumSupportNodeVersion',
@@ -328,62 +384,63 @@ async function getQuestions(state) {
 			name: 'upgradeAllDependencies',
 			type: 'confirm',
 			message: 'Should all dependencies be upgraded to their latest versions?',
-			default: true
+			default: true,
+			ignore({ nowWebsite }) {
+				return nowWebsite
+			}
 		},
 		{
 			name: 'docs',
 			type: 'confirm',
 			message: 'Will there be inline source code documentation?',
-			default({ website, language }) {
-				return website
-					? false
-					: hasDocumentation(packageData) || language === 'typescript'
+			default({ language }) {
+				return hasDocumentation(packageData) || language === 'typescript'
 			},
-			skip({ website, language }) {
-				return website || language === 'typescript'
+			skip({ language }) {
+				return language === 'typescript'
+			},
+			ignore({ website }) {
+				return website
 			}
 		},
 		{
 			name: 'flowtype',
 			type: 'confirm',
 			message: 'Will it use flow type for strong type checking?',
-			default({ website, language }) {
+			default({ language }) {
 				return Boolean(
-					!website &&
-						language === 'esnext' &&
-						getPackageFlowtypeDependency(packageData)
+					language === 'esnext' && getPackageFlowtypeDependency(packageData)
 				)
 			},
-			skip({ website, language }) {
-				return website || language !== 'esnext'
+			skip({ language }) {
+				return language !== 'esnext'
+			},
+			ignore({ website }) {
+				return website
 			}
 		},
 		{
 			name: 'modules',
 			type: 'confirm',
 			message: 'Will it use ES6 Modules?',
-			default({ website, language }) {
+			default({ language }) {
 				return Boolean(
-					website
-						? false
-						: language === 'typescript'
-						? true
-						: getPackageModules(packageData)
+					language === 'typescript' ? true : getPackageModules(packageData)
 				)
 			},
-			skip({ website, language }) {
-				return website || language !== 'esnext'
+			skip({ language }) {
+				return language !== 'esnext'
+			},
+			ignore({ website }) {
+				return website
 			}
 		},
 		{
-			name: 'deploy',
-			type: 'list',
-			choices: ['now-static', 'now-custom', 'surge', 'custom', 'other'],
-			default: 'now-static',
-			message: 'Which website deployment strategy would you like to use?',
-			ignore({ website }) {
-				return !website
-			}
+			name: 'travisUpdateEnvironment',
+			type: 'confirm',
+			message:
+				'Would you like to update the remote travis environment variables?',
+			default: true
 		},
 		{
 			name: 'deployBranch',
@@ -391,8 +448,8 @@ async function getQuestions(state) {
 			validate: isSpecified,
 			filter: trim,
 			default: (await getGitBranch(cwd)) || 'master',
-			ignore({ deploy }) {
-				return !deploy || deploy === 'other'
+			when({ website, travisUpdateEnvironment }) {
+				return website && travisUpdateEnvironment
 			}
 		},
 		{
@@ -403,8 +460,8 @@ async function getQuestions(state) {
 			default({ organisation }) {
 				return organisation
 			},
-			ignore({ deploy }) {
-				return !deploy || !deploy.startsWith('now')
+			when({ nowWebsite, travisUpdateEnvironment }) {
+				return nowWebsite && travisUpdateEnvironment
 			}
 		},
 		{
@@ -415,8 +472,8 @@ async function getQuestions(state) {
 			filter: trim,
 			default: defaults.nowToken,
 			skip: defaults.nowToken,
-			ignore({ deploy }) {
-				return !deploy || !deploy.startsWith('now')
+			when({ nowWebsite, travisUpdateEnvironment }) {
+				return nowWebsite && travisUpdateEnvironment
 			}
 		},
 		{
@@ -426,8 +483,8 @@ async function getQuestions(state) {
 			filter: trim,
 			default: getNowName(nowData) || (await getGitProject()),
 			skip: getNowName(nowData),
-			ignore({ deploy }) {
-				return !deploy || !deploy.startsWith('now')
+			when({ nowWebsite }) {
+				return nowWebsite
 			}
 		},
 		{
@@ -435,20 +492,21 @@ async function getQuestions(state) {
 			message: 'For deploying the website, what now aliases should be used?',
 			filter: trim,
 			default: getNowAliases(nowData).join(', '),
-			ignore({ deploy }) {
-				return !deploy || !deploy.startsWith('now')
+			when({ nowWebsite }) {
+				return nowWebsite
 			}
 		},
 		{
 			name: 'deployDirectory',
-			message: 'For deploying the website, what directory should be deployed?',
+			message:
+				'For deploying the static website, what directory should be deployed?',
 			validate: isSpecified,
 			filter: trim,
-			default({ docpadWebsite }) {
-				return docpadWebsite ? 'out' : 'www'
+			default({ website }) {
+				return website && website.includes('docpad') ? 'out' : 'www'
 			},
-			ignore({ deploy }) {
-				return !deploy || deploy === 'custom' || deploy === 'other'
+			when({ staticWebsite }) {
+				return staticWebsite
 			}
 		},
 		{
@@ -458,8 +516,8 @@ async function getQuestions(state) {
 			filter: trim,
 			default: defaults.surgeLogin,
 			skip: defaults.surgeLogin,
-			ignore({ docs, deploy }) {
-				return !(docs || deploy === 'surge')
+			when({ docs, website, travisUpdateEnvironment }) {
+				return travisUpdateEnvironment && (docs || website === 'surge')
 			}
 		},
 		{
@@ -470,8 +528,8 @@ async function getQuestions(state) {
 			filter: trim,
 			default: defaults.surgeToken,
 			skip: defaults.surgeToken,
-			ignore({ docs, deploy }) {
-				return !(docs || deploy === 'surge')
+			when({ surgeLogin }) {
+				return surgeLogin
 			}
 		},
 		{
@@ -482,8 +540,8 @@ async function getQuestions(state) {
 			filter: trim,
 			default: defaults.npmAuthToken,
 			skip: defaults.npmAuthToken,
-			ignore({ npm }) {
-				return !npm
+			when({ npm }) {
+				return npm
 			}
 		},
 		{
@@ -493,14 +551,10 @@ async function getQuestions(state) {
 			default: defaults.travisEmail || (await getGitEmail(cwd)),
 			skip() {
 				return defaults.travisEmail
+			},
+			when({ travisUpdateEnvironment }) {
+				return travisUpdateEnvironment
 			}
-		},
-		{
-			name: 'travisUpdateEnvironment',
-			type: 'confirm',
-			message:
-				'Would you like to update the remote travis environment variables?',
-			default: true
 		}
 	]
 }
