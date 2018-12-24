@@ -6,6 +6,7 @@
     -   Questions regarding environment variables are now optional
     -   Support Now v2 deployments, and Next.js on Now types
 -   Internal changes
+    -   Updated version handling to support pinned versions
     -   Travis configuration will only be updated if it is desired
     -   Revised the inquirer extensions, such that:
         -   The extensions operate reliably
