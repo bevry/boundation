@@ -36,7 +36,7 @@ async function updateWebsite(state) {
 	const { answers, nowData } = state
 
 	// add website deployment strategies
-	if (answers.deploy && answers.deploy.startsWith('now')) {
+	if (answers.nowWebsite) {
 		// add the versions we know
 		const now = Object.assign(nowData || {}, {
 			version: 2,
@@ -51,7 +51,7 @@ async function updateWebsite(state) {
 			delete now.static
 		}
 		// next.js builder
-		if (answers.website.includes('next.js')) {
+		if (answers.website.includes('next')) {
 			if (!now.routes)
 				now.routes = [
 					{ src: '/favicon.ico', dest: '/static/favicon.ico' },

@@ -115,14 +115,11 @@ async function getQuestions(state) {
 			choices: ['package', 'website'],
 			message: 'What type of project will this be?',
 			validate: isSpecified,
-			default: getProjectType(packageData, nowData),
-			skip({ type }) {
-				return type
-			}
+			default: getProjectType(packageData, nowData)
 		},
 		{
 			name: 'website',
-			type: 'confirm',
+			type: 'list',
 			choices: [
 				'@now/next',
 				'docpad on @now/static',
@@ -133,9 +130,6 @@ async function getQuestions(state) {
 			],
 			message: 'What type of website will this be?',
 			default: getWebsiteType(packageData, nowData),
-			skip({ website }) {
-				return Boolean(website)
-			},
 			when({ type }) {
 				return type === 'website'
 			}

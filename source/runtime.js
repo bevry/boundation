@@ -887,6 +887,7 @@ async function updateRuntime(state) {
 			},
 			include: [answers.sourceDirectory]
 		}
+		// website
 		if (answers.website) {
 			// https://github.com/zeit/next-plugins/tree/master/packages/next-typescript
 			Object.assign(tsconfig.compilerOptions, {
@@ -902,48 +903,42 @@ async function updateRuntime(state) {
 				sourceMap: true,
 				strict: true
 			})
-		}
-		if (answers.website.includes('next')) {
-			tsconfig.include = ['components', 'pages']
+			// next website
+			if (answers.website.includes('next')) {
+				// tsconfig
+				tsconfig.include = ['components', 'pages']
+
+				// next.config.js
+				const next = [
+					'// https://spectrum.chat/zeit/general/unable-to-import-module-now-launcher-error~2662f0ba-4186-402f-b1db-2e3c43d8689a',
+					'const env =',
+					"process.env.NODE_ENV === 'development'",
+					`	? {} // We're never in "production server" phase when in development mode`,
+					`	: !process.env.NOW_REGION`,
+					"	? require('next/constants') // Get values from `next` package when building locally",
+					"	: require('next-server/constants') // Get values from `next-server` package when building on now v2",
+					'',
+					'module.exports = (phase, { defaultConfig }) => {',
+					'	if (phase === env.PHASE_PRODUCTION_SERVER) {',
+					'		// Config used to run in production',
+					'		return {}',
+					'	}',
+					'',
+					"	const withTypescript = require('@zeit/next-typescript')",
+					'	return withTypescript()',
+					'}'
+				]
+				await write('next.config.js', next.join('\n') + '\n')
+
+				// .babelrc
+				const babel = {
+					presets: ['next/babel', '@zeit/next-typescript/babel']
+				}
+				await write('.babelrc', JSON.stringify(babel, null, '  ') + '\n')
+			}
 		}
 		await write('tsconfig.json', JSON.stringify(tsconfig, null, '  ') + '\n')
 		status('...wrote tsconfig file')
-	}
-
-	// write next configuration
-	if (
-		answers.website.includes('next') &&
-		answers.languages.includes('typescript')
-	) {
-		// add typescript config
-		const next = [
-			'// 2018 December 22',
-			'// https://github.com/bevry/base',
-			'// https://spectrum.chat/zeit/general/unable-to-import-module-now-launcher-error~2662f0ba-4186-402f-b1db-2e3c43d8689a',
-			'const env =',
-			"process.env.NODE_ENV === 'development'",
-			`	? {} // We're never in "production server" phase when in development mode`,
-			`	: !process.env.NOW_REGION`,
-			"	? require('next/constants') // Get values from `next` package when building locally",
-			"	: require('next-server/constants') // Get values from `next-server` package when building on now v2",
-			'',
-			'module.exports = (phase, { defaultConfig }) => {',
-			'	if (phase === env.PHASE_PRODUCTION_SERVER) {',
-			'		// Config used to run in production',
-			'		return {}',
-			'	}',
-			'',
-			"	const withTypescript = require('@zeit/next-typescript')",
-			'	return withTypescript()',
-			'}'
-		]
-		await write('next.config.js', next.join('\n') + '\n')
-
-		// add babel rc file
-		const babel = {
-			presets: ['next/babel', '@zeit/next-typescript/babel']
-		}
-		await write('.babelrc', JSON.stringify(babel, null, '  ') + '\n')
 	}
 
 	// run setup

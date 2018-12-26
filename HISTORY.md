@@ -1,5 +1,10 @@
 # History
 
+## v1.25.1 2018 December 27
+
+-   Allow changing project and website types
+-   Correctly generate now and next website configurations
+
 ## v1.25.0 2018 December 24
 
 -   Streamlined the question and answer flow, surrounding project type, website type, and environment variables
