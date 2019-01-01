@@ -93,7 +93,7 @@
   "devDependencies": {
     "assert-helpers": "^4.9.3",
     "eslint": "^5.11.1",
-    "eslint-config-bevry": "^1.1.0",
+    "eslint-config-bevry": "^1.1.1",
     "eslint-config-prettier": "^3.3.0",
     "eslint-plugin-prettier": "^3.0.1",
     "kava": "^3.1.0",
@@ -102,7 +102,7 @@
     "valid-directory": "^1.0.0"
   },
   "scripts": {
-    "our:clean": "rm -Rf ./docs ./edition* ./es2015 ./es5 ./out",
+    "our:clean": "rm -Rf ./docs ./edition* ./es2015 ./es5 ./out ./.next",
     "our:compile": "echo no need for this project",
     "our:deploy": "echo no need for this project",
     "our:meta": "npm run our:meta:projectz",
@@ -118,7 +118,7 @@
     "our:test": "npm run our:verify && npm test",
     "our:verify": "npm run our:verify:directory && npm run our:verify:eslint",
     "our:verify:directory": "npx valid-directory",
-    "our:verify:eslint": "eslint --fix --ignore-pattern '**/*.d.ts' --ignore-pattern '**/vendor/' --ignore-pattern '**/node_modules/' --ext .mjs,.js,.jsx,.ts,.tsx './source/**/*.*'",
+    "our:verify:eslint": "eslint --fix --ignore-pattern '**/*.d.ts' --ignore-pattern '**/vendor/' --ignore-pattern '**/node_modules/' --ext .mjs,.js,.jsx,.ts,.tsx ./source",
     "test": "node ./source/test.js"
   },
   "eslintConfig": {
