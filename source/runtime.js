@@ -478,7 +478,16 @@ async function updateRuntime(state) {
 				? 'dev'
 				: false
 	}
-	const versions = {}
+
+	// Override the versions that are installed if these dependencies are needed
+	const versions = {
+		react: 'next',
+		'react-dom': 'next',
+		next: 'canary',
+		now: 'canary',
+		// https://github.com/TypeStrong/typedoc/issues/913
+		typedoc: 'TypeStrong/typedoc'
+	}
 
 	// add our default scripts
 	state.scripts = {
@@ -608,10 +617,6 @@ async function updateRuntime(state) {
 		// typescript
 		if (answers.languages.includes('typescript')) {
 			packages.typedoc = 'dev'
-			// https://github.com/TypeStrong/typedoc/issues/913
-			if (answers.language !== 'typescript') {
-				versions.typedoc = 'TypeStrong/typedoc'
-			}
 			state.scripts['our:meta:docs:typedoc'] = [
 				'rm -Rf ./docs',
 				'&&',
@@ -726,7 +731,6 @@ async function updateRuntime(state) {
 					packages['@types/next'] = packages['@zeit/next-typescript'] = 'dev'
 				}
 				packages.next = packages.react = packages['react-dom'] = true
-				versions.react = versions['react-dom'] = 'next'
 			}
 		}
 	}
