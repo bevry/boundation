@@ -483,7 +483,7 @@ async function updateRuntime(state) {
 	// add our default scripts
 	state.scripts = {
 		'our:setup:npm': 'npm install',
-		'our:clean': 'rm -Rf ./docs ./edition* ./es2015 ./es5 ./out',
+		'our:clean': 'rm -Rf ./docs ./edition* ./es2015 ./es5 ./out ./.next',
 		'our:meta:projectz':
 			packageData.name === 'projectz' ? './bin.js compile' : 'projectz compile',
 		'our:test': ['npm run our:verify', 'npm test'].join(' && '),
