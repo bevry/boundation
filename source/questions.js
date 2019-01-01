@@ -315,8 +315,8 @@ async function getQuestions(state) {
 			skip() {
 				return getPackageBinEntry(packageData)
 			},
-			when({ npm }) {
-				return npm
+			when({ bin }) {
+				return bin
 			}
 		},
 		{
