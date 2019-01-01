@@ -1,5 +1,12 @@
 # History
 
+## v1.25.2 2019 January 1
+
+-   Fix `binEntry` being asked for even though `bin` was false
+-   Fixed `joe` not being uninstalled when replaced with `kava`
+-   `our:clean` now also clears the `.next` directory
+-   Ensure latest `react`, `react-dom`, `next`, and `now` dependencies are being used
+
 ## v1.25.1 2018 December 27
 
 -   Allow changing project and website types
