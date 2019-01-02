@@ -396,9 +396,10 @@ async function scaffoldEditions(state) {
 
 // Update runtime
 async function updateRuntime(state) {
-	const { answers, packageData } = state
+	const { answers, packageData, sourceEdition } = state
 
 	// prepare
+	const sourceEditionMainPath = sourceEdition && sourceEdition.mainPath
 	const sourcePath =
 		!answers.sourceDirectory || answers.sourceDirectory === '.'
 			? `.`
@@ -604,7 +605,11 @@ async function updateRuntime(state) {
 		] = 'dev'
 		state.scripts['our:verify:typescript'] = 'tsc --noEmit --project .'
 	}
-	delete packageData.types
+	if (answers.language === 'typescript') {
+		packageData.types = sourceEditionMainPath
+	} else {
+		delete packageData.types
+	}
 
 	// documentation
 	if (answers.docs) {
