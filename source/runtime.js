@@ -880,16 +880,23 @@ async function updateRuntime(state) {
 				noEmit: true,
 				// Enable strictest settings like strictNullChecks & noImplicitAny.
 				strict: true,
-				// Disallow features that require cross-file information for emit.
-				isolatedModules: answers.language === 'typescript',
+				// Disallows features that require cross-file information for emit.
+				isolatedModules: true,
 				// Import non-ES modules as default imports.
-				esModuleInterop: true,
-				// Allow .ts files to make use of jsdoc'd .js files.
-				// https://github.com/Microsoft/TypeScript/issues/29056#issuecomment-448386794
-				maxNodeModuleJsDepth: 5
-			},
-			include: [answers.sourceDirectory]
+				esModuleInterop: true
+			}
 		}
+		// add our own extensions
+		Object.assign(tsconfig, {
+			include: [answers.sourceDirectory]
+		})
+		Object.assign(tsconfig.compilerOptions, {
+			// Only enable on TypeScript projects, as for JavaScript projects it will be incompatible with 'use strict'
+			isolatedModules: answers.language === 'typescript',
+			// Allow .ts files to make use of jsdoc'd .js files.
+			// https://github.com/Microsoft/TypeScript/issues/29056#issuecomment-448386794
+			maxNodeModuleJsDepth: 5
+		})
 		// website
 		if (answers.website) {
 			// https://github.com/zeit/next-plugins/tree/master/packages/next-typescript
