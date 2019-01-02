@@ -605,7 +605,7 @@ async function updateRuntime(state) {
 		] = 'dev'
 		state.scripts['our:verify:typescript'] = 'tsc --noEmit --project .'
 	}
-	if (answers.language === 'typescript') {
+	if (sourceEditionMainPath && answers.language === 'typescript') {
 		packageData.types = sourceEditionMainPath
 	} else {
 		delete packageData.types
