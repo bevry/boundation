@@ -1,5 +1,10 @@
 # History
 
+## v1.25.3 2019 January 2
+
+-   Fixed consumption of types on TypeScript projects. The `package.json`:`types` will now point to the source edition main entry. The prior `index.d.ts` generation script from v1.23.0 was producing `File ‘index.d.ts' is not a module.ts(2306)`.
+-   Ensure `our:verify:typescript` does not emit
+
 ## v1.25.2 2019 January 1
 
 -   Fix `binEntry` being asked for even though `bin` was false
