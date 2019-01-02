@@ -602,7 +602,7 @@ async function updateRuntime(state) {
 		packages.typescript = packages['eslint-plugin-typescript'] = packages[
 			'typescript-eslint-parser'
 		] = 'dev'
-		state.scripts['our:verify:typescript'] = 'tsc --project .'
+		state.scripts['our:verify:typescript'] = 'tsc --noEmit --project .'
 	}
 	if (answers.language === 'typescript') {
 		state.scripts['our:compile:types'] =
