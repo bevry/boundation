@@ -604,13 +604,7 @@ async function updateRuntime(state) {
 		] = 'dev'
 		state.scripts['our:verify:typescript'] = 'tsc --noEmit --project .'
 	}
-	if (answers.language === 'typescript') {
-		state.scripts['our:compile:types'] =
-			'tsc --isolatedModules false --noEmit false --allowJs false --declaration  --emitDeclarationOnly --outFile index --project .'
-		packageData.types = 'index.d.ts'
-	} else {
-		delete packageData.types
-	}
+	delete packageData.types
 
 	// documentation
 	if (answers.docs) {
