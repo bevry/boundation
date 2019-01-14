@@ -484,9 +484,7 @@ async function updateRuntime(state) {
 		react: 'next',
 		'react-dom': 'next',
 		next: 'canary',
-		now: 'canary',
-		// https://github.com/TypeStrong/typedoc/issues/913
-		typedoc: 'TypeStrong/typedoc'
+		now: 'canary'
 	}
 
 	// add our default scripts
