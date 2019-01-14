@@ -399,7 +399,6 @@ async function updateRuntime(state) {
 	const { answers, packageData, sourceEdition } = state
 
 	// prepare
-	const sourceEditionMainPath = sourceEdition && sourceEdition.mainPath
 	const sourcePath =
 		!answers.sourceDirectory || answers.sourceDirectory === '.'
 			? `.`
@@ -605,8 +604,27 @@ async function updateRuntime(state) {
 		] = 'dev'
 		state.scripts['our:verify:typescript'] = 'tsc --noEmit --project .'
 	}
-	if (sourceEditionMainPath && answers.language === 'typescript') {
-		packageData.types = sourceEditionMainPath
+
+	// Types
+	// define the possible locations
+	const typePaths = [
+		// e.g. source/index.d.ts
+		sourceEdition &&
+			pathUtil.join(sourceEdition.directory, answers.mainEntry + '.d.ts'),
+		// e.g. index.d.ts
+		pathUtil.join(answers.mainEntry + '.d.ts'),
+		// e.g. source/index.ts
+		answers.language === 'typescript' && sourceEdition && sourceEdition.mainPath
+	].filter(v => v)
+	// fetch their existing status and convert back into the original location
+	const typePathsExisting = await Promise.all(
+		typePaths.map(v => exists(v).then(e => e && v))
+	)
+	// find the first location that exists
+	const typePath = typePathsExisting.find(v => v)
+	// and if exists, apply to types
+	if (typePath) {
+		packageData.types = typePath
 	} else {
 		delete packageData.types
 	}
