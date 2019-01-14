@@ -428,9 +428,11 @@ async function updateRuntime(state) {
 		surge: false,
 		now: false,
 		next: false,
+		'@zeit/next-typescript': false,
 		'next-server': false,
 		'@types/next': false,
-		'@zeit/next-typescript': false,
+		'@types/react': false,
+		'@types/react-dom': false,
 		'babel-cli': false,
 		'babel-core': false,
 		'babel-preset-es2015': false,
@@ -449,10 +451,11 @@ async function updateRuntime(state) {
 		'babel-eslint': false,
 		'eslint-config-bevry': false,
 		'eslint-config-prettier': false,
-		'eslint-plugin-prettier': false,
-		'eslint-plugin-typescript': false,
-		'eslint-plugin-react': false,
 		'eslint-plugin-flow-vars': false,
+		'eslint-plugin-prettier': false,
+		'eslint-plugin-react-hooks': false,
+		'eslint-plugin-react': false,
+		'eslint-plugin-typescript': false,
 		'valid-directory': false,
 		documentation: false,
 		jsdoc: false,
@@ -753,6 +756,7 @@ async function updateRuntime(state) {
 		// now
 		else if (answers.nowWebsite) {
 			packages.now = 'dev'
+			// next / react
 			if (answers.website.includes('next')) {
 				Object.assign(state.scripts, {
 					test: 'npm run build',
@@ -760,10 +764,15 @@ async function updateRuntime(state) {
 					build: 'next build',
 					start: 'next start'
 				})
-				if (answers.languages.includes('typescript')) {
-					packages['@types/next'] = packages['@zeit/next-typescript'] = 'dev'
-				}
 				packages.next = packages.react = packages['react-dom'] = true
+				packages['eslint-plugin-react-hooks'] = packages[
+					'eslint-plugin-react'
+				] = 'dev'
+				if (answers.languages.includes('typescript')) {
+					packages['@types/next'] = packages[
+						'@zeit/next-typescript'
+					] = packages['@types/react'] = packages['types/react-dom'] = true
+				}
 			}
 		}
 	}
