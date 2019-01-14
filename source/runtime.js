@@ -484,7 +484,8 @@ async function updateRuntime(state) {
 		react: 'next',
 		'react-dom': 'next',
 		next: 'canary',
-		now: 'canary'
+		now: 'canary',
+		'@zeit/next-typescript': 'canary'
 	}
 
 	// add our default scripts
