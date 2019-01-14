@@ -1,5 +1,13 @@
 # History
 
+## v1.26.0 2019 January 14
+
+-   Add react eslint plugins, and types, for Next.js projects
+-   Use the canary version of `@zeit/next-typescript`
+-   Updated TypeDoc to latest standard version, as the bugfix as been released
+-   Better `types` file detection, try for `index.d.ts`, then `source/index.d.ts`, then `source/index.ts`
+-   Support multiple documentation tools at once. So if there is JavaScript and TypeScript, `jsdoc` docs will go in `docs/jsdoc/` and `typedoc` docs will go inside `docs/typedoc/`
+
 ## v1.25.3 2019 January 2
 
 -   Fixed consumption of types on TypeScript projects. The `package.json`:`types` will now point to the source edition main entry. The prior `index.d.ts` generation script from v1.23.0 was producing `File ‘index.d.ts' is not a module.ts(2306)`.
