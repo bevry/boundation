@@ -608,11 +608,11 @@ async function updateRuntime(state) {
 	// Types
 	// define the possible locations
 	const typePaths = [
+		// e.g. index.d.ts
+		pathUtil.join(answers.mainEntry + '.d.ts'),
 		// e.g. source/index.d.ts
 		sourceEdition &&
 			pathUtil.join(sourceEdition.directory, answers.mainEntry + '.d.ts'),
-		// e.g. index.d.ts
-		pathUtil.join(answers.mainEntry + '.d.ts'),
 		// e.g. source/index.ts
 		answers.language === 'typescript' && sourceEdition && sourceEdition.mainPath
 	].filter(v => v)
