@@ -613,78 +613,95 @@ async function updateRuntime(state) {
 
 	// documentation
 	if (answers.docs) {
+		// Prepare
+		const tools = []
+
 		// typescript
 		if (answers.languages.includes('typescript')) {
-			packages.typedoc = 'dev'
-			state.scripts['our:meta:docs:typedoc'] = [
-				'rm -Rf ./docs',
-				'&&',
-				'typedoc',
-				// use includeDeclarations if we are not a typescript project
-				answers.language === 'typescript' ? '' : '--includeDeclarations',
-				'--mode file',
-				"--exclude '**/+(*test*|node_modules)/**'",
-				'--name "$npm_package_name"',
-				'--readme ./README.md',
-				'--out ./docs',
-				sourcePath
-			]
-				.filter(v => v)
-				.join(' ')
+			tools.push('typedoc')
 		}
 		// coffeescript
 		if (answers.languages.includes('coffescript')) {
 			// biscotto
 			if (packageData.devDependencies.biscotto) {
-				packages.biscotto = 'dev'
-				state.scripts['our:meta:docs:biscotto'] = [
-					'rm -Rf ./docs',
-					'&&',
-					'biscotto',
-					'-n "$npm_package_name"',
-					'--title "$npm_package_name API Documentation"',
-					'--readme README.md',
-					'--output-dir ./docs',
-					sourcePath,
-					'- LICENSE.md HISTORY.md'
-				].join(' ')
+				tools.push('biscotto')
 			}
 			// yuidoc
 			else {
-				packages.yuidocjs = 'dev'
-				state.scripts['our:meta:docs:yuidoc'] = [
-					'rm -Rf ./docs',
-					'&&',
-					'yuidoc',
-					'-o ./docs',
-					'--syntaxtype coffee',
-					'-e .coffee',
-					sourcePath
-				]
+				tools.push('yuidoc')
 			}
 		}
 		// esnext
 		if (answers.languages.includes('esnext')) {
-			packages.jsdoc = 'dev'
-			packages.minami = 'dev'
-			state.scripts['our:meta:docs:jsdoc'] = [
-				'rm -Rf ./docs',
-				'&&',
-				'jsdoc',
-				'--recurse',
-				'--pedantic',
-				'--access all',
-				'--destination ./docs',
-				'--package ./package.json',
-				'--readme ./README.md',
-				'--template ./node_modules/minami',
-				'./source',
-				'&&',
-				'mv ./docs/$npm_package_name/$npm_package_version/* ./docs/',
-				'&&',
-				'rm -Rf ./docs/$npm_package_name/$npm_package_version'
-			].join(' ')
+			tools.push('jsdoc')
 		}
+
+		// Add the documentation engines
+		tools.forEach(function(tool) {
+			const out = tools.length === 1 ? './docs' : `./docs/${tool}`
+			packages[tool] = 'dev'
+			const parts = [`rm -Rf ${out}`, '&&']
+			switch (tool) {
+				case 'typedoc':
+					packages.typedoc = 'dev'
+					parts.push(
+						'typedoc',
+						// use includeDeclarations if we are not a typescript project
+						answers.language === 'typescript' ? '' : '--includeDeclarations',
+						'--mode file',
+						"--exclude '**/+(*test*|node_modules)/**'",
+						'--name "$npm_package_name"',
+						'--readme ./README.md',
+						`--out ${out}`,
+						sourcePath
+					)
+					break
+				case 'jsdoc':
+					packages.jsdoc = 'dev'
+					packages.minami = 'dev'
+					parts.push(
+						'jsdoc',
+						'--recurse',
+						'--pedantic',
+						'--access all',
+						`--destination ${out}`,
+						'--package ./package.json',
+						'--readme ./README.md',
+						'--template ./node_modules/minami',
+						'./source',
+						'&&',
+						`mv ${out}/$npm_package_name/$npm_package_version/* ${out}/`,
+						'&&',
+						`rm -Rf ${out}/$npm_package_name/$npm_package_version`
+					)
+					break
+				case 'yuidoc':
+					packages.yuidocjs = 'dev'
+					parts.push(
+						'yuidoc',
+						`-o ${out}`,
+						'--syntaxtype coffee',
+						'-e .coffee',
+						sourcePath
+					)
+					break
+				case 'biscotto':
+					packages.biscotto = 'dev'
+					parts.push(
+						'biscotto',
+						'-n "$npm_package_name"',
+						'--title "$npm_package_name API Documentation"',
+						'--readme README.md',
+						`--output-dir ${out}`,
+						sourcePath,
+						'- LICENSE.md HISTORY.md'
+					)
+					break
+				default:
+					throw new Error('unknown documentation tool')
+			}
+			state.scripts[`our:meta:docs:${tool}`] = parts.filter(v => v).join(' ')
+		})
 	}
 
 	// flowtype
