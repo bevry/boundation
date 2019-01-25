@@ -92,12 +92,10 @@
     "semver": "^5.6.0"
   },
   "devDependencies": {
-    "assert-helpers": "^4.9.6",
     "eslint": "^5.12.1",
-    "eslint-config-bevry": "^1.1.2",
+    "eslint-config-bevry": "^1.2.0",
     "eslint-config-prettier": "^3.6.0",
     "eslint-plugin-prettier": "^3.0.1",
-    "kava": "^3.1.0",
     "prettier": "^1.16.1",
     "projectz": "^1.7.4",
     "valid-directory": "^1.0.0"
@@ -114,8 +112,8 @@
     "our:release:prepare": "npm run our:clean && npm run our:compile && npm run our:test && npm run our:meta",
     "our:release:push": "git push origin master && git push origin --tags",
     "our:release:tag": "export MESSAGE=$(cat ./HISTORY.md | sed -n \"/## v$npm_package_version/,/##/p\" | sed 's/## //' | awk 'NR>1{print buf}{buf = $0}') && test \"$MESSAGE\" || (echo 'proper changelog entry not found' && exit -1) && git tag v$npm_package_version -am \"$MESSAGE\"",
-    "our:setup": "npm run our:setup:npm",
-    "our:setup:npm": "npm install",
+    "our:setup": "npm run our:setup:install",
+    "our:setup:install": "npm install",
     "our:test": "npm run our:verify && npm test",
     "our:verify": "npm run our:verify:directory && npm run our:verify:eslint",
     "our:verify:directory": "npx valid-directory",
