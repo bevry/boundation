@@ -245,9 +245,6 @@ function getWebsiteType(packageData, nowData) {
 }
 
 function getProjectType(packageData, nowData) {
-	if (isPackageDocPadPlugin(packageData) || hasEditions(packageData)) {
-		return 'package'
-	}
 	if (hasPackageScript(packageData, 'start') || getNowName(nowData)) {
 		return 'website'
 	}
