@@ -516,7 +516,7 @@ async function updatePackageData(state) {
 
 	// engines
 	if (answers.website) {
-		packageData.engines.node = `${answers.desiredNodeVersion}`
+		packageData.engines.node = `>=${answers.desiredNodeVersion}`
 	} else {
 		packageData.engines.node = `>=${answers.minimumSupportNodeVersion}`
 	}
