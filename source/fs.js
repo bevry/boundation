@@ -13,7 +13,12 @@ const yaml = require('js-yaml')
 const { status } = require('./log')
 
 function exists(file) {
-	file = pathUtil.resolve(cwd, file)
+	try {
+		file = pathUtil.resolve(cwd, file)
+	} catch (err) {
+		console.error({ err, cwd, file })
+		return Promise.resolve(false)
+	}
 	return new Promise(function(resolve) {
 		fsUtil.exists(file, function(exists) {
 			resolve(exists)
