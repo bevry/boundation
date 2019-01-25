@@ -234,8 +234,9 @@ function getWebsiteType(packageData, nowData) {
 			nowData.builds &&
 			nowData.builds.length &&
 			nowData.builds[0].use === '@now/static'
-		)
+		) {
 			return '@now/static'
+		}
 		return 'now'
 	}
 	if (hasPackageDependency(packageData, 'surge')) {
@@ -356,7 +357,7 @@ function arrangePackage(state) {
 				if (value) {
 					const ourKey = 'our:' + parts.slice(1).join(':')
 					if (!scripts[ourKey]) {
-						scripts[ourKey] = `npm run ${key}`
+						scripts[ourKey] = `${state.answers.packageManager} run ${key}`
 						list.add(ourKey)
 					}
 				} else {
@@ -401,7 +402,7 @@ function arrangePackage(state) {
 				// ignore, keep the user override
 			} else {
 				if (!value) scripts[prefix] = new Set()
-				scripts[prefix].add(`npm run ${key}`)
+				scripts[prefix].add(`${state.answers.packageManager} run ${key}`)
 			}
 		}
 	}
@@ -434,6 +435,7 @@ function arrangePackage(state) {
 async function readPackage(state) {
 	const { cwd } = state
 	const path = pathUtil.resolve(cwd, 'package.json')
+	const special = ['start', 'test']
 
 	// read
 	let packageData = {}
@@ -444,11 +446,6 @@ async function readPackage(state) {
 	// adjust
 	const userScripts = {}
 	if (packageData.scripts) {
-		// start
-		if (packageData.scripts.start) {
-			userScripts.start = packageData.scripts.start
-		}
-
 		// deploy to my:deploy
 		if (packageData.scripts.deploy) {
 			userScripts['my:deploy'] = packageData.scripts.deploy
@@ -456,8 +453,10 @@ async function readPackage(state) {
 
 		// keep my:* scripts
 		Object.keys(packageData.scripts).forEach(function(key) {
-			if (key.startsWith('my:')) {
-				const value = packageData.scripts[key]
+			const value = packageData.scripts[key]
+			if (special.includes(key)) {
+				userScripts[key] = value
+			} else if (key.startsWith('my:')) {
 				userScripts[key] = value
 			}
 		})

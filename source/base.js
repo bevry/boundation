@@ -111,13 +111,6 @@ async function updateBaseFiles({ answers, packageData }) {
 	} else {
 		await unlink('.npmignore')
 	}
-	if (answers.languages.includes('css')) {
-		downloads.push(
-			'https://raw.githubusercontent.com/bevry/base/master/.stylelintrc.js'
-		)
-	} else {
-		await unlink('.stylelintrc.js')
-	}
 	if (answers.flowtype) {
 		downloads.push(
 			'https://raw.githubusercontent.com/bevry/base/master/.flowconfig'

@@ -64,7 +64,7 @@ async function updateWebsite(state) {
 		if (answers.staticWebsite) {
 			if (!now.builds)
 				now.builds = [
-					{ src: `${answers.deployDirectory}/**`, use: '@now/static' }
+					{ src: `${answers.staticDirectory}/**`, use: '@now/static' }
 				]
 		}
 		// export

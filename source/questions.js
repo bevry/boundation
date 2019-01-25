@@ -126,7 +126,8 @@ async function getQuestions(state) {
 				'@now/static',
 				'now',
 				'surge',
-				'custom'
+				'custom',
+				'external'
 			],
 			message: 'What type of website will this be?',
 			default: getWebsiteType(packageData, nowData),
@@ -161,6 +162,19 @@ async function getQuestions(state) {
 			}
 		},
 		{
+			name: 'staticDirectory',
+			message:
+				'For the static website, which directory contains the site to be deployed?',
+			validate: isSpecified,
+			filter: trim,
+			default({ website }) {
+				return website && website.includes('docpad') ? 'out' : 'www'
+			},
+			when({ staticWebsite }) {
+				return staticWebsite
+			}
+		},
+		{
 			name: 'nowWebsite',
 			type: 'confirm',
 			message: 'Will it be a Now by Zeit website?',
@@ -170,6 +184,53 @@ async function getQuestions(state) {
 			skip: true,
 			when({ nowWebsite }) {
 				return nowWebsite
+			}
+		},
+		{
+			name: 'nowName',
+			message: 'For name should be used for the now site?',
+			validate: isSpecified,
+			filter: trim,
+			default: getNowName(nowData) || (await getGitProject()),
+			skip: getNowName(nowData),
+			when({ nowWebsite }) {
+				return nowWebsite
+			}
+		},
+		{
+			name: 'nowAliases',
+			message: 'What aliases should be used for the now site?',
+			filter: trim,
+			default: getNowAliases(nowData).join(', '),
+			skip({ nowAliases }) {
+				return nowAliases
+			},
+			when({ nowWebsite }) {
+				return nowWebsite
+			}
+		},
+		{
+			name: 'travisWebsite',
+			type: 'confirm',
+			message: 'Will it utilise a travis deploy script?',
+			default({ website }) {
+				return website === 'surge' || website === 'custom'
+			},
+			skip: true,
+			when({ travisWebsite }) {
+				return travisWebsite
+			}
+		},
+		{
+			name: 'nextWebsite',
+			type: 'confirm',
+			message: 'Will it be a Next by Zeit website?',
+			default({ website }) {
+				return Boolean(website && website.includes('next'))
+			},
+			skip: true,
+			when({ nextWebsite }) {
+				return nextWebsite
 			}
 		},
 		{
@@ -185,17 +246,38 @@ async function getQuestions(state) {
 			}
 		},
 		{
+			name: 'packageManager',
+			type: 'list',
+			message: 'NPM or Yarn?',
+			choices: ['npm', 'yarn'],
+			default({ nowWebsite }) {
+				return (nowWebsite && 'yarn') || 'npm'
+			}
+		},
+		{
 			name: 'languages',
 			type: 'checkbox',
-			choices: ['esnext', 'typescript', 'coffeescript', 'json', 'html', 'css'],
+			choices: [
+				'esnext',
+				'typescript',
+				'coffeescript',
+				'json',
+				'react',
+				'jsx',
+				'mdx',
+				'html',
+				'css'
+			],
 			message: 'What programming languages will the source code be written in?',
 			validate: isSpecified,
-			default({ website }) {
+			default({ website, nextWebsite }) {
 				const types = [
 					isPackageJavaScript(packageData) && 'esnext',
 					isPackageTypeScript(packageData) && 'typescript',
 					isPackageCoffee(packageData) && 'coffeescript',
 					isPackageJSON(packageData) && 'json',
+					nextWebsite && 'react',
+					nextWebsite && 'jsx',
 					website && 'html',
 					website && 'css'
 				]
@@ -216,6 +298,35 @@ async function getQuestions(state) {
 			},
 			skip({ languages }) {
 				return languages.length === 1
+			},
+			ignore({ website }) {
+				return website
+			}
+		},
+		{
+			name: 'modules',
+			type: 'confirm',
+			message: 'Will it use ES6 Modules?',
+			default({ language }) {
+				return Boolean(
+					language === 'typescript' ? true : getPackageModules(packageData)
+				)
+			},
+			skip({ language }) {
+				return language !== 'esnext'
+			}
+		},
+		{
+			name: 'flowtype',
+			type: 'confirm',
+			message: 'Will it use flow type for strong type checking?',
+			default({ language }) {
+				return Boolean(
+					language === 'esnext' && getPackageFlowtypeDependency(packageData)
+				)
+			},
+			skip({ language }) {
+				return language !== 'esnext'
 			},
 			ignore({ website }) {
 				return website
@@ -384,6 +495,15 @@ async function getQuestions(state) {
 			}
 		},
 		{
+			name: 'kava',
+			type: 'confirm',
+			message: "Use Bevry's testing tools?",
+			default: true,
+			ignore({ website, nowWebsite, docpadPlugin }) {
+				return docpadPlugin || (website && !nowWebsite)
+			}
+		},
+		{
 			name: 'docs',
 			type: 'confirm',
 			message: 'Will there be inline source code documentation?',
@@ -392,38 +512,6 @@ async function getQuestions(state) {
 			},
 			skip({ language }) {
 				return language === 'typescript'
-			},
-			ignore({ website }) {
-				return website
-			}
-		},
-		{
-			name: 'flowtype',
-			type: 'confirm',
-			message: 'Will it use flow type for strong type checking?',
-			default({ language }) {
-				return Boolean(
-					language === 'esnext' && getPackageFlowtypeDependency(packageData)
-				)
-			},
-			skip({ language }) {
-				return language !== 'esnext'
-			},
-			ignore({ website }) {
-				return website
-			}
-		},
-		{
-			name: 'modules',
-			type: 'confirm',
-			message: 'Will it use ES6 Modules?',
-			default({ language }) {
-				return Boolean(
-					language === 'typescript' ? true : getPackageModules(packageData)
-				)
-			},
-			skip({ language }) {
-				return language !== 'esnext'
 			},
 			ignore({ website }) {
 				return website
@@ -442,65 +530,8 @@ async function getQuestions(state) {
 			validate: isSpecified,
 			filter: trim,
 			default: (await getGitBranch(cwd)) || 'master',
-			when({ website, travisUpdateEnvironment }) {
-				return website && travisUpdateEnvironment
-			}
-		},
-		{
-			name: 'nowTeam',
-			message: 'For deploying the website, what now team should be used?',
-			validate: isSpecified,
-			filter: trim,
-			default({ organisation }) {
-				return organisation
-			},
-			when({ nowWebsite, travisUpdateEnvironment }) {
-				return nowWebsite && travisUpdateEnvironment
-			}
-		},
-		{
-			name: 'nowToken',
-			type: 'password',
-			message: 'For deploying the website, what now token should be used?',
-			validate: isSpecified,
-			filter: trim,
-			default: defaults.nowToken,
-			skip: defaults.nowToken,
-			when({ nowWebsite, travisUpdateEnvironment }) {
-				return nowWebsite && travisUpdateEnvironment
-			}
-		},
-		{
-			name: 'nowName',
-			message: 'For deploying the website, what now name should be used?',
-			validate: isSpecified,
-			filter: trim,
-			default: getNowName(nowData) || (await getGitProject()),
-			skip: getNowName(nowData),
-			when({ nowWebsite }) {
-				return nowWebsite
-			}
-		},
-		{
-			name: 'nowAliases',
-			message: 'For deploying the website, what now aliases should be used?',
-			filter: trim,
-			default: getNowAliases(nowData).join(', '),
-			when({ nowWebsite }) {
-				return nowWebsite
-			}
-		},
-		{
-			name: 'deployDirectory',
-			message:
-				'For deploying the static website, what directory should be deployed?',
-			validate: isSpecified,
-			filter: trim,
-			default({ website }) {
-				return website && website.includes('docpad') ? 'out' : 'www'
-			},
-			when({ staticWebsite }) {
-				return staticWebsite
+			when({ travisWebsite }) {
+				return travisWebsite
 			}
 		},
 		{

@@ -7,8 +7,6 @@ const { without } = require('./util')
 const { spawn, exec, write, unlink, exists, rename, contains } = require('./fs')
 const { readPackage, writePackage } = require('./package')
 const { versionComparator } = require('./versions')
-const { getAnswers } = require('./answers')
-const { equal } = require('assert-helpers')
 
 // External
 const pathUtil = require('path')
@@ -61,7 +59,7 @@ async function updateEngines(state) {
 		await versions.load()
 		await versions.install()
 		const numbers = versions.map(version => version.version)
-		await versions.test('npm test')
+		await versions.test(`${answers.packageManager} test`)
 		const passed = versions.json.passed || []
 		if (passed.length === 0) {
 			console.error(versions.messages.join('\n\n'))
@@ -212,11 +210,8 @@ async function updateEngines(state) {
 		console.log(`The project supports the extra versions: ${extra.join(', ')}`)
 	}
 
-	if (answers.website && passed.length === 1) {
-		packageData.engines.node = passed[0]
-	} else {
-		packageData.engines.node = '>=' + passed[0]
-	}
+	// make the engines the first passed version
+	packageData.engines.node = '>=' + passed[0]
 
 	// =================================
 	// update the package.json file
@@ -243,55 +238,64 @@ async function scaffoldEditions(state) {
 		)
 
 		// move or scaffold edition main path if needed
-		if ((await exists(sourceEdition.mainPath)) === false) {
-			// edition entry doesn't exist, but the root entry does
-			if (await exists(sourceEdition.main)) {
-				await rename(sourceEdition.main, sourceEdition.mainPath)
-			}
-			// edition entry doesn't exist, but it is a docpad plugin
-			else if (answers.docpadPlugin) {
-				write(
-					sourceEdition.mainPath,
-					[
-						"'use strict'",
-						'',
-						"module.exports = class MyPlugin extends require('docpad-baseplugin') {",
-						"\tget name () { return 'myplugin' }",
-						'\tget initialConfig () { return {} }',
-						'}',
-						''
-					].join('\n')
-				)
-			}
-			// edition entry doesn't exist, so create an empty file
-			else await spawn(['touch', sourceEdition.mainPath])
-		}
-
-		// move or scaffold edition test path if needed
-		if (answers.docpadPlugin === false) {
-			if ((await exists(sourceEdition.testPath)) === false) {
+		if (sourceEdition.mainPath) {
+			if ((await exists(sourceEdition.mainPath)) === false) {
 				// edition entry doesn't exist, but the root entry does
-				if (await exists(sourceEdition.test)) {
-					await rename(sourceEdition.test, sourceEdition.testPath)
+				if (await exists(sourceEdition.main)) {
+					await rename(sourceEdition.main, sourceEdition.mainPath)
 				}
-				// edition entry doesn't exist, so create a basic test file
-				else {
-					await write(
-						sourceEdition.testPath,
+				// edition entry doesn't exist, but it is a docpad plugin
+				else if (answers.docpadPlugin) {
+					write(
+						sourceEdition.mainPath,
 						[
 							"'use strict'",
 							'',
-							"const {equal} = require('assert-helpers')",
-							`const kava = require('kava')`,
-							'',
-							`kava.suite('${packageData.name}', function (suite, test) {`,
-							"\ttest('no tests yet', function () {",
-							"\t\tconsole.log('no tests yet')",
-							'\t})',
-							'})',
+							"module.exports = class MyPlugin extends require('docpad-baseplugin') {",
+							"\tget name () { return 'myplugin' }",
+							'\tget initialConfig () { return {} }',
+							'}',
 							''
 						].join('\n')
 					)
+				}
+				// edition entry doesn't exist, so create an empty file
+				else await spawn(['touch', sourceEdition.mainPath])
+			}
+		}
+
+		// move or scaffold edition test path if needed
+		if (sourceEdition.testPath) {
+			if (answers.docpadPlugin === false) {
+				if ((await exists(sourceEdition.testPath)) === false) {
+					// edition entry doesn't exist, but the root entry does
+					if (await exists(sourceEdition.test)) {
+						await rename(sourceEdition.test, sourceEdition.testPath)
+					}
+					// edition entry doesn't exist, so create a basic test file
+					else if (answers.kava) {
+						await write(
+							sourceEdition.testPath,
+							[
+								"'use strict'",
+								'',
+								"const {equal} = require('assert-helpers')",
+								`const kava = require('kava')`,
+								'',
+								`kava.suite('${packageData.name}', function (suite, test) {`,
+								"\ttest('no tests yet', function () {",
+								"\t\tconsole.log('no tests yet')",
+								'\t})',
+								'})',
+								''
+							].join('\n')
+						)
+					} else {
+						await write(
+							sourceEdition.testPath,
+							["console.log('no tests yet')", ''].join('\n')
+						)
+					}
 				}
 			}
 		}
@@ -403,6 +407,8 @@ async function updateRuntime(state) {
 		!answers.sourceDirectory || answers.sourceDirectory === '.'
 			? `.`
 			: `./${answers.sourceDirectory}`
+	const mdx = answers.languages.includes('mdx')
+	const run = `${answers.packageManager} run`
 
 	// log
 	status('updating runtime...')
@@ -446,6 +452,7 @@ async function updateRuntime(state) {
 		'babel-plugin-add-module-exports': false,
 		typescript: false,
 		'typescript-eslint-parser': false,
+		'@typescript-eslint/parser': false,
 		prettier: false,
 		eslint: false,
 		'babel-eslint': false,
@@ -456,6 +463,7 @@ async function updateRuntime(state) {
 		'eslint-plugin-react-hooks': false,
 		'eslint-plugin-react': false,
 		'eslint-plugin-typescript': false,
+		'@typescript-eslint/eslint-plugin': false,
 		'valid-directory': false,
 		documentation: false,
 		jsdoc: false,
@@ -488,24 +496,27 @@ async function updateRuntime(state) {
 		'react-dom': 'next',
 		next: 'canary',
 		now: 'canary',
-		'@zeit/next-typescript': 'canary'
+		'@zeit/next-typescript': 'canary',
+		'@zeit/next-mdx': 'canary'
 	}
 
 	// add our default scripts
 	state.scripts = {
-		'our:setup:npm': 'npm install',
+		'our:setup:install': `${answers.packageManager} install`,
 		'our:clean': 'rm -Rf ./docs ./edition* ./es2015 ./es5 ./out ./.next',
 		'our:meta:projectz':
 			packageData.name === 'projectz' ? './bin.js compile' : 'projectz compile',
-		'our:test': ['npm run our:verify', 'npm test'].join(' && '),
+		'our:test': [`${run} our:verify`, `${answers.packageManager} test`].join(
+			' && '
+		),
 		'our:release:prepare': [
-			'npm run our:clean',
-			'npm run our:compile',
-			'npm run our:test',
-			'npm run our:meta'
+			`${run} our:clean`,
+			`${run} our:compile`,
+			`${run} our:test`,
+			`${run} our:meta`
 		].join(' && '),
 		'our:release:push': 'git push origin master && git push origin --tags',
-		'our:release': 'npm run our:release:push'
+		'our:release': `${run} our:release:push`
 	}
 
 	// add test script
@@ -522,8 +533,7 @@ async function updateRuntime(state) {
 			'our:release:tag':
 				'export MESSAGE=$(cat ./HISTORY.md | sed -n "/## v$npm_package_version/,/##/p" | sed \'s/## //\' | awk \'NR>1{print buf}{buf = $0}\') && test "$MESSAGE" || (echo \'proper changelog entry not found\' && exit -1) && git tag v$npm_package_version -am "$MESSAGE"',
 			'our:release:push': 'git push origin master && git push origin --tags',
-			'our:release':
-				'npm run our:release:prepare && npm run our:release:check-changelog && npm run our:release:check-dirty && npm run our:release:tag && npm run our:release:push'
+			'our:release': `${run} our:release:prepare && ${run} our:release:check-changelog && ${run} our:release:check-dirty && ${run} our:release:tag && ${run} our:release:push`
 		})
 
 	// docpad plugin
@@ -544,13 +554,49 @@ async function updateRuntime(state) {
 
 	// css
 	if (answers.languages.includes('css')) {
-		packages.stylelint = 'dev'
-		packages['stylelint-config-standard'] = 'dev'
-		state.scripts['our:verify:stylelint'] = [
-			'stylelint',
-			'--fix',
-			`'${sourcePath}/**/*.css'`
-		].join(' ')
+		if (answers.nowWebsite) {
+			state.scripts['our:verify:stylelint'] =
+				"echo 'disabled due to https://spectrum.chat/?t=d1b9f61a-65e8-42a3-9042-f9c6a6fae6fd'"
+		} else {
+			packages.stylelint = 'dev'
+			packages['stylelint-config-standard'] = 'dev'
+			state.scripts['our:verify:stylelint'] = [
+				'stylelint',
+				'--fix',
+				`'${sourcePath}/**/*.css'`
+			].join(' ')
+			packageData.stylelint = {
+				extends: 'stylelint-config-standard',
+				rules: {
+					'at-rule-empty-line-before': null,
+					'custom-property-empty-line-before': null,
+					'declaration-empty-line-before': null,
+					indentation: 'tab',
+					'max-empty-lines': 2,
+					'no-descending-specificity': null,
+					'no-duplicate-selectors': null,
+					'rule-empty-line-before': null,
+					'selector-list-comma-newline-after': null
+				},
+				ignoreFiles: ['**/vendor/*.css', 'node_modules']
+			}
+			if (answers.languages.includes('jsx')) {
+				// jsx compatibility
+				Object.assign(packageData.stylelint.rules, {
+					'block-closing-brace-empty-line-before': null,
+					'block-closing-brace-newline-after': null,
+					'block-closing-brace-newline-before': null,
+					'block-closing-brace-space-before': null,
+					'block-opening-brace-newline-after': null,
+					'block-opening-brace-space-after': null,
+					'block-opening-brace-space-before': null,
+					'declaration-block-semicolon-newline-after': null,
+					'declaration-block-semicolon-space-after': null,
+					'declaration-block-semicolon-space-before': null,
+					'declaration-block-trailing-semicolon': null
+				})
+			}
+		}
 	}
 
 	// coffeescript
@@ -574,14 +620,11 @@ async function updateRuntime(state) {
 		packages.prettier = packages['eslint-config-prettier'] = packages[
 			'eslint-plugin-prettier'
 		] = 'dev'
+		if (!packageData.eslintConfig) packageData.eslintConfig = {}
 		if (answers.name === 'eslint-config-bevry') {
-			packageData.eslintConfig = {
-				extends: ['./local.js']
-			}
+			packageData.eslintConfig.extends = ['./local.js']
 		} else {
-			packageData.eslintConfig = {
-				extends: ['bevry']
-			}
+			packageData.eslintConfig.extends = ['bevry']
 			packages['eslint-config-bevry'] = 'dev'
 		}
 		packageData.prettier = {
@@ -601,9 +644,9 @@ async function updateRuntime(state) {
 
 	// typescript
 	if (answers.languages.includes('typescript')) {
-		packages.typescript = packages['eslint-plugin-typescript'] = packages[
-			'typescript-eslint-parser'
-		] = 'dev'
+		packages.typescript = packages[
+			'@typescript-eslint/eslint-plugin'
+		] = packages['@typescript-eslint/parser'] = 'dev'
 		state.scripts['our:verify:typescript'] = 'tsc --noEmit --project .'
 	}
 
@@ -751,7 +794,7 @@ async function updateRuntime(state) {
 		// surge
 		if (answers.website === 'surge') {
 			packages.surge = 'dev'
-			state.scripts['my:deploy'] = `surge ./${answers.deployDirectory}`
+			state.scripts['my:deploy'] = `surge ./${answers.staticDirectory}`
 		}
 		// now
 		else if (answers.nowWebsite) {
@@ -759,21 +802,25 @@ async function updateRuntime(state) {
 			// next / react
 			if (answers.website.includes('next')) {
 				Object.assign(state.scripts, {
-					test: 'npm run build',
-					dev: 'next',
-					build: 'next build',
-					start: 'next start'
+					'now-build': `${run} our:compile:next`,
+					'our:compile:next': 'next build',
+					start: `${run} our:verify && next dev`
 				})
-				packages.next = packages.react = packages['react-dom'] = true
-				packages['eslint-plugin-react-hooks'] = packages[
-					'eslint-plugin-react'
-				] = 'dev'
+				packages.next = 'dev'
 				if (answers.languages.includes('typescript')) {
-					packages['@types/next'] = packages[
-						'@zeit/next-typescript'
-					] = packages['@types/react'] = packages['types/react-dom'] = true
+					packages['@types/next'] = packages['@zeit/next-typescript'] = 'dev'
 				}
 			}
+		}
+	}
+
+	// react
+	if (answers.languages.includes('react')) {
+		packages.react = packages['react-dom'] = true
+		packages['eslint-plugin-react-hooks'] = packages['eslint-plugin-react'] =
+			'dev'
+		if (answers.languages.includes('typescript')) {
+			packages['@types/react'] = packages['@types/react-dom'] = true
 		}
 	}
 
@@ -783,7 +830,7 @@ async function updateRuntime(state) {
 	}
 
 	// testing (not docpad plugin, nor website)
-	if (!answers.docpadPlugin && !answers.website) {
+	if (answers.kava) {
 		packages.kava = packages['assert-helpers'] = 'dev'
 	}
 
@@ -824,56 +871,64 @@ async function updateRuntime(state) {
 			.filter(item => versions[item])
 			.map(item => `${item}@${versions[item]}`)
 	}
-	async function uninstall(dependencies) {
-		console.log('uninstalling:', dependencies.join(' '))
-		await spawn(['npm', 'uninstall', '-SDO'].concat(dependencies))
-	}
-
-	async function install(dependencies, flags) {
-		console.log('installing:', dependencies.join(' '))
-		await spawn(
-			['npm', 'install', `-${flags}`].concat(latestDependencies(dependencies))
-		)
-		await spawn(
-			['npm', 'install', `-E${flags}`].concat(exactDependencies(dependencies))
-		)
-	}
-
-	// remove deps
-	if (removeDependencies.length) {
-		status('remove old dependencies...')
-		await uninstall(removeDependencies)
-		status('...removed old dependencies')
-	}
-	// add deps
-	if (addDependencies.length) {
-		status('adding the dependencies...')
-		await install(addDependencies, 'P')
-		status('...added the dependencies')
-	}
-	// add dev deps
-	if (addDevDependencies.length) {
-		status('adding the development dependencies...')
-		await install(addDevDependencies, 'D')
-		status('...added the development dependencies')
-	}
-
-	// upgrade deps
-	if (answers.upgradeAllDependencies) {
-		status('upgrading the installed dependencies...')
-		try {
-			await spawn(['ncu', '-u'])
-		} catch (err) {
-			await spawn(['npm', 'install', '-g', 'npm-check-updates'])
-			await spawn(['ncu', '-u'])
+	function uninstallRaw(dependencies) {
+		if (!dependencies.length) return
+		const command = []
+		const flags = []
+		if (answers.packageManager === 'yarn') {
+			// yarn can only uninstall installed deps
+			// https://github.com/yarnpkg/yarn/issues/6919
+			dependencies = dependencies.filter(
+				dependency =>
+					packageData.dependencies[dependency] ||
+					packageData.devDependencies[dependency]
+			)
+			if (!dependencies.length) return
+			// s = silent
+			flags.push('s')
+			command.push('yarn', 'remove')
+		} else if (answers.packageManager === 'npm') {
+			// S = save
+			flags.push('S')
+			command.push('npm', 'uninstall')
 		}
-		status('...upgraded all the installed dependencies')
+		command.push(...dependencies)
+		if (flags.length) command.push('-' + flags.join(''))
+		console.log(command.join(' '))
+		return spawn(command)
 	}
-
-	// install remaining
-	status('installing the dependencies...')
-	await spawn(['npm', 'install'])
-	status('...installed all the dependencies')
+	function uninstall(dependencies) {
+		return uninstallRaw(dependencies)
+	}
+	function installRaw(dependencies, mode, exact = false) {
+		if (!dependencies.length) return
+		const command = []
+		const flags = []
+		if (mode === 'development') flags.push('D')
+		if (exact) flags.push('E')
+		if (answers.packageManager === 'yarn') {
+			// s = silent
+			flags.push('s')
+			command.push('yarn', 'add')
+		} else if (answers.packageManager === 'npm') {
+			// S = save
+			// P = production
+			flags.push('S')
+			if (mode !== 'development') flags.push('P')
+			command.push('npm', 'install')
+		}
+		command.push(...dependencies)
+		if (flags.length) command.push('-' + flags.join(''))
+		console.log(command.join(' '))
+		return spawn(command)
+	}
+	async function install(dependencies, mode) {
+		// if yarn, uninstall first, workaround for https://github.com/yarnpkg/yarn/issues/5345
+		if (answers.packageManager === 'yarn') await uninstall(dependencies)
+		// continue
+		await installRaw(latestDependencies(dependencies), mode)
+		await installRaw(exactDependencies(dependencies), mode, true)
+	}
 
 	// remove old files
 	status('removing old files...')
@@ -883,6 +938,7 @@ async function updateRuntime(state) {
 			'.eslintrc.js',
 			'.jscrc',
 			'.jshintrc',
+			'.stylelintrc.js',
 			'Cakefile',
 			'cyclic.js',
 			'docpad-setup.sh',
@@ -890,7 +946,9 @@ async function updateRuntime(state) {
 			'nakefile.js',
 			'next.config.js',
 			'tsconfig.json'
-		].map(file => unlink(file))
+		]
+			.filter(i => i)
+			.map(file => unlink(file))
 	)
 	status('...removed old files')
 
@@ -909,78 +967,55 @@ async function updateRuntime(state) {
 
 	// tsconfig
 	if (answers.languages.includes('typescript')) {
+		// based from
+		// https://blogs.msdn.microsoft.com/typescript/2018/08/27/typescript-and-babel-7/
+		// https://github.com/zeit/next-plugins/tree/master/packages/next-typescript
+		// https://github.com/Microsoft/TypeScript/issues/29056#issuecomment-448386794
+		// Only enable isolatedModules on TypeScript projects, as for JavaScript projects it will be incompatible with 'use strict'
 		status('writing tsconfig file...')
-		const tsconfig = {
-			// https://blogs.msdn.microsoft.com/typescript/2018/08/27/typescript-and-babel-7/
-			compilerOptions: {
-				// Target latest version of ECMAScript.
-				target: 'esnext',
-				// Search under node_modules for non-relative imports.
-				moduleResolution: 'node',
-				// Process & infer types from .js files.
-				allowJs: true,
-				// Don't emit; allow Babel to transform files.
-				noEmit: true,
-				// Enable strictest settings like strictNullChecks & noImplicitAny.
-				strict: true,
-				// Disallows features that require cross-file information for emit.
-				isolatedModules: true,
-				// Import non-ES modules as default imports.
-				esModuleInterop: true
-			}
-		}
-		// add our own extensions
-		Object.assign(tsconfig, {
-			include: [answers.sourceDirectory]
-		})
-		Object.assign(tsconfig.compilerOptions, {
-			// Only enable on TypeScript projects, as for JavaScript projects it will be incompatible with 'use strict'
-			isolatedModules: answers.language === 'typescript',
-			// Allow .ts files to make use of jsdoc'd .js files.
-			// https://github.com/Microsoft/TypeScript/issues/29056#issuecomment-448386794
-			maxNodeModuleJsDepth: 5
-		})
+		const tsconfig = answers.website
+			? {
+					compilerOptions: {
+						allowJs: true,
+						allowSyntheticDefaultImports: true,
+						jsx: 'preserve',
+						lib: ['dom', 'esnext'],
+						maxNodeModuleJsDepth: 5,
+						module: 'commonjs',
+						moduleResolution: 'node',
+						resolveJsonModule: true,
+						sourceMap: true,
+						strict: true,
+						target: 'esnext'
+					},
+					include: ['client', 'pages', 'scripts', 'server', 'shared']
+			  }
+			: {
+					compilerOptions: {
+						allowJs: true,
+						esModuleInterop: true,
+						isolatedModules: answers.language === 'typescript',
+						maxNodeModuleJsDepth: 5,
+						moduleResolution: 'node',
+						noEmit: true,
+						resolveJsonModule: true,
+						strict: true,
+						target: 'esnext'
+					},
+					include: [answers.sourceDirectory]
+			  }
 		// website
 		if (answers.website) {
-			// https://github.com/zeit/next-plugins/tree/master/packages/next-typescript
-			Object.assign(tsconfig.compilerOptions, {
-				allowSyntheticDefaultImports: true,
-				jsx: 'preserve',
-				lib: ['dom', 'esnext'],
-				module: 'esnext',
-				noUnusedLocals: true,
-				noUnusedParameters: true,
-				preserveConstEnums: true,
-				removeComments: false,
-				skipLibCheck: true,
-				sourceMap: true,
-				strict: true
-			})
 			// next website
 			if (answers.website.includes('next')) {
-				// tsconfig
-				tsconfig.include = ['components', 'pages']
-
 				// next.config.js
 				const next = [
-					'// https://spectrum.chat/zeit/general/unable-to-import-module-now-launcher-error~2662f0ba-4186-402f-b1db-2e3c43d8689a',
-					'const env =',
-					"process.env.NODE_ENV === 'development'",
-					`	? {} // We're never in "production server" phase when in development mode`,
-					`	: !process.env.NOW_REGION`,
-					"	? require('next/constants') // Get values from `next` package when building locally",
-					"	: require('next-server/constants') // Get values from `next-server` package when building on now v2",
-					'',
-					'module.exports = (phase, { defaultConfig }) => {',
-					'	if (phase === env.PHASE_PRODUCTION_SERVER) {',
-					'		// Config used to run in production',
-					'		return {}',
-					'	}',
-					'',
-					"	const withTypescript = require('@zeit/next-typescript')",
-					'	return withTypescript()',
-					'}'
-				]
+					`const withTypescript = require('@zeit/next-typescript')`,
+					mdx ? `const withMDX = require('@zeit/next-mdx')` : '',
+					`module.exports = ${mdx ? 'withMDX(' : ''}withTypescript({`,
+					`	target: 'serverless'`,
+					`})${mdx ? ')' : ''}`
+				].filter(i => i)
 				await write('next.config.js', next.join('\n') + '\n')
 
 				// .babelrc
@@ -994,19 +1029,64 @@ async function updateRuntime(state) {
 		status('...wrote tsconfig file')
 	}
 
+	// yarn pnp
+	if (answers.packageManager === 'yarn') {
+		status('yarn enabling plug and play...')
+		await spawn(['yarn', '--pnp'])
+		status('...yarn enabled plug and play')
+	}
+
+	// remove deps
+	if (removeDependencies.length) {
+		status('remove old dependencies...')
+		await uninstall(removeDependencies)
+		status('...removed old dependencies')
+	}
+	// add deps
+	if (addDependencies.length) {
+		status('adding the dependencies...')
+		await install(addDependencies, 'production')
+		status('...added the dependencies')
+	}
+	// add dev deps
+	if (addDevDependencies.length) {
+		status('adding the development dependencies...')
+		await install(addDevDependencies, 'development')
+		status('...added the development dependencies')
+	}
+
+	// upgrade deps
+	if (answers.upgradeAllDependencies && answers.packageManager === 'npm') {
+		status('upgrading the installed dependencies...')
+		try {
+			await spawn(['ncu', '-u'])
+		} catch (err) {
+			await spawn(['npm', 'install', '-g', 'npm-check-updates'])
+			await spawn(['ncu', '-u'])
+		}
+		status('...upgraded all the installed dependencies')
+	}
+
 	// run setup
 	status('running setup...')
-	await spawn('npm run our:setup')
+	await spawn(`${run} our:setup`)
 	status('...ran setup')
+
+	// yarn pnp
+	if (answers.packageManager === 'yarn' && answers.nowWebsite) {
+		status('yarn disabling plug and play...')
+		await spawn(['yarn', '--disable-pnp'])
+		status('...yarn disabled plug and play')
+	}
 
 	// run clean
 	status('running clean...')
-	await spawn('npm run our:clean')
+	await spawn(`${run} our:clean`)
 	status('...ran clean')
 
 	// run compile
 	status('running compile...')
-	await spawn('npm run our:compile')
+	await spawn(`${run} our:compile`)
 	status('...ran compile')
 
 	// read the updated package.json file

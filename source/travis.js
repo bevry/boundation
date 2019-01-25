@@ -37,9 +37,7 @@ async function updateTravis(state) {
 				node_js: version
 			}))
 		},
-		cache: {
-			directories: ['$HOME/.npm', '$HOME/.yarn-cache']
-		},
+		cache: answers.packageManager,
 		install: [
 			`eval "$(curl ${curlFlags} https://raw.githubusercontent.com/bevry/awesome-travis/${awesomeTravisCommit}/scripts/node-install.bash)"`
 		],
@@ -108,6 +106,16 @@ async function updateTravis(state) {
 			'--public',
 			usedFlag
 		])
+		if (answers.deployBranch) {
+			await spawn([
+				'travis',
+				'env',
+				'set',
+				'DEPLOY_BRANCH',
+				answers.deployBranch,
+				usedFlag
+			])
+		}
 		if (answers.surgeLogin) {
 			await spawn([
 				'travis',
@@ -129,40 +137,16 @@ async function updateTravis(state) {
 				usedFlag
 			])
 		}
-		if (answers.nowToken) {
-			await spawn([
-				'travis',
-				'env',
-				'set',
-				'NOW_TOKEN',
-				answers.nowToken,
-				usedFlag
-			])
-		}
-		if (answers.nowTeam) {
-			await spawn([
-				'travis',
-				'env',
-				'set',
-				'NOW_TEAM',
-				answers.nowTeam,
-				'--public',
-				usedFlag
-			])
-		}
 	}
 	if (answers.docs) {
 		travis.after_success.push(
 			`eval "$(curl ${curlFlags} https://raw.githubusercontent.com/bevry/awesome-travis/${awesomeTravisCommit}/scripts/surge.bash)"`
 		)
 	}
-	if (answers.website) {
-		const deployScript = answers.nowWebsite ? 'deploy-now' : 'deploy-custom'
-		if (deployScript) {
-			travis.after_success.push(
-				`eval "$(curl ${curlFlags} https://raw.githubusercontent.com/bevry/awesome-travis/${awesomeTravisCommit}/scripts/${deployScript}.bash)"`
-			)
-		}
+	if (answers.travisWebsite) {
+		travis.after_success.push(
+			`eval "$(curl ${curlFlags} https://raw.githubusercontent.com/bevry/awesome-travis/${awesomeTravisCommit}/scripts/deploy-custom.bash"`
+		)
 	}
 	if (answers.npm) {
 		if (answers.npmAuthToken && answers.travisUpdateEnvironment) {
@@ -189,17 +173,33 @@ async function updateTravis(state) {
 		)
 	}
 
-	// output the resul env vars
+	// output the result env vars
 	if (answers.travisUpdateEnvironment)
 		await spawn(['travis', 'env', 'list', usedFlag])
 
-	// write the .travis.yml file
-	// these spawns must be run serially, as otherwise not all variables may be written, which is annoying
-	status('writing the travis file...')
+	// re-add notifications if we aren't making new ones
 	if (!answers.travisUpdateEnvironment && travisOriginal.notifications) {
 		travis.notifications = travisOriginal.notifications
 	}
+
+	// trim empty fields to prevent travis errors like:
+	// travis_run_after_success: command not found
+	Object.keys(travis).forEach(function(key) {
+		const value = travis[key]
+		if (Array.isArray(value) && value.length === 0) {
+			delete travis[key]
+		} else if (typeof value === 'object' && Object.keys(value).length === 0) {
+			delete travis[key]
+		} else if (value === '' || value == null) {
+			delete travis[key]
+		}
+	})
+
+	// write the .travis.yml file
+	status('writing the travis file...')
 	await writeYAML('.travis.yml', travis)
+
+	// add the notifications
 	if (answers.travisUpdateEnvironment && answers.travisEmail) {
 		await spawn([
 			'travis',
@@ -210,6 +210,8 @@ async function updateTravis(state) {
 			usedFlag
 		])
 	}
+
+	// note we are now finished with the travis file
 	status('...wrote the travis file')
 
 	// log
