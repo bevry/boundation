@@ -1,5 +1,24 @@
 # History
 
+## v1.27.0 2019 January 26
+
+-   complete zeit stack support for now 2 and next.js 8
+-   add support for yarn
+-   don’t use stylelint with now, due to it being too large
+-   boundation now handles stylelint support, to rather than bevry/base, such that we can add jsx support to it
+-   update typescript eslint support for new packages
+-   add support for mdx to next
+-   improved tsconfig handling, it is now more obvious
+-   update travis for latest cache rules, and to trim empty fields
+-   prevent test script from being trimmed if it existed
+-   ensure missing source edition doesn’t throw
+-   if for some reason `exists` throws, tell us why
+-   make engines is `>`= on website projects too, in order to prevent yarn from whining
+-   better website project detection
+-   support editions for website projects
+-   use `githubauthquerystring`
+-   updated deps
+
 ## v1.26.0 2019 January 14
 
 -   Add react eslint plugins, and types, for Next.js projects

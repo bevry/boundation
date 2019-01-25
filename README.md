@@ -71,44 +71,42 @@ It will ask you several questions about your project, then initialise or upgrade
 
 If you have the `secret env` command available, you can preload `boundation` with the following usage:
 
-``` bash
+```bash
 secret env GITHUB_CLIENT_ID GITHUB_CLIENT_SECRET NPM_AUTHTOKEN TRAVIS_NOTIFICATION_EMAIL SURGE_LOGIN SURGE_TOKEN NOW_TOKEN -- boundation
 ```
 
-
 ## Features
 
-- Supports JavaScript, TypeScript, CoffeeScript, and Website projects
-- Automatic [Editions](https://github.com/bevry/editions) setup and upgrades for automatic selection of the best edition for the environment, allowing you to develop for the latest environment with the latest technology, then automatically test on and support older environments
-- Uses [Projectz](https://github.com/bevry/projectz) to automatically generate and maintain your readme, license, badges, and the contributing file
-- Uses [Bevry's Base Files](https://github.com/bevry/base) which provides linting configurations that automatically detect the features of your projects, and adjusts the linting accordingly, as well as pulling down files like `.gitignore` and `.npmignore` with respect for custom sections
-- ESLint for JavaScript and TypeScript projects, and CoffeeLint for CoffeeScript projects
-- Powerful NPM Scripts
-    - `npm run our:setup` for setting up the project for development
-        - automatic addition of your `my:setup:*` scripts
-    - `npm run our:compile` for compiling the project
-        - automatic addition of your `my:compile:*` scripts
-    - `npm run our:deploy` for linting
-        - automatic addition of your `my:deploy:*` scripts
-    - `npm run our:meta` for compiling the meta files
-        - automatic addition of your `my:meta:*` scripts
-    - `npm run our:verify` for linting and tests
-        - automatic addition of your `my:verify:*` scripts
-    - `npm run our:release` for for releasing your project
-        - on code projects, it will run verify, check for uncommitted changes, a changelog entry, performing the git tag automatically, and the git push
-        - on website projects, it will run verify and git push
-        - automatic addition of your `my:release:*` scripts
-- Optional automatic Travis CI setup to release your project to npm when tests pass, and to test on older environments
-    - Powered by [Awesome Travis](https://github.com/bevry/awesome-travis)
-- Optional JSDoc for JavaScript projects
-- Automatic TypeDoc for TypeScript projects
-- Optional YUIDoc for new CoffeeScript projects, and Biscotto for old
-- Optional Flow Type for type checking of JavaScript projects
-- Optional ES6 Import module support
-- Automatic Babel support when needing to support browsers and older targets
-- Optional DocPad Plugin support
-- Automatic package dependency upgrades
-
+-   Supports JavaScript, TypeScript, CoffeeScript, and Website projects
+-   Automatic [Editions](https://github.com/bevry/editions) setup and upgrades for automatic selection of the best edition for the environment, allowing you to develop for the latest environment with the latest technology, then automatically test on and support older environments
+-   Uses [Projectz](https://github.com/bevry/projectz) to automatically generate and maintain your readme, license, badges, and the contributing file
+-   Uses [Bevry's Base Files](https://github.com/bevry/base) which provides linting configurations that automatically detect the features of your projects, and adjusts the linting accordingly, as well as pulling down files like `.gitignore` and `.npmignore` with respect for custom sections
+-   ESLint for JavaScript and TypeScript projects, and CoffeeLint for CoffeeScript projects
+-   Powerful NPM Scripts
+    -   `npm run our:setup` for setting up the project for development
+        -   automatic addition of your `my:setup:*` scripts
+    -   `npm run our:compile` for compiling the project
+        -   automatic addition of your `my:compile:*` scripts
+    -   `npm run our:deploy` for linting
+        -   automatic addition of your `my:deploy:*` scripts
+    -   `npm run our:meta` for compiling the meta files
+        -   automatic addition of your `my:meta:*` scripts
+    -   `npm run our:verify` for linting and tests
+        -   automatic addition of your `my:verify:*` scripts
+    -   `npm run our:release` for for releasing your project
+        -   on code projects, it will run verify, check for uncommitted changes, a changelog entry, performing the git tag automatically, and the git push
+        -   on website projects, it will run verify and git push
+        -   automatic addition of your `my:release:*` scripts
+-   Optional automatic Travis CI setup to release your project to npm when tests pass, and to test on older environments
+    -   Powered by [Awesome Travis](https://github.com/bevry/awesome-travis)
+-   Optional JSDoc for JavaScript projects
+-   Automatic TypeDoc for TypeScript projects
+-   Optional YUIDoc for new CoffeeScript projects, and Biscotto for old
+-   Optional Flow Type for type checking of JavaScript projects
+-   Optional ES6 Import module support
+-   Automatic Babel support when needing to support browsers and older targets
+-   Optional DocPad Plugin support
+-   Automatic package dependency upgrades
 
 <!-- HISTORY/ -->
 
