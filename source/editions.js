@@ -84,11 +84,16 @@ async function generateEditions(state) {
 	status('updating editions...')
 
 	// handle
-	if (answers.website || answers.sourceDirectory === '.') {
-		status('skipped editions')
+	if (answers.website) {
 		delete packageData.main
+		state.editions = [
+			{
+				description: 'source',
+				directory: '.',
+				tags: [...answers.languages, answers.modules ? 'import' : 'require']
+			}
+		]
 	} else {
-		status('updating editions...')
 		const editions = []
 
 		// Generate base editions based on language
