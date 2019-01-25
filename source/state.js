@@ -52,7 +52,7 @@ module.exports = {
 	},
 	get sourceEdition() {
 		const sourceEdition = this.editions[0]
-		if (sourceEdition.active === false) {
+		if (sourceEdition && sourceEdition.active === false) {
 			throw new Error('source edition had .active=false which is not allowed')
 		}
 		return sourceEdition
