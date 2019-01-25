@@ -3,7 +3,10 @@
 
 // Local
 const { warn } = require('./log')
-const { githubAuth } = require('./data')
+const {
+	fetchGithubAuthQueryString,
+	redactGithubAuthQueryString
+} = require('githubauthquerystring')
 
 // External
 const fetch = require('node-fetch')
@@ -11,7 +14,7 @@ const fetch = require('node-fetch')
 async function getGithubCommit(slug, fallback = 'master') {
 	try {
 		const response = await fetch(
-			`https://api.github.com/repos/${slug}/commits?${githubAuth}`,
+			`https://api.github.com/repos/${slug}/commits?${fetchGithubAuthQueryString()}`,
 			{
 				headers: {
 					Accept: 'application/vnd.github.v3+json'
@@ -25,7 +28,10 @@ async function getGithubCommit(slug, fallback = 'master') {
 		const commit = result[0].sha
 		return commit
 	} catch (err) {
-		warn(`fetching the latest ${slug} commit failed, so using ${fallback}`, err)
+		warn(
+			`fetching the latest ${slug} commit failed, so using ${fallback}`,
+			redactGithubAuthQueryString(err.toString())
+		)
 		return fallback
 	}
 }
