@@ -492,8 +492,6 @@ async function updateRuntime(state) {
 
 	// Override the versions that are installed if these dependencies are needed
 	const versions = {
-		react: 'next',
-		'react-dom': 'next',
 		next: 'canary',
 		now: 'canary',
 		'@zeit/next-typescript': 'canary',

@@ -1,5 +1,10 @@
 # History
 
+## v1.28.0 2019 Fenruary 7
+
+-   use latest react version, rather than next, as 16.8 is now released
+-   update deps
+
 ## v1.27.0 2019 January 26
 
 -   complete zeit stack support for now 2 and next.js 8
