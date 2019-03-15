@@ -24,6 +24,17 @@ function nodeMajorVersion(value) {
 function nodeMajorVersions(array) {
 	return array.map(version => nodeMajorVersion(version))
 }
+function importOrRequire(left, right, modules = true) {
+	return modules
+		? `import ${left} from '${right}'`
+		: `const ${left} = require('${modules}')`
+}
+function exportOrExports(content, modules = true) {
+	return modules ? `export default ${content}` : `module.exports = ${content}`
+}
+function useStrict(modules = true) {
+	return modules ? '' : "'use strict'\n"
+}
 
 // function completeVersion (value) {
 // 	const version = value.toString()
@@ -246,12 +257,14 @@ async function scaffoldEditions(state) {
 				}
 				// edition entry doesn't exist, but it is a docpad plugin
 				else if (answers.docpadPlugin) {
-					write(
+					await write(
 						sourceEdition.mainPath,
 						[
-							"'use strict'",
-							'',
-							"module.exports = class MyPlugin extends require('docpad-baseplugin') {",
+							useStrict(answers.modules),
+							exportOrExports(
+								"class MyPlugin extends require('docpad-baseplugin') {",
+								answers.modules
+							),
 							"\tget name () { return 'myplugin' }",
 							'\tget initialConfig () { return {} }',
 							'}',
@@ -260,7 +273,15 @@ async function scaffoldEditions(state) {
 					)
 				}
 				// edition entry doesn't exist, so create an empty file
-				else await spawn(['touch', sourceEdition.mainPath])
+				else
+					await write(
+						sourceEdition.mainPath,
+						[
+							useStrict(answers.modules),
+							exportOrExports("'@todo'", answers.modules),
+							''
+						].join('\n')
+					)
 			}
 		}
 
@@ -277,10 +298,9 @@ async function scaffoldEditions(state) {
 						await write(
 							sourceEdition.testPath,
 							[
-								"'use strict'",
-								'',
-								"const {equal} = require('assert-helpers')",
-								`const kava = require('kava')`,
+								useStrict(answers.modules),
+								importOrRequire('{equal}', 'assert-helpers', answers.modules),
+								importOrRequire('kava', 'kava', answers.modules),
 								'',
 								`kava.suite('${packageData.name}', function (suite, test) {`,
 								"\ttest('no tests yet', function () {",
@@ -293,7 +313,11 @@ async function scaffoldEditions(state) {
 					} else {
 						await write(
 							sourceEdition.testPath,
-							["console.log('no tests yet')", ''].join('\n')
+							[
+								useStrict(answers.modules),
+								exportOrExports("'@todo'", answers.modules),
+								''
+							].join('\n')
 						)
 					}
 				}
