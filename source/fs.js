@@ -75,6 +75,8 @@ function write(file, data) {
 }
 
 async function readYAML(file) {
+	const exist = await exists(file)
+	if (!exist) return {}
 	const data = await read(file)
 	return yaml.load(data)
 }
