@@ -2,7 +2,7 @@
 'use strict'
 
 // Prepare
-const mandatoryScriptsList = 'our:setup our:compile our:meta our:verify our:deploy our:release'.split(
+const mandatoryScriptsList = 'our:setup our:compile our:meta our:verify our:deploy our:release test'.split(
 	' '
 )
 const bevryOrganisationsList = 'balupton bevry bevry-trading docpad browserstate webwrite chainyjs interconnectapp'.split(
