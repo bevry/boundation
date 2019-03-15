@@ -970,6 +970,7 @@ async function updateRuntime(state) {
 		// https://github.com/zeit/next-plugins/tree/master/packages/next-typescript
 		// https://github.com/Microsoft/TypeScript/issues/29056#issuecomment-448386794
 		// Only enable isolatedModules on TypeScript projects, as for JavaScript projects it will be incompatible with 'use strict'
+		// resolveJsonModule seems to cause too many issues, so is disabled unless needed
 		status('writing tsconfig file...')
 		const tsconfig = answers.website
 			? {
@@ -981,7 +982,6 @@ async function updateRuntime(state) {
 						maxNodeModuleJsDepth: 5,
 						module: 'commonjs',
 						moduleResolution: 'node',
-						resolveJsonModule: true,
 						sourceMap: true,
 						strict: true,
 						target: 'esnext'
@@ -996,7 +996,6 @@ async function updateRuntime(state) {
 						maxNodeModuleJsDepth: 5,
 						moduleResolution: 'node',
 						noEmit: true,
-						resolveJsonModule: true,
 						strict: true,
 						target: 'esnext'
 					},
