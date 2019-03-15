@@ -554,7 +554,7 @@ async function updateRuntime(state) {
 	if (answers.languages.includes('css')) {
 		if (answers.nowWebsite) {
 			state.scripts['our:verify:stylelint'] =
-				"echo 'disabled due to https://spectrum.chat/?t=d1b9f61a-65e8-42a3-9042-f9c6a6fae6fd'"
+				"echo 'disabled due to https://spectrum.chat/zeit/general/resolved-deployments-fail-with-enospc-no-space-left-on-device-write~d1b9f61a-65e8-42a3-9042-f9c6a6fae6fd'"
 		} else {
 			packages.stylelint = 'dev'
 			packages['stylelint-config-standard'] = 'dev'
