@@ -1,5 +1,14 @@
 # History
 
+## v1.28.1 2019 March 15
+
+-   Scaffolded files now reflect CommonJS Modules vs ES Modules.
+-   No longer scaffold `tsconfig` file with `resolveJsonModule` as it caused too many issues.
+-   Updated the stylelint disable reference URL for the new location
+-   If there is no`test` script, then inject a noop one, to prevent tests from failing
+-   No longer crashes if `.travis.yml` does not exist
+-   Updated dependencies
+
 ## v1.28.0 2019 Fenruary 7
 
 -   use latest react version, rather than next, as 16.8 is now released
