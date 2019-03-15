@@ -710,7 +710,7 @@ async function updateRuntime(state) {
 						// use includeDeclarations if we are not a typescript project
 						answers.language === 'typescript' ? '' : '--includeDeclarations',
 						'--mode file',
-						"--exclude '**/+(*test*|node_modules)/**'",
+						"--exclude '**/+(*test*|node_modules)'",
 						'--name "$npm_package_name"',
 						'--readme ./README.md',
 						`--out ${out}`,
