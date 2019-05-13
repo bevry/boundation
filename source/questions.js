@@ -38,6 +38,7 @@ const {
 	getWebsiteType,
 	hasDocumentation,
 	hasEditions,
+	hasPackageDependency,
 	isPackageCoffee,
 	isPackageDocPadPlugin,
 	isPackageJavaScript,
@@ -276,8 +277,9 @@ async function getQuestions(state) {
 					isPackageTypeScript(packageData) && 'typescript',
 					isPackageCoffee(packageData) && 'coffeescript',
 					isPackageJSON(packageData) && 'json',
-					nextWebsite && 'react',
-					nextWebsite && 'jsx',
+					(hasPackageDependency(packageData, 'react') || nextWebsite) &&
+						'react',
+					(hasPackageDependency(packageData, 'react') || nextWebsite) && 'jsx',
 					website && 'html',
 					website && 'css'
 				]

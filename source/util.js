@@ -39,6 +39,10 @@ function without(list, blacklist) {
 	return list.filter(value => blacklist.includes(value) === false)
 }
 
+function uniq(list) {
+	return Array.from(new Set(list.filter(i => i)).values())
+}
+
 module.exports = {
 	trim,
 	slugit,
@@ -49,5 +53,6 @@ module.exports = {
 	repoToSlug,
 	repoToOrganisation,
 	repoToProject,
-	without
+	without,
+	uniq
 }

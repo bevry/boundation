@@ -3,7 +3,7 @@
 
 // Local
 const { status } = require('./log')
-const { without } = require('./util')
+const { without, uniq } = require('./util')
 const { spawn, exec, write, unlink, exists, rename, contains } = require('./fs')
 const { readPackage, writePackage } = require('./package')
 const { versionComparator } = require('./versions')
@@ -12,7 +12,26 @@ const { versionComparator } = require('./versions')
 const pathUtil = require('path')
 const { Versions } = require('@bevry/testen')
 
+// Consts
+const commands = {
+	yarn: {
+		add: ['yarn', 'add', '--ignore-engines'],
+		install: ['yarn', 'install', '--ignore-engines'],
+		uninstall: ['yarn', 'remove', '--ignore-engines'],
+		pnp: ['yarn', '--pnp', '--ignore-engines'],
+		disablepnp: ['yarn', '--disable-pnp', '--ignore-engines']
+	},
+	npm: {
+		add: ['npm', 'install'],
+		install: ['npm', 'install'],
+		uninstall: ['npm', 'uninstall']
+	}
+}
+
 // Helpers
+function peerDepInstallLocation(packageData, key) {
+	return (packageData.peerDependencies || {})[key] ? 'dev' : true
+}
 function nodeMajorVersion(value) {
 	return value.startsWith('0')
 		? value
@@ -524,7 +543,7 @@ async function updateRuntime(state) {
 
 	// add our default scripts
 	state.scripts = {
-		'our:setup:install': `${answers.packageManager} install`,
+		'our:setup:install': commands[answers.packageManager].install.join(' '),
 		'our:clean': 'rm -Rf ./docs ./edition* ./es2015 ./es5 ./out ./.next',
 		'our:meta:projectz':
 			packageData.name === 'projectz' ? './bin.js compile' : 'projectz compile',
@@ -838,11 +857,14 @@ async function updateRuntime(state) {
 
 	// react
 	if (answers.languages.includes('react')) {
-		packages.react = packages['react-dom'] = true
+		packages.react = packages['react-dom'] = peerDepInstallLocation(
+			packageData,
+			'react'
+		)
 		packages['eslint-plugin-react-hooks'] = packages['eslint-plugin-react'] =
 			'dev'
 		if (answers.languages.includes('typescript')) {
-			packages['@types/react'] = packages['@types/react-dom'] = true
+			packages['@types/react'] = packages['@types/react-dom'] = packages.react
 		}
 	}
 
@@ -908,11 +930,11 @@ async function updateRuntime(state) {
 			if (!dependencies.length) return
 			// s = silent
 			flags.push('s')
-			command.push('yarn', 'remove')
+			command.push(...commands.yarn.uninstall)
 		} else if (answers.packageManager === 'npm') {
 			// S = save
 			flags.push('S')
-			command.push('npm', 'uninstall')
+			command.push(...commands.npm.uninstall)
 		}
 		command.push(...dependencies)
 		if (flags.length) command.push('-' + flags.join(''))
@@ -931,13 +953,13 @@ async function updateRuntime(state) {
 		if (answers.packageManager === 'yarn') {
 			// s = silent
 			flags.push('s')
-			command.push('yarn', 'add')
+			command.push(...commands.yarn.add)
 		} else if (answers.packageManager === 'npm') {
 			// S = save
 			// P = production
 			flags.push('S')
 			if (mode !== 'development') flags.push('P')
-			command.push('npm', 'install')
+			command.push(...commands.npm.add)
 		}
 		command.push(...dependencies)
 		if (flags.length) command.push('-' + flags.join(''))
@@ -1010,7 +1032,14 @@ async function updateRuntime(state) {
 						strict: true,
 						target: 'esnext'
 					},
-					include: ['client', 'pages', 'scripts', 'server', 'shared']
+					include: uniq([
+						'client',
+						'pages',
+						'scripts',
+						'server',
+						'shared',
+						answers.staticDirectory
+					])
 			  }
 			: {
 					compilerOptions: {
@@ -1053,7 +1082,7 @@ async function updateRuntime(state) {
 	// yarn pnp
 	if (answers.packageManager === 'yarn') {
 		status('yarn enabling plug and play...')
-		await spawn(['yarn', '--pnp'])
+		await spawn(commands.yarn.pnp)
 		status('...yarn enabled plug and play')
 	}
 
@@ -1096,7 +1125,7 @@ async function updateRuntime(state) {
 	// yarn pnp
 	if (answers.packageManager === 'yarn' && answers.nowWebsite) {
 		status('yarn disabling plug and play...')
-		await spawn(['yarn', '--disable-pnp'])
+		await spawn(commands.yarn.disablepnp)
 		status('...yarn disabled plug and play')
 	}
 

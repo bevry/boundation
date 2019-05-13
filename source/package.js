@@ -173,8 +173,16 @@ function isPackageDocPadPlugin(packageData) {
 }
 
 function hasPackageDependency(packageData, key) {
-	const { dependencies = {}, devDependencies = {} } = packageData
-	return Boolean(dependencies[key]) || Boolean(devDependencies[key])
+	const {
+		dependencies = {},
+		devDependencies = {},
+		peerDependencies = {}
+	} = packageData
+	return (
+		Boolean(dependencies[key]) ||
+		Boolean(devDependencies[key]) ||
+		Boolean(peerDependencies[key])
+	)
 }
 
 function getBasename(path) {
