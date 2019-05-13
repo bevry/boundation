@@ -1,5 +1,14 @@
 # History
 
+## v1.28.2 2019 May 13
+
+-   If react packages are peer dependencies, then install them as dev dependencies, instead of dependencies
+-   Have yarn ignore engines
+-   Add static directory to typescript includes
+-   If the project has react, then enable react in languages
+-   Add node 12 to support node versions
+-   Updated dependencies
+
 ## v1.28.1 2019 March 15
 
 -   Scaffolded files now reflect CommonJS Modules vs ES Modules.
