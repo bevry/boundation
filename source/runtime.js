@@ -411,20 +411,30 @@ async function scaffoldEditions(state) {
 				browserEdition.directory || '.',
 				browserEdition.main
 			)
+			if (answers.modules) {
+				packageData.module = packageData.browser
+			}
 		} else {
 			delete packageData.browser
+			delete packageData.module
 		}
 
 		// log
 		status('...scaffolded edition files')
-	} else {
+	}
+	// no editions
+	else {
 		if (answers.mainEntry) {
 			packageData.main = answers.mainEntry + '.js'
 		}
 		if (answers.browser) {
 			packageData.browser = packageData.main
+			if (answers.modules) {
+				packageData.module = packageData.browser
+			}
 		} else {
 			delete packageData.browser
+			delete packageData.module
 		}
 		if (answers.testEntry) {
 			state.test = answers.testEntry + '.js'
