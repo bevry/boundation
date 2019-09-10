@@ -677,6 +677,11 @@ async function updateRuntime(state) {
 		].join(' ')
 	}
 
+	// prettier
+	if (packages.prettier) {
+		state.scripts['our:verify:prettier'] = `prettier --write ${sourcePath}/**`
+	}
+
 	// typescript
 	if (answers.languages.includes('typescript')) {
 		packages.typescript = packages[
