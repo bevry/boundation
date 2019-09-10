@@ -7,7 +7,7 @@ const { exists, write, read, rename, unlink } = require('./fs')
 const Errlop = require('errlop')
 
 // External
-const fetch = require('node-fetch')
+const { fetch } = require('fetch-h2')
 const pathUtil = require('path')
 const urlUtil = require('url')
 
