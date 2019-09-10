@@ -84,19 +84,19 @@
     "arrangekeys": "^1.2.0",
     "chalk": "^2.4.2",
     "errlop": "^1.1.1",
+    "fetch-h2": "^2.2.0",
     "githubauthquerystring": "^1.0.2",
-    "inquirer": "^6.3.1",
+    "inquirer": "^7.0.0",
     "js-yaml": "^3.13.1",
-    "node-fetch": "^2.5.0",
     "safeps": "^7.0.1",
-    "semver": "^6.0.0"
+    "semver": "^6.3.0"
   },
   "devDependencies": {
-    "eslint": "^5.16.0",
-    "eslint-config-bevry": "^1.2.0",
-    "eslint-config-prettier": "^4.2.0",
+    "eslint": "^6.3.0",
+    "eslint-config-bevry": "^1.2.1",
+    "eslint-config-prettier": "^6.2.0",
     "eslint-plugin-prettier": "^3.1.0",
-    "prettier": "^1.17.0",
+    "prettier": "^1.18.2",
     "projectz": "^1.7.4",
     "valid-directory": "^1.0.0"
   },
@@ -123,7 +123,10 @@
   "eslintConfig": {
     "extends": [
       "bevry"
-    ]
+    ],
+    "rules": {
+      "require-atomic-updates": 0
+    }
   },
   "prettier": {
     "semi": false,
