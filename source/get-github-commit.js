@@ -9,7 +9,7 @@ const {
 } = require('githubauthquerystring')
 
 // External
-const fetch = require('node-fetch')
+const { fetch } = require('fetch-h2')
 
 async function getGithubCommit(slug, fallback = 'master') {
 	try {
