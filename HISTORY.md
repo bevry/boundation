@@ -1,5 +1,14 @@
 # History
 
+## v1.29.0 2019 September 11
+
+-   Apply `module` field if desired if a `browser` edition exists
+-   Place `module` field after `browser` field
+-   Simplified LTS discovery
+-   Add `ltsNodeOnly` question
+-   Run prettier on source if prettier exists
+-   Updated dependencies
+
 ## v1.28.2 2019 May 13
 
 -   If react packages are peer dependencies, then install them as dev dependencies, instead of dependencies
