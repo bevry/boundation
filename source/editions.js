@@ -178,9 +178,7 @@ async function generateEditions(state) {
 						browsers: false
 					},
 					scripts: {
-						'our:compile:edition-esnext': `coffee -bco ./edition-esnext ./${
-							answers.sourceDirectory
-						}`
+						'our:compile:edition-esnext': `coffee -bco ./edition-esnext ./${answers.sourceDirectory}`
 					}
 				})
 			)
@@ -270,9 +268,7 @@ async function generateEditions(state) {
 					// add coffee compile script
 					edition.babel = true
 					edition.scripts = {
-						[`our:compile:${edition.directory}`]: `env BABEL_ENV=${
-							edition.directory
-						} coffee -bcto ./${edition.directory}/ ./${answers.sourceDirectory}`
+						[`our:compile:${edition.directory}`]: `env BABEL_ENV=${edition.directory} coffee -bcto ./${edition.directory}/ ./${answers.sourceDirectory}`
 					}
 				} else {
 					// add custom babel env

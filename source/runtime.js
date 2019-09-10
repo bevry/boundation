@@ -188,9 +188,7 @@ async function updateEngines(state) {
 			// trim
 			if (trim) {
 				console.log(
-					`The edition [${
-						edition.directory
-					}] had no unique versions which it passed, so it will been trimmed`
+					`The edition [${edition.directory}] had no unique versions which it passed, so it will been trimmed`
 				)
 				edition.active = false
 				recompile = true
@@ -366,9 +364,7 @@ async function scaffoldEditions(state) {
 						"'use strict'",
 						'',
 						`/** @type {typeof import("./${sourceEdition.testPath}") } */`,
-						`module.exports = require('editions').requirePackage(__dirname, require, '${
-							nodeEdition.test
-						}')`,
+						`module.exports = require('editions').requirePackage(__dirname, require, '${nodeEdition.test}')`,
 						''
 					].join('\n')
 				)
@@ -383,9 +379,7 @@ async function scaffoldEditions(state) {
 						"'use strict'",
 						'',
 						`/** @type {typeof import("./${sourceEdition.binPath}") } */`,
-						`module.exports = require('editions').requirePackage(__dirname, require, '${
-							nodeEdition.bin
-						}')`,
+						`module.exports = require('editions').requirePackage(__dirname, require, '${nodeEdition.bin}')`,
 						''
 					].join('\n')
 				)
