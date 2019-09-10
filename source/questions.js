@@ -60,6 +60,7 @@ async function getQuestions(state) {
 	const editioned = hasEditions(packageData)
 	const nodeEngineVersion = getPackageNodeEngineVersion(packageData)
 	const nodeMinimumLTSVersion = await getMinimumNodeLTSVersion()
+	const nodeMaximumLTSVersion = await getMaximumNodeLTSVersion()
 	const minimumSupportNodeVersion = nodeEngineVersion || nodeMinimumLTSVersion
 	const maximumSupportNodeVersion = allNodeVersions[allNodeVersions.length - 1]
 	return [
@@ -433,58 +434,96 @@ async function getQuestions(state) {
 			}
 		},
 		{
+			name: 'ltsNodeOnly',
+			message: 'Support only the LTS node versions?',
+			type: 'confirm',
+			default({ website }) {
+				return !website
+			},
+			skip({ website }) {
+				return website
+			}
+		},
+		{
 			name: 'desiredNodeVersion',
 			message: 'What is the desired node version?',
 			default({ nowWebsite }) {
-				return nowWebsite ? '8' : getMaximumNodeLTSVersion()
+				// https://zeit.co/docs/v2/serverless-functions/supported-languages/?query=node%20version#defined-node.js-version
+				return nowWebsite ? '10' : nodeMaximumLTSVersion
 			},
 			validate: isNumber,
-			skip({ nowWebsite }) {
-				return nowWebsite
+			skip({ ltsNodeOnly, nowWebsite }) {
+				return ltsNodeOnly || nowWebsite
 			}
 		},
 		{
 			name: 'minimumSupportNodeVersion',
 			message: 'What is the minimum node version for support?',
 			validate: isNumber,
-			default({ website, desiredNodeVersion }) {
-				return website ? desiredNodeVersion : minimumSupportNodeVersion
+			default({ ltsNodeOnly, website, desiredNodeVersion }) {
+				return ltsNodeOnly
+					? nodeMinimumLTSVersion
+					: website
+					? desiredNodeVersion
+					: minimumSupportNodeVersion
 			},
-			skip({ website }) {
-				return website
+			skip({ ltsNodeOnly, website }) {
+				return ltsNodeOnly || website
 			}
 		},
 		{
 			name: 'maximumSupportNodeVersion',
 			message: 'What is the maximum node version for support?',
 			validate: isNumber,
-			default({ website, desiredNodeVersion }) {
-				return website ? desiredNodeVersion : maximumSupportNodeVersion
+			default({ ltsNodeOnly, website, desiredNodeVersion }) {
+				return ltsNodeOnly
+					? nodeMaximumLTSVersion
+					: website
+					? desiredNodeVersion
+					: maximumSupportNodeVersion
 			},
-			skip({ website }) {
-				return website
+			skip({ ltsNodeOnly, website }) {
+				return ltsNodeOnly || website
 			}
 		},
 		{
 			name: 'minimumTestNodeVersion',
 			message: 'What is the minimum node version for testing?',
 			validate: isNumber,
-			default({ website, desiredNodeVersion, minimumSupportNodeVersion }) {
-				return website ? desiredNodeVersion : minimumSupportNodeVersion
+			default({
+				ltsNodeOnly,
+				website,
+				desiredNodeVersion,
+				minimumSupportNodeVersion
+			}) {
+				return ltsNodeOnly
+					? nodeMinimumLTSVersion
+					: website
+					? desiredNodeVersion
+					: minimumSupportNodeVersion
 			},
-			skip({ website }) {
-				return website
+			skip({ ltsNodeOnly, website }) {
+				return ltsNodeOnly || website
 			}
 		},
 		{
 			name: 'maximumTestNodeVersion',
 			message: 'What is the maximum node version for testing?',
 			validate: isNumber,
-			default({ website, desiredNodeVersion, maximumSupportNodeVersion }) {
-				return website ? desiredNodeVersion : maximumSupportNodeVersion
+			default({
+				ltsNodeOnly,
+				website,
+				desiredNodeVersion,
+				maximumSupportNodeVersion
+			}) {
+				return ltsNodeOnly
+					? nodeMaximumLTSVersion
+					: website
+					? desiredNodeVersion
+					: maximumSupportNodeVersion
 			},
-			skip({ website }) {
-				return website
+			skip({ ltsNodeOnly, website }) {
+				return ltsNodeOnly || website
 			}
 		},
 		{
