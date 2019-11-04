@@ -168,6 +168,15 @@ async function updateTravis(state) {
 				usedFlag
 			])
 		}
+		await spawn([
+			'travis',
+			'env',
+			'set',
+			'NPM_BRANCH_TAG',
+			'master:next',
+			'--public',
+			usedFlag
+		])
 		travis.after_success.push(
 			`eval "$(curl ${curlFlags} https://raw.githubusercontent.com/bevry/awesome-travis/${awesomeTravisCommit}/scripts/node-publish.bash)"`
 		)
