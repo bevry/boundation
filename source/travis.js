@@ -13,6 +13,7 @@ const curlFlags = '-fsSL'
 const { status } = require('./log')
 const { getGithubCommit } = require('./get-github-commit')
 const { spawn, readYAML, writeYAML } = require('./fs')
+function noop() {}
 
 // Thing
 async function updateTravis(state) {
@@ -46,54 +47,48 @@ async function updateTravis(state) {
 		],
 		after_success: []
 	}
-	let com, org, clearFlag, usedFlag, unusedFlag
+
+	// default to travis-ci.com
+	state.travisTLD = 'com'
+	let travisFlag = '--com'
 
 	// travis env variables
 	// these spawns must be run serially, as otherwise not all variables may be written, which is annoying
 	if (answers.travisUpdateEnvironment) {
 		// Detect which travis environments we are configured for
-		try {
-			await spawn(['travis', 'status', '--com'])
-			com = true
-		} catch (err) {}
-		try {
-			await spawn(['travis', 'status', '--org'])
-			org = true
-		} catch (err) {}
 
-		// Based on the above, set the used and unused
-		if (com || !org) {
-			state.travisTLD = 'com'
-			usedFlag = '--com'
-			unusedFlag = '--org'
-			if (org) {
-				clearFlag = '--org'
-			}
-		} else {
-			state.travisTLD = 'org'
-			usedFlag = '--org'
-			unusedFlag = '--com'
-			if (com) {
-				clearFlag = '--com'
-			}
+		// Attempt travis-ci.com first
+		try {
+			await spawn(['travis', 'enable', '--com'])
+		} catch (err) {
+			travisFlag = ''
 		}
 
-		// update the user
-		status(
-			`determined travis env to be ${usedFlag}, enabling ${usedFlag}, and disabling ${unusedFlag}...`
-		)
-
-		// enable the used, disable the unused
-		await spawn(['travis', 'enable', usedFlag])
-		try {
-			await spawn(['travis', 'disable', unusedFlag])
-		} catch (err) {}
-
-		// clear the env of the unused
-		if (clearFlag) {
-			status(`clearing the old travis env of ${clearFlag}...`)
-			spawn(['travis', 'env', 'clear', '--force', clearFlag])
-			status(`...cleared`)
+		// If travis-ci.com was successful, clear travis-ci.org
+		if (state.travisTLD) {
+			spawn(['travis', 'env', 'clear', '--force', '--org'], {
+				stdio: false,
+				output: false
+			})
+				.catch(noop)
+				.finally(() =>
+					spawn(['travis', 'disable', '--org'], {
+						stdio: false,
+						output: false
+					}).catch(noop)
+				)
+		}
+		// If travis-ci.com was unsuccessful, try travis-ci.org
+		else {
+			try {
+				await spawn(['travis', 'enable', '--org'])
+				state.travisTLD = 'org'
+				travisFlag = '--org'
+			} catch (err) {
+				throw new Error(
+					'Was unnsuccessful in enabling travis-ci for this repository'
+				)
+			}
 		}
 
 		// set the env vars
@@ -104,7 +99,7 @@ async function updateTravis(state) {
 			'DESIRED_NODE_VERSION',
 			answers.desiredNodeVersion,
 			'--public',
-			usedFlag
+			travisFlag
 		])
 		if (answers.deployBranch) {
 			await spawn([
@@ -113,7 +108,7 @@ async function updateTravis(state) {
 				'set',
 				'DEPLOY_BRANCH',
 				answers.deployBranch,
-				usedFlag
+				travisFlag
 			])
 		}
 		if (answers.surgeLogin) {
@@ -124,7 +119,7 @@ async function updateTravis(state) {
 				'SURGE_LOGIN',
 				answers.surgeLogin,
 				'--public',
-				usedFlag
+				travisFlag
 			])
 		}
 		if (answers.surgeToken) {
@@ -134,7 +129,7 @@ async function updateTravis(state) {
 				'set',
 				'SURGE_TOKEN',
 				answers.surgeToken,
-				usedFlag
+				travisFlag
 			])
 		}
 	}
@@ -156,7 +151,7 @@ async function updateTravis(state) {
 				'set',
 				'NPM_AUTHTOKEN',
 				answers.npmAuthToken,
-				usedFlag
+				travisFlag
 			])
 			await spawn([
 				'travis',
@@ -165,7 +160,7 @@ async function updateTravis(state) {
 				'NPM_USERNAME',
 				'NPM_PASSWORD',
 				'NPM_EMAIL',
-				usedFlag
+				travisFlag
 			])
 		}
 		await spawn([
@@ -175,7 +170,7 @@ async function updateTravis(state) {
 			'NPM_BRANCH_TAG',
 			'master:next',
 			'--public',
-			usedFlag
+			travisFlag
 		])
 		travis.after_success.push(
 			`eval "$(curl ${curlFlags} https://raw.githubusercontent.com/bevry/awesome-travis/${awesomeTravisCommit}/scripts/node-publish.bash)"`
@@ -184,7 +179,7 @@ async function updateTravis(state) {
 
 	// output the result env vars
 	if (answers.travisUpdateEnvironment)
-		await spawn(['travis', 'env', 'list', usedFlag])
+		await spawn(['travis', 'env', 'list', travisFlag])
 
 	// re-add notifications if we aren't making new ones
 	if (!answers.travisUpdateEnvironment && travisOriginal.notifications) {
@@ -216,7 +211,7 @@ async function updateTravis(state) {
 			answers.travisEmail,
 			'--add',
 			'notifications.email.recipients',
-			usedFlag
+			travisFlag
 		])
 	}
 
