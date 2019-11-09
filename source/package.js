@@ -5,14 +5,16 @@
 const mandatoryScriptsList = 'our:setup our:compile our:meta our:verify our:deploy our:release test'.split(
 	' '
 )
-const bevryOrganisationsList = 'balupton bevry bevry-trading docpad browserstate webwrite chainyjs interconnectapp'.split(
-	' '
-)
 
 // Local
 const { status } = require('./log')
-const { repoToWebsite, repoToOrganisation, without } = require('./util')
-const { exists, write, read, parse } = require('./fs')
+const {
+	repoToWebsite,
+	repoToOrganisation,
+	without,
+	isBevryOrganisation
+} = require('./util')
+const { exists, write, parse } = require('./fs')
 const { getNowName } = require('./website')
 
 // External
@@ -328,7 +330,7 @@ function arrangePackage(state) {
 	// package keys
 	packageData = arrangekeys(
 		packageData,
-		'title name version private description homepage license keywords badges author sponsors maintainers contributors bugs repository engines editions bin types main browser module dependencies optionalDependencies devDependencies peerDependencies scripts now eslintConfig prettier babel'
+		'title name version private description homepage license keywords badges funding author sponsors maintainers contributors bugs repository engines editions bin types main browser module dependencies optionalDependencies devDependencies peerDependencies scripts now eslintConfig prettier babel'
 	)
 
 	// ---------------------------------
@@ -569,7 +571,7 @@ async function updatePackageData(state) {
 
 	// badges
 	const removeBadges = ['gratipay']
-	if (bevryOrganisationsList.includes(answers.organisation)) {
+	if (isBevryOrganisation(answers.organisation)) {
 		packageData.badges = {
 			list: [
 				'travisci',
@@ -581,8 +583,6 @@ async function updatePackageData(state) {
 				'patreon',
 				'flattr',
 				'liberapay',
-				'thanksapp',
-				'boostlab',
 				'buymeacoffee',
 				'opencollective',
 				'crypto',
@@ -599,6 +599,10 @@ async function updatePackageData(state) {
 				paypalURL: 'https://bevry.me/paypal',
 				wishlistURL: 'https://bevry.me/wishlist'
 			}
+		}
+		packageData.funding = {
+			type: 'cooperative',
+			url: 'https://bevry.me/fund'
 		}
 	}
 

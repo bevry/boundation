@@ -1,5 +1,11 @@
 'use strict'
 
+const { bevryOrganisationsList } = require('./data')
+
+function isBevryOrganisation(organisation) {
+	return bevryOrganisationsList.includes(organisation)
+}
+
 function trim(input) {
 	return input.trim()
 }
@@ -44,6 +50,7 @@ function uniq(list) {
 }
 
 module.exports = {
+	isBevryOrganisation,
 	trim,
 	slugit,
 	isSpecified,

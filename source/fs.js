@@ -82,12 +82,12 @@ async function readYAML(file) {
 }
 
 function writeYAML(file, data) {
-	return write('.travis.yml', yaml.dump(data))
+	return write(file, yaml.dump(data))
 }
 
 function spawn(command, opts = {}) {
 	opts.cwd = opts.cwd || cwd
-	opts.stdio = opts.stdio || 'inherit'
+	opts.stdio = opts.stdio == null ? 'inherit' : opts.stdio
 	return new Promise(function(resolve, reject) {
 		safeps.spawn(command, opts, function(err, stdout) {
 			if (err) return reject(err)

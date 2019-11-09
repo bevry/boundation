@@ -2,8 +2,17 @@
 'use strict'
 
 // Local
+const { isBevryOrganisation } = require('./util')
 const { status } = require('./log')
-const { exists, write, read, rename, unlink } = require('./fs')
+const {
+	exists,
+	write,
+	read,
+	rename,
+	unlink,
+	spawn,
+	writeYAML
+} = require('./fs')
 const Errlop = require('errlop')
 
 // External
@@ -168,6 +177,44 @@ async function updateBaseFiles({ answers, packageData }) {
 		await write('HISTORY.md', historyContent)
 		status('...updated history file')
 	}
+
+	// write the funding file
+	if (isBevryOrganisation(answers.organisation)) {
+		await spawn(['mkdir', '-p', '.github'])
+		await write(
+			'.github/FUNDING.yml',
+			[
+				'github: [balupton]',
+				'patreon: bevry',
+				'open_collective: bevry',
+				'ko_fi: balupton',
+				'liberapay: bevry',
+				"custom: ['https://bevry.me/fund']"
+			].join('\n')
+		)
+	}
+
+	// dependabot
+	/* eslint camelcase:0 */
+	await spawn(['mkdir', '-p', '.dependabot'])
+	await writeYAML('.dependabot/config.yml', {
+		version: 1,
+		update_configs: [
+			{
+				package_manager: 'javascript',
+				directory: '/',
+				update_schedule: 'live',
+				automerged_updates: [
+					{
+						match: {
+							dependency_type: 'all',
+							update_type: 'all' // `all` as CI will fail if any dep caused failure in any supported version
+						}
+					}
+				]
+			}
+		]
+	})
 }
 
 module.exports = { download, updateBaseFiles }
