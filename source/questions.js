@@ -63,6 +63,7 @@ async function getQuestions(state) {
 	const nodeMaximumLTSVersion = await getMaximumNodeLTSVersion()
 	const minimumSupportNodeVersion = nodeEngineVersion || nodeMinimumLTSVersion
 	const maximumSupportNodeVersion = allNodeVersions[allNodeVersions.length - 1]
+	const alreadyLTS = nodeEngineVersion >= nodeMinimumLTSVersion
 	return [
 		{
 			name: 'name',
@@ -435,13 +436,11 @@ async function getQuestions(state) {
 		},
 		{
 			name: 'ltsNodeOnly',
-			message: 'Support only the LTS node versions?',
+			message: `Change the minimum supported node version from ${nodeEngineVersion} to ${nodeMinimumLTSVersion}`,
 			type: 'confirm',
-			default({ website }) {
-				return !website
-			},
+			default: false,
 			skip({ website }) {
-				return website
+				return website || alreadyLTS
 			}
 		},
 		{
