@@ -82,22 +82,22 @@
   "dependencies": {
     "@bevry/testen": "^3.0.1",
     "arrangekeys": "^1.2.0",
-    "chalk": "^2.4.2",
-    "errlop": "^1.1.1",
-    "fetch-h2": "^2.2.0",
-    "githubauthquerystring": "^1.0.2",
+    "chalk": "^3.0.0",
+    "errlop": "^1.1.2",
+    "fetch-h2": "^2.2.1",
+    "githubauthquerystring": "^1.1.0",
     "inquirer": "^7.0.0",
     "js-yaml": "^3.13.1",
     "safeps": "^7.0.1",
     "semver": "^6.3.0"
   },
   "devDependencies": {
-    "eslint": "^6.3.0",
+    "eslint": "^6.6.0",
     "eslint-config-bevry": "^1.2.1",
-    "eslint-config-prettier": "^6.2.0",
-    "eslint-plugin-prettier": "^3.1.0",
-    "prettier": "^1.18.2",
-    "projectz": "^1.7.4",
+    "eslint-config-prettier": "^6.5.0",
+    "eslint-plugin-prettier": "^3.1.1",
+    "prettier": "^1.19.0",
+    "projectz": "^1.7.5",
     "valid-directory": "^1.0.0"
   },
   "scripts": {
