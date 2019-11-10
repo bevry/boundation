@@ -50,7 +50,7 @@ async function updateTravis(state) {
 
 	// default to travis-ci.com
 	state.travisTLD = 'com'
-	let travisFlag = '--com'
+	const flags = ['--no-interactive']
 
 	// travis env variables
 	// these spawns must be run serially, as otherwise not all variables may be written, which is annoying
@@ -59,20 +59,20 @@ async function updateTravis(state) {
 
 		// Attempt travis-ci.com first
 		try {
-			await spawn(['travis', 'enable', '--com'])
+			await spawn(['travis', 'enable', '--com', ...flags])
 		} catch (err) {
-			travisFlag = ''
+			state.travisTLD = ''
 		}
 
 		// If travis-ci.com was successful, clear travis-ci.org
 		if (state.travisTLD) {
-			spawn(['travis', 'env', 'clear', '--force', '--org'], {
+			spawn(['travis', 'env', 'clear', '--force', '--org', ...flags], {
 				stdio: false,
 				output: false
 			})
 				.catch(noop)
 				.finally(() =>
-					spawn(['travis', 'disable', '--org'], {
+					spawn(['travis', 'disable', '--org', ...flags], {
 						stdio: false,
 						output: false
 					}).catch(noop)
@@ -81,9 +81,9 @@ async function updateTravis(state) {
 		// If travis-ci.com was unsuccessful, try travis-ci.org
 		else {
 			try {
-				await spawn(['travis', 'enable', '--org'])
+				await spawn(['travis', 'enable', '--org', ...flags])
 				state.travisTLD = 'org'
-				travisFlag = '--org'
+				flags.push('--org')
 			} catch (err) {
 				throw new Error(
 					'Was unnsuccessful in enabling travis-ci for this repository'
@@ -99,7 +99,7 @@ async function updateTravis(state) {
 			'DESIRED_NODE_VERSION',
 			answers.desiredNodeVersion,
 			'--public',
-			travisFlag
+			...flags
 		])
 		if (answers.deployBranch) {
 			await spawn([
@@ -108,7 +108,7 @@ async function updateTravis(state) {
 				'set',
 				'DEPLOY_BRANCH',
 				answers.deployBranch,
-				travisFlag
+				...flags
 			])
 		}
 		if (answers.surgeLogin) {
@@ -119,7 +119,7 @@ async function updateTravis(state) {
 				'SURGE_LOGIN',
 				answers.surgeLogin,
 				'--public',
-				travisFlag
+				...flags
 			])
 		}
 		if (answers.surgeToken) {
@@ -129,7 +129,7 @@ async function updateTravis(state) {
 				'set',
 				'SURGE_TOKEN',
 				answers.surgeToken,
-				travisFlag
+				...flags
 			])
 		}
 	}
@@ -151,7 +151,7 @@ async function updateTravis(state) {
 				'set',
 				'NPM_AUTHTOKEN',
 				answers.npmAuthToken,
-				travisFlag
+				...flags
 			])
 			await spawn([
 				'travis',
@@ -160,7 +160,7 @@ async function updateTravis(state) {
 				'NPM_USERNAME',
 				'NPM_PASSWORD',
 				'NPM_EMAIL',
-				travisFlag
+				...flags
 			])
 		}
 		await spawn([
@@ -170,7 +170,16 @@ async function updateTravis(state) {
 			'NPM_BRANCH_TAG',
 			'master:next',
 			'--public',
-			travisFlag
+			...flags
+		])
+		await spawn([
+			'travis',
+			'env',
+			'set',
+			'GITHUB_API',
+			'https://bevry.me/api/github',
+			'--public',
+			...flags
 		])
 		travis.after_success.push(
 			`eval "$(curl ${curlFlags} https://raw.githubusercontent.com/bevry/awesome-travis/${awesomeTravisCommit}/scripts/node-publish.bash)"`
@@ -179,7 +188,7 @@ async function updateTravis(state) {
 
 	// output the result env vars
 	if (answers.travisUpdateEnvironment)
-		await spawn(['travis', 'env', 'list', travisFlag])
+		await spawn(['travis', 'env', 'list', ...flags])
 
 	// re-add notifications if we aren't making new ones
 	if (!answers.travisUpdateEnvironment && travisOriginal.notifications) {
@@ -211,7 +220,7 @@ async function updateTravis(state) {
 			answers.travisEmail,
 			'--add',
 			'notifications.email.recipients',
-			travisFlag
+			...flags
 		])
 	}
 
