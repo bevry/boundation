@@ -85,6 +85,7 @@
     "chalk": "^3.0.0",
     "errlop": "^1.1.2",
     "fetch-h2": "^2.2.1",
+    "get-cli-arg": "^1.0.0",
     "githubauthquerystring": "^1.1.0",
     "inquirer": "^7.0.0",
     "js-yaml": "^3.13.1",

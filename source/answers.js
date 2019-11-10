@@ -4,11 +4,11 @@
 const inquirer = require('inquirer')
 const chalk = require('chalk')
 const Errlop = require('errlop')
+const getarg = require('get-cli-arg')
 
 // Local
 const skipAllArg = '--auto'
 const skipAll = process.argv.includes(skipAllArg)
-const opaqueReasons = ['skip', skipAllArg]
 
 // Fetch
 function fetch(value, ...args) {
@@ -21,7 +21,7 @@ async function getAnswers(questions) {
 		// find defaults
 		const defaults = {}
 		questions.forEach(function(question) {
-			const { name, skip, when, ignore } = question
+			const { name, skip, when, ignore, arg } = question
 			if (typeof question.default === 'function') {
 				const fn = question.default
 				question.default = function(answers) {
@@ -31,43 +31,67 @@ async function getAnswers(questions) {
 				}
 			}
 			question.when = async function(answers) {
-				let reason, result
+				let reason,
+					result,
+					opaque = false
+
 				// fetch values
 				const value = await Promise.resolve(fetch(question.default, answers))
 				const values = Object.assign({ [name]: value }, defaults, answers)
-				// check when and ignore
-				if (when || ignore) {
-					// check ignore
-					if (when != null) {
-						result = fetch(when, values)
-						if (!result) reason = 'when'
-					}
-					// check ignore
-					if (!reason && ignore != null) {
-						result = fetch(ignore, values)
-						if (result) reason = 'ignore'
+
+				// check args
+				const args = arg ? [name, arg] : [name]
+				for (const _arg of args) {
+					const _value = getarg(process.argv, _arg)
+					if (_value != null) {
+						opaque = true
+						defaults[name] = _value
+						reason = 'arg'
 					}
 				}
-				// check skip
+
+				// fallback to other checks if no arg
 				if (!reason) {
+					// check when and ignore
+					if (when || ignore) {
+						// check ignore
+						if (when != null) {
+							result = fetch(when, values)
+							if (!result) reason = 'when'
+						}
+						// check ignore
+						if (!reason && ignore != null) {
+							result = fetch(ignore, values)
+							if (result) reason = 'ignore'
+						}
+					}
+
 					// check skip
-					if (skip != null) {
-						result = fetch(skip, values)
-						if (result) reason = 'skip'
-					}
-					// check skip all
-					if (!reason && skipAll) {
-						reason = skipAllArg
-					}
-					// store value
-					if (reason) {
-						defaults[name] = value
+					if (!reason) {
+						// check skip
+						if (skip != null) {
+							result = fetch(skip, values)
+							if (result) {
+								reason = 'skip'
+								opaque = true
+							}
+						}
+						// check skip all
+						if (!reason && skipAll) {
+							reason = skipAllArg
+							opaque = true
+						}
+						// store value
+						if (reason) {
+							defaults[name] = value
+						}
 					}
 				}
+
 				// if we are not proceeding then ignore
 				if (reason) {
 					const value = defaults[name]
-					const color = opaqueReasons.includes(reason) ? v => v : chalk.dim
+					const color = opaque ? v => v : chalk.dim
 					const message = [
 						'Automated',
 						chalk.bold.underline(name),
