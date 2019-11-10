@@ -5,6 +5,11 @@ const inquirer = require('inquirer')
 const chalk = require('chalk')
 const Errlop = require('errlop')
 
+// Local
+const skipAllArg = '--auto'
+const skipAll = process.argv.includes(skipAllArg)
+const opaqueReasons = ['skip', skipAllArg]
+
 // Fetch
 function fetch(value, ...args) {
 	return typeof value === 'function' ? value(...args) : value
@@ -50,6 +55,10 @@ async function getAnswers(questions) {
 						result = fetch(skip, values)
 						if (result) reason = 'skip'
 					}
+					// check skip all
+					if (!reason && skipAll) {
+						reason = skipAllArg
+					}
 					// store value
 					if (reason) {
 						defaults[name] = value
@@ -58,7 +67,7 @@ async function getAnswers(questions) {
 				// if we are not proceeding then ignore
 				if (reason) {
 					const value = defaults[name]
-					const color = reason === 'skip' ? v => v : chalk.dim
+					const color = opaqueReasons.includes(reason) ? v => v : chalk.dim
 					const message = [
 						'Automated',
 						chalk.bold.underline(name),
