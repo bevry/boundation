@@ -171,7 +171,9 @@ function getPackageOrganisation(packageData) {
 }
 
 function isPackageDocPadPlugin(packageData) {
-	return packageData.name && packageData.name.startsWith('docpad-plugin-')
+	return (
+		(packageData.name && packageData.name.startsWith('docpad-plugin-')) || false
+	)
 }
 
 function hasPackageDependency(packageData, key) {
