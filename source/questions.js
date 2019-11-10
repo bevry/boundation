@@ -436,11 +436,12 @@ async function getQuestions(state) {
 		},
 		{
 			name: 'ltsNodeOnly',
+			arg: '--lts',
 			message: `Change the minimum supported node version from ${nodeEngineVersion} to ${nodeMinimumLTSVersion}`,
 			type: 'confirm',
 			default: false,
-			skip({ website }) {
-				return website || alreadyLTS
+			skip({ website, adaptive }) {
+				return website || alreadyLTS || !adaptive
 			}
 		},
 		{
