@@ -45,7 +45,7 @@ async function getAnswers(questions) {
 					const _value = getarg(process.argv, _arg)
 					if (_value != null) {
 						opaque = true
-						defaults[name] = _value
+						defaults[name] = _value === 0.1 ? '0.10' : _value
 						reason = 'arg'
 					}
 				}
