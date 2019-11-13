@@ -203,7 +203,7 @@ async function updateBaseFiles({ answers, packageData }) {
 			{
 				package_manager: 'javascript',
 				directory: '/',
-				update_schedule: 'live',
+				update_schedule: 'daily', // use `daily` instead of `live` as live delays CI for manual work as automatic CI work is bumped up, which is annoying
 				automerged_updates: [
 					{
 						match: {
