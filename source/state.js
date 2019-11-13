@@ -41,6 +41,7 @@ module.exports = {
 	get browserEdition() {
 		const browserEditions = this.browserEditions
 		if (browserEditions.length > 1) {
+			console.error(browserEditions)
 			throw new Error(
 				'there is more than one edition catered towards browsers, not sure what to do here...'
 			)
