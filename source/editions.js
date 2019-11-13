@@ -202,7 +202,7 @@ async function generateEditions(state) {
 		}
 
 		// Add the browser edition if necessary
-		if (answers.browsers) {
+		if (answers.browsers && answers.language !== 'json') {
 			babel = true
 			editions.push(
 				new Edition({
