@@ -33,6 +33,11 @@ function peerDepInstallLocation(packageData, key) {
 	return (packageData.peerDependencies || {})[key] ? 'dev' : true
 }
 function nodeMajorVersion(value) {
+	if (typeof value === 'number') {
+		value = String(value)
+	} else if (typeof value !== 'string') {
+		return null
+	}
 	return value.startsWith('0')
 		? value
 				.split('.')
