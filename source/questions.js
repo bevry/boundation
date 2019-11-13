@@ -352,9 +352,14 @@ async function getQuestions(state) {
 			name: 'browser',
 			type: 'confirm',
 			message: 'Will it be used on the client-side inside web browsers?',
-			default: browser,
+			default({ language }) {
+				return language === 'json' || browser
+			},
 			ignore({ website }) {
 				return website
+			},
+			skip({ language }) {
+				return language === 'json'
 			}
 		},
 		{
@@ -363,15 +368,20 @@ async function getQuestions(state) {
 			default: browsersList,
 			ignore({ browser }) {
 				return !browser
+			},
+			skip({ language }) {
+				return language === 'json'
 			}
 		},
 		{
 			name: 'adaptive',
 			type: 'confirm',
 			message: 'Would you like adaptive support for older environments?',
-			default: true,
-			skip({ browser }) {
-				return browser
+			default({ language }) {
+				return language !== 'json'
+			},
+			skip({ browser, language }) {
+				return browser || language === 'json'
 			},
 			ignore({ website }) {
 				return website
@@ -494,16 +504,17 @@ async function getQuestions(state) {
 				ltsNodeOnly,
 				website,
 				desiredNodeVersion,
-				minimumSupportNodeVersion
+				minimumSupportNodeVersion,
+				language
 			}) {
 				return ltsNodeOnly
 					? nodeMinimumLTSVersion
-					: website
+					: website || language === 'json'
 					? desiredNodeVersion
 					: minimumSupportNodeVersion
 			},
-			skip({ ltsNodeOnly, website }) {
-				return ltsNodeOnly || website
+			skip({ ltsNodeOnly, website, language }) {
+				return ltsNodeOnly || website || language === 'json'
 			}
 		},
 		{
@@ -514,16 +525,17 @@ async function getQuestions(state) {
 				ltsNodeOnly,
 				website,
 				desiredNodeVersion,
-				maximumSupportNodeVersion
+				maximumSupportNodeVersion,
+				language
 			}) {
 				return ltsNodeOnly
 					? nodeMaximumLTSVersion
-					: website
+					: website || language === 'json'
 					? desiredNodeVersion
 					: maximumSupportNodeVersion
 			},
-			skip({ ltsNodeOnly, website }) {
-				return ltsNodeOnly || website
+			skip({ ltsNodeOnly, website, language }) {
+				return ltsNodeOnly || website || language === 'json'
 			}
 		},
 		{
