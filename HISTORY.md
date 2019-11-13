@@ -1,5 +1,26 @@
 # History
 
+## v1.30.0 2019 November 13
+
+-   update node version list to the latest
+-   LTS question now clearer with correct default
+-   add new funding conventions, add depandabot
+-   fix travis org/com selection
+-   enable `--auto` for skipping all
+-   fix docpad plugin being the default on new projects
+-   fix lts default
+-   set configuration via cli args
+-   make travis non-interactive, add `GITHUB_API` support
+-   output the multiple browser editions if they exist
+-   better support for json only projects
+-   don’t fail by making two browser editions on json
+-   simpler `funding` field
+-   more robust lts node version fetching
+-   change dependabot to daily instead of live
+-   workaround for `0.1` as `0.10` values on arg setting
+-   support downgrading certain deps if needed
+-   update deps
+
 ## v1.29.0 2019 September 11
 
 -   Apply `module` field if desired if a `browser` edition exists
