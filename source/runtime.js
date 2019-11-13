@@ -77,6 +77,7 @@ async function updateEngines(state) {
 	const { answers, supportedNodeVersions, nodeVersions, packageData } = state
 	const nodeEditions = state.nodeEditions
 	const allPassedVersions = new Set()
+	const serial = ['testen', 'safefs', 'lazy-require'].includes(answers.name)
 
 	// =================================
 	// run each edition against the supported node version
@@ -89,7 +90,7 @@ async function updateEngines(state) {
 		await versions.load()
 		await versions.install()
 		const numbers = versions.map(version => version.version)
-		await versions.test(`${answers.packageManager} test`)
+		await versions.test(`${answers.packageManager} test`, serial)
 		const passed = versions.json.passed || []
 		if (passed.length === 0) {
 			console.error(versions.messages.join('\n\n'))
@@ -135,7 +136,7 @@ async function updateEngines(state) {
 			await versions.load()
 			await versions.install()
 			const numbers = versions.map(version => version.version)
-			await versions.test(test)
+			await versions.test(test, serial)
 			const passed = versions.json.passed || []
 			const failed = versions.json.failed || []
 
@@ -545,6 +546,20 @@ async function updateRuntime(state) {
 		'@zeit/next-mdx': 'canary'
 	}
 
+	// b/c compat
+	if (answers.minimumSupportNodeVersion < 8) {
+		versions['assert-helpers'] = 4
+		versions.safeps = 7
+		versions.taskgroup = 5
+		versions.rimraf = 2
+		versions['lazy-require'] = 2
+		versions.safefs = 4
+		versions.cson = 5
+	}
+	if (answers.name === 'taskgroup') {
+		versions.ambi = 3
+	}
+
 	// add our default scripts
 	state.scripts = {
 		'our:setup:install': commands[answers.packageManager].install.join(' '),
@@ -899,6 +914,16 @@ async function updateRuntime(state) {
 	// remove old scripts
 	delete state.scripts['our:setup:docpad']
 
+	// ensure specific versions are set
+	for (const key of Object.keys(versions)) {
+		if (packageData.dependencies[key]) {
+			packages[key] = true
+		}
+		if (packageData.devDependencies[key]) {
+			packages[key] = 'dev'
+		}
+	}
+
 	// write the package.json file
 	await writePackage(state)
 
@@ -1101,18 +1126,6 @@ async function updateRuntime(state) {
 		await uninstall(removeDependencies)
 		status('...removed old dependencies')
 	}
-	// add deps
-	if (addDependencies.length) {
-		status('adding the dependencies...')
-		await install(addDependencies, 'production')
-		status('...added the dependencies')
-	}
-	// add dev deps
-	if (addDevDependencies.length) {
-		status('adding the development dependencies...')
-		await install(addDevDependencies, 'development')
-		status('...added the development dependencies')
-	}
 
 	// upgrade deps
 	if (answers.upgradeAllDependencies && answers.packageManager === 'npm') {
@@ -1124,6 +1137,20 @@ async function updateRuntime(state) {
 			await spawn(['ncu', '-u'])
 		}
 		status('...upgraded all the installed dependencies')
+	}
+
+	// add deps
+	if (addDependencies.length) {
+		status('adding the dependencies...')
+		await install(addDependencies, 'production')
+		status('...added the dependencies')
+	}
+
+	// add dev deps
+	if (addDevDependencies.length) {
+		status('adding the development dependencies...')
+		await install(addDevDependencies, 'development')
+		status('...added the development dependencies')
 	}
 
 	// run setup
@@ -1160,7 +1187,9 @@ async function updateRuntime(state) {
 	}
 
 	// continue
-	await updateEngines(state)
+	if (answers.language !== 'json') {
+		await updateEngines(state)
+	}
 
 	// log
 	status('...updated runtime')
