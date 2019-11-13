@@ -602,10 +602,7 @@ async function updatePackageData(state) {
 				wishlistURL: 'https://bevry.me/wishlist'
 			}
 		}
-		packageData.funding = {
-			type: 'cooperative',
-			url: 'https://bevry.me/fund'
-		}
+		packageData.funding = 'https://bevry.me/fund'
 	}
 
 	// default badges
