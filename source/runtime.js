@@ -591,7 +591,7 @@ async function updateRuntime(state) {
 		'our:setup:install': commands[answers.packageManager].install.join(' '),
 		'our:clean': 'rm -Rf ./docs ./edition* ./es2015 ./es5 ./out ./.next',
 		'our:meta:projectz':
-			packageData.name === 'projectz' ? './bin.js compile' : 'projectz compile',
+			packageData.name === 'projectz' ? 'npx . compile' : 'projectz compile',
 		'our:test': [`${run} our:verify`, `${answers.packageManager} test`].join(
 			' && '
 		),

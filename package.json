@@ -1,6 +1,6 @@
 {
   "name": "boundation",
-  "version": "1.31.0",
+  "version": "1.32.0",
   "description": "Automatic scaffolding and upgrading of your JavaScript ecosystem projects using Bevry's best practices",
   "homepage": "https://github.com/bevry/boundation",
   "license": "MIT",
@@ -80,7 +80,7 @@
   "boundation": {
     "adaptive": false
   },
-  "bin": "bin.js",
+  "bin": "source/bin.js",
   "main": "source/index.js",
   "dependencies": {
     "@bevry/testen": "^3.0.1",
