@@ -306,6 +306,7 @@ async function generateEditions(state) {
 				if (answers.language === 'typescript') {
 					edition.babel.presets.push('@babel/preset-typescript')
 					edition.babel.plugins.push(
+						'@babel/plugin-proposal-optional-chaining',
 						'@babel/proposal-class-properties',
 						'add-module-exports'
 					)

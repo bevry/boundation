@@ -196,6 +196,8 @@ async function updateBaseFiles({ answers, packageData }) {
 
 	// dependabot
 	/* eslint camelcase:0 */
+	// update_schedule should be 'weekly' as 'daily' and 'live' cause bottlenecks with CI
+	// update_Type should be 'all' as 'security' only does patches
 	await spawn(['mkdir', '-p', '.dependabot'])
 	await writeYAML('.dependabot/config.yml', {
 		version: 1,
@@ -203,12 +205,13 @@ async function updateBaseFiles({ answers, packageData }) {
 			{
 				package_manager: 'javascript',
 				directory: '/',
-				update_schedule: 'daily', // use `daily` instead of `live` as live delays CI for manual work as automatic CI work is bumped up, which is annoying
+				update_schedule: 'weekly',
 				automerged_updates: [
 					{
 						match: {
 							dependency_type: 'all',
-							update_type: 'all' // `all` as CI will fail if any dep caused failure in any supported version
+							update_type: 'all'
+							// CI will fail if any dep caused failure in any supported version
 						}
 					}
 				]

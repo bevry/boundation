@@ -552,14 +552,21 @@ async function updateRuntime(state) {
 	}
 
 	// b/c compat
+	const compat = {
+		cson: 5,
+		kava: 3,
+		rimraf: 2,
+		safefs: 4,
+		safeps: 7,
+		taskgroup: 5,
+		'assert-helpers': 4,
+		'cli-spinners': 1,
+		'lazy-require': 2
+	}
 	if (answers.minimumSupportNodeVersion < 8) {
-		versions['assert-helpers'] = 4
-		versions.safeps = 7
-		versions.taskgroup = 5
-		versions.rimraf = 2
-		versions['lazy-require'] = 2
-		versions.safefs = 4
-		versions.cson = 5
+		Object.keys(compat).forEach(key => (versions[key] = compat[key]))
+	} else {
+		Object.keys(compat).forEach(key => (versions[key] = 'latest'))
 	}
 	if (answers.name === 'taskgroup') {
 		versions.ambi = 3
@@ -783,6 +790,7 @@ async function updateRuntime(state) {
 						answers.language === 'typescript' ? '' : '--includeDeclarations',
 						'--mode file',
 						"--exclude '**/+(*test*|node_modules)'",
+						'--excludeExternals',
 						'--name "$npm_package_name"',
 						'--readme ./README.md',
 						`--out ${out}`,
@@ -856,7 +864,7 @@ async function updateRuntime(state) {
 			'@babel/plugin-proposal-class-properties'
 		] = packages['@babel/plugin-proposal-object-rest-spread'] = packages[
 			'babel-plugin-add-module-exports'
-		] = 'dev'
+		] = packages['@babel/plugin-proposal-optional-chaining'] = 'dev'
 	}
 
 	// deploy
@@ -908,7 +916,7 @@ async function updateRuntime(state) {
 	}
 
 	// package
-	if (answers.npm) {
+	if (answers.npm && answers.name !== 'valid-directory') {
 		packages['valid-directory'] = 'dev'
 		state.scripts['our:verify:directory'] = 'npx valid-directory'
 	}
