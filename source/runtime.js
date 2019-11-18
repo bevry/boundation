@@ -1045,6 +1045,7 @@ async function updateRuntime(state) {
 
 	// joe to kava
 	if (
+		sourcePath !== '.' &&
 		answers.type === 'package' &&
 		packageData.devDependencies.joe &&
 		packageData.name !== 'kava'

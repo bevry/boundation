@@ -641,7 +641,10 @@ async function getQuestions(state) {
 
 async function getAnswers(state) {
 	// Fetch
-	const answers = await _getAnswers(await getQuestions(state))
+	const answers = await _getAnswers(
+		await getQuestions(state),
+		state.packageData && state.packageData.boundation
+	)
 
 	// Apply
 	state.answers = answers

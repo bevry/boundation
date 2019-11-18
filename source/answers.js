@@ -16,7 +16,7 @@ function fetch(value, ...args) {
 }
 
 // Action
-async function getAnswers(questions) {
+async function getAnswers(questions, user) {
 	try {
 		// find defaults
 		const defaults = {}
@@ -48,6 +48,12 @@ async function getAnswers(questions) {
 						defaults[name] = _value === 0.1 ? '0.10' : _value
 						reason = 'arg'
 					}
+				}
+
+				// check user
+				if (user && !reason && user[name] != null) {
+					defaults[name] = user[name]
+					reason = 'package'
 				}
 
 				// fallback to other checks if no arg
