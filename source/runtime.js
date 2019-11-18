@@ -406,6 +406,18 @@ async function scaffoldEditions(state) {
 			) {
 				await unlink('test.js')
 			}
+			if (
+				(await exists('bin.js')) &&
+				(await contains('bin.js', 'requirePackage'))
+			) {
+				await unlink('bin.js')
+			}
+
+			if (answers.binEntry) {
+				packageData.bin = nodeEdition.binPath
+			} else {
+				delete packageData.bin
+			}
 
 			packageData.main = nodeEdition.mainPath
 			state.test = nodeEdition.testPath
@@ -447,6 +459,8 @@ async function scaffoldEditions(state) {
 		}
 		if (answers.binEntry) {
 			packageData.bin = answers.binEntry + '.js'
+		} else {
+			delete packageData.bin
 		}
 	}
 }
