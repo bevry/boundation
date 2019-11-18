@@ -92,6 +92,14 @@ function hasEditions(packageData) {
 	return packageData.editions && Boolean(packageData.editions.length)
 }
 
+function isES5(packageData) {
+	return (
+		packageData.editions &&
+		packageData.editions[0] &&
+		packageData.editions[0].description.includes('ES5')
+	)
+}
+
 function getPackageScript(packageData, key) {
 	return (packageData.scripts && packageData.scripts[key]) || null
 }
@@ -655,6 +663,7 @@ module.exports = {
 	hasMultipleEditions,
 	hasPackageDependency,
 	hasPackageScript,
+	isES5,
 	isPackageCoffee,
 	isPackageDocPadPlugin,
 	isPackageJavaScript,

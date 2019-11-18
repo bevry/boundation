@@ -97,7 +97,30 @@ async function generateEditions(state) {
 		const editions = []
 
 		// Generate base editions based on language
-		if (answers.language === 'esnext') {
+		if (answers.language === 'es5') {
+			babel = true
+			editions.push(
+				new Edition({
+					directory: answers.sourceDirectory,
+					main: `${answers.mainEntry}.js`,
+					test: `${answers.testEntry}.js`,
+					bin: `${answers.binEntry}.js`,
+					tags: ['javascript', 'es5'],
+					engines: {
+						node: true,
+						browsers: answers.browsers && !answers.adaptive
+					}
+				})
+			)
+			if (answers.modules) {
+				editions[0].tags.push('import')
+			} else {
+				editions[0].tags.push('require')
+			}
+			if (answers.flowtype) {
+				editions[0].tags.push('flow type comments')
+			}
+		} else if (answers.language === 'esnext') {
 			babel = true
 			editions.push(
 				new Edition({
@@ -108,7 +131,7 @@ async function generateEditions(state) {
 					tags: ['javascript', 'esnext'],
 					engines: {
 						node: true,
-						browsers: false
+						browsers: answers.browsers && !answers.adaptive
 					}
 				})
 			)
@@ -175,7 +198,7 @@ async function generateEditions(state) {
 					tags: ['javascript', 'esnext', 'require'],
 					engines: {
 						node: true,
-						browsers: false
+						browsers: answers.browsers && !answers.adaptive
 					},
 					scripts: {
 						'our:compile:edition-esnext': `coffee -bco ./edition-esnext ./${answers.sourceDirectory}`
@@ -193,7 +216,7 @@ async function generateEditions(state) {
 					tags: ['json'],
 					engines: {
 						node: true,
-						browsers: true
+						browsers: answers.browsers && !answers.adaptive
 					}
 				})
 			)
@@ -202,7 +225,7 @@ async function generateEditions(state) {
 		}
 
 		// Add the browser edition if necessary
-		if (answers.browsers && answers.language !== 'json') {
+		if (answers.adaptive && answers.browsers) {
 			babel = true
 			editions.push(
 				new Edition({

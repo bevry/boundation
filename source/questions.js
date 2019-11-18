@@ -39,6 +39,7 @@ const {
 	hasDocumentation,
 	hasEditions,
 	hasPackageDependency,
+	isES5,
 	isPackageCoffee,
 	isPackageDocPadPlugin,
 	isPackageJavaScript,
@@ -278,6 +279,7 @@ async function getQuestions(state) {
 					isPackageJavaScript(packageData) && 'esnext',
 					isPackageTypeScript(packageData) && 'typescript',
 					isPackageCoffee(packageData) && 'coffeescript',
+					isES5(packageData) && 'es5',
 					isPackageJSON(packageData) && 'json',
 					(hasPackageDependency(packageData, 'react') || nextWebsite) &&
 						'react',
@@ -378,10 +380,10 @@ async function getQuestions(state) {
 			type: 'confirm',
 			message: 'Would you like adaptive support for older environments?',
 			default({ language }) {
-				return language !== 'json'
+				return language !== 'json' && language !== 'es5'
 			},
 			skip({ browser, language }) {
-				return browser || language === 'json'
+				return browser || language === 'json' || language === 'es5'
 			},
 			ignore({ website }) {
 				return website
