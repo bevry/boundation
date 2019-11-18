@@ -47,6 +47,7 @@ const {
 	isPackageTypeScript
 } = require('./package')
 const { getNowAliases, getNowName } = require('./website')
+const { versionComparator } = require('./versions')
 
 // ====================================
 // Questions
@@ -64,7 +65,8 @@ async function getQuestions(state) {
 	const nodeMaximumLTSVersion = await getMaximumNodeLTSVersion()
 	const minimumSupportNodeVersion = nodeEngineVersion || nodeMinimumLTSVersion
 	const maximumSupportNodeVersion = allNodeVersions[allNodeVersions.length - 1]
-	const alreadyLTS = nodeEngineVersion >= nodeMinimumLTSVersion
+	const alreadyLTS =
+		versionComparator(nodeEngineVersion, nodeMinimumLTSVersion) >= 0
 	return [
 		{
 			name: 'name',
@@ -473,7 +475,9 @@ async function getQuestions(state) {
 			message: 'What is the minimum node version for support?',
 			validate: isNumber,
 			default({ ltsNodeOnly, website, desiredNodeVersion }) {
-				return ltsNodeOnly
+				return alreadyLTS
+					? minimumSupportNodeVersion
+					: ltsNodeOnly
 					? nodeMinimumLTSVersion
 					: website
 					? desiredNodeVersion
@@ -509,7 +513,9 @@ async function getQuestions(state) {
 				minimumSupportNodeVersion,
 				language
 			}) {
-				return ltsNodeOnly
+				return alreadyLTS
+					? minimumSupportNodeVersion
+					: ltsNodeOnly
 					? nodeMinimumLTSVersion
 					: website || language === 'json'
 					? desiredNodeVersion
