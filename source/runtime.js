@@ -380,7 +380,7 @@ async function scaffoldEditions(state) {
 			// bin
 			if (answers.binEntry) {
 				await write(
-					'index.js',
+					'bin.js',
 					[
 						"'use strict'",
 						'',
