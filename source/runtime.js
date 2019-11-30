@@ -968,12 +968,17 @@ async function updateRuntime(state) {
 	)
 
 	// helper
+	function isExact(value) {
+		return value && value !== 'latest'
+	}
 	function latestDependencies(array) {
-		return array.filter(item => !versions[item]).map(item => `${item}@latest`)
+		return array
+			.filter(item => !isExact(versions[item]))
+			.map(item => `${item}@latest`)
 	}
 	function exactDependencies(array) {
 		return array
-			.filter(item => versions[item])
+			.filter(item => isExact(versions[item]))
 			.map(item => `${item}@${versions[item]}`)
 	}
 	function uninstallRaw(dependencies) {
