@@ -96,7 +96,8 @@ function isES5(packageData) {
 	return (
 		packageData.editions &&
 		packageData.editions[0] &&
-		packageData.editions[0].description.includes('ES5')
+		packageData.editions[0].tags &&
+		packageData.editions[0].tags.includes('es5')
 	)
 }
 

@@ -278,10 +278,10 @@ async function getQuestions(state) {
 			validate: isSpecified,
 			default({ website, nextWebsite }) {
 				const types = [
+					isES5(packageData) && 'es5',
 					isPackageJavaScript(packageData) && 'esnext',
 					isPackageTypeScript(packageData) && 'typescript',
 					isPackageCoffee(packageData) && 'coffeescript',
-					isES5(packageData) && 'es5',
 					isPackageJSON(packageData) && 'json',
 					(hasPackageDependency(packageData, 'react') || nextWebsite) &&
 						'react',
