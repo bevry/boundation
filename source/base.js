@@ -197,7 +197,7 @@ async function updateBaseFiles({ answers, packageData }) {
 	// dependabot
 	/* eslint camelcase:0 */
 	// update_schedule should be 'weekly' as 'daily' and 'live' cause bottlenecks with CI
-	// update_type set to 'security' as running boundation on everything is the recommended way of updating everything
+	// update_type set to 'security:patch' as running boundation on everything is the recommended way of updating everything
 	// CI will fail if any dep caused failure in any supported version
 	await spawn(['mkdir', '-p', '.dependabot'])
 	await writeYAML('.dependabot/config.yml', {
@@ -211,7 +211,7 @@ async function updateBaseFiles({ answers, packageData }) {
 					{
 						match: {
 							dependency_type: 'all',
-							update_type: 'security'
+							update_type: 'security:patch'
 						}
 					}
 				]
