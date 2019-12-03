@@ -312,11 +312,14 @@ function arrangePackage(state) {
 			const value = packageData[key]
 			if (typeChecker.isArray(value)) {
 				if (value.length === 0) {
+					console.log(`trim: package.json:${key}`)
 					delete packageData[key]
 				}
 			} else if (typeChecker.isEmptyObject(value)) {
+				console.log(`trim: package.json:${key}`)
 				delete packageData[key]
-			} else if (!value) {
+			} else if (value == null || value === '') {
+				console.log(`trim: package.json:${key}`)
 				delete packageData[key]
 			}
 		}
@@ -626,7 +629,7 @@ async function updatePackageData(state) {
 	}
 
 	// remove badges relating to private
-	if (packageData.private) {
+	if (!answers.npm) {
 		removeBadges.push('npmversion', 'npmdownloads', 'daviddm', 'daviddmdev')
 	}
 
