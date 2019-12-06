@@ -39,7 +39,7 @@ async function init(state) {
 
 	// and finish it all up
 	status('running release prepare...')
-	await spawn(`${state.answers.packageManager} run our:release:prepare`)
+	await spawn([state.answers.packageManager, 'run', 'our:release:prepare'])
 	status('...ran release prepare')
 
 	// log

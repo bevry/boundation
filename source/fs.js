@@ -8,6 +8,7 @@ const pathUtil = require('path')
 const fsUtil = require('fs')
 const safeps = require('safeps')
 const yaml = require('js-yaml')
+const Errlop = require('errlop')
 
 // Local
 const { status } = require('./log')
@@ -30,6 +31,19 @@ function unlink(file) {
 	file = pathUtil.resolve(cwd, file)
 	return new Promise(function(resolve, reject) {
 		fsUtil.unlink(file, function(error) {
+			if (error) {
+				if (error.message && error.message.includes('ENOENT')) return resolve()
+				return reject(error)
+			}
+			return resolve()
+		})
+	})
+}
+
+function rmdir(file) {
+	file = pathUtil.resolve(cwd, file)
+	return new Promise(function(resolve, reject) {
+		fsUtil.rmdir(file, { recursive: true }, function(error) {
 			if (error) {
 				if (error.message && error.message.includes('ENOENT')) return resolve()
 				return reject(error)
@@ -90,7 +104,8 @@ function spawn(command, opts = {}) {
 	opts.stdio = opts.stdio == null ? 'inherit' : opts.stdio
 	return new Promise(function(resolve, reject) {
 		safeps.spawn(command, opts, function(err, stdout) {
-			if (err) return reject(err)
+			if (err)
+				return reject(new Errlop(`spawn failed: ${command.join(' ')}`, err))
 			return resolve(stdout)
 		})
 	})
@@ -100,7 +115,7 @@ function exec(command, opts = {}) {
 	opts.cwd = opts.cwd || cwd
 	return new Promise(function(resolve, reject) {
 		safeps.exec(command, opts, function(err, stdout) {
-			if (err) return reject(err)
+			if (err) return reject(new Errlop(`exec failed: ${command}`, err))
 			return resolve(stdout)
 		})
 	})
@@ -122,15 +137,16 @@ async function parse(path) {
 }
 
 module.exports = {
-	exists,
-	unlink,
-	read,
-	rename,
-	write,
-	spawn,
-	exec,
 	contains,
+	exec,
+	exists,
 	parse,
+	read,
 	readYAML,
+	rename,
+	rmdir,
+	spawn,
+	unlink,
+	write,
 	writeYAML
 }

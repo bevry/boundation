@@ -4,7 +4,16 @@
 // Local
 const { status } = require('./log')
 const { without, uniq } = require('./util')
-const { spawn, exec, write, unlink, exists, rename, contains } = require('./fs')
+const {
+	contains,
+	exec,
+	exists,
+	rename,
+	rmdir,
+	spawn,
+	unlink,
+	write
+} = require('./fs')
 const { readPackage, writePackage } = require('./package')
 const { versionComparator } = require('./versions')
 
@@ -475,7 +484,8 @@ async function updateRuntime(state) {
 			? `.`
 			: `./${answers.sourceDirectory}`
 	const mdx = answers.languages.includes('mdx')
-	const run = `${answers.packageManager} run`
+	const run = [answers.packageManager, 'run']
+	const test = [answers.packageManager, 'test']
 
 	// log
 	status('updating runtime...')
@@ -592,17 +602,19 @@ async function updateRuntime(state) {
 		'our:clean': 'rm -Rf ./docs ./edition* ./es2015 ./es5 ./out ./.next',
 		'our:meta:projectz':
 			packageData.name === 'projectz' ? 'npx . compile' : 'projectz compile',
-		'our:test': [`${run} our:verify`, `${answers.packageManager} test`].join(
-			' && '
-		),
+		'our:test': [[...run, 'our:verify'], test]
+			.map(i => i.join(' '))
+			.join(' && '),
 		'our:release:prepare': [
-			`${run} our:clean`,
-			`${run} our:compile`,
-			`${run} our:test`,
-			`${run} our:meta`
-		].join(' && '),
+			[...run, 'our:clean'],
+			[...run, 'our:compile'],
+			[...run, 'our:test'],
+			[...run, 'our:meta']
+		]
+			.map(i => i.join(' '))
+			.join(' && '),
 		'our:release:push': 'git push origin master && git push origin --tags',
-		'our:release': `${run} our:release:push`
+		'our:release': [...run, 'our:release:push']
 	}
 
 	// add test script
@@ -619,7 +631,15 @@ async function updateRuntime(state) {
 			'our:release:tag':
 				'export MESSAGE=$(cat ./HISTORY.md | sed -n "/## v$npm_package_version/,/##/p" | sed \'s/## //\' | awk \'NR>1{print buf}{buf = $0}\') && test "$MESSAGE" || (echo \'proper changelog entry not found\' && exit -1) && git tag v$npm_package_version -am "$MESSAGE"',
 			'our:release:push': 'git push origin master && git push origin --tags',
-			'our:release': `${run} our:release:prepare && ${run} our:release:check-changelog && ${run} our:release:check-dirty && ${run} our:release:tag && ${run} our:release:push`
+			'our:release': [
+				[...run, 'our:release:prepare'],
+				[...run, 'our:release:check-changelog'],
+				[...run, 'our:release:check-dirty'],
+				[...run, 'our:release:tag'],
+				[...run, 'our:release:push']
+			]
+				.map(i => i.join(' '))
+				.join(' && ')
 		})
 
 	// docpad plugin
@@ -894,9 +914,14 @@ async function updateRuntime(state) {
 			// next / react
 			if (answers.website.includes('next')) {
 				Object.assign(state.scripts, {
-					'now-build': `${run} our:compile:next`,
+					'now-build': [...run, 'our:compile:next'].join(' '),
 					'our:compile:next': 'next build',
-					start: `${run} our:verify && next dev`
+					start: [
+						[...run, 'our:verify'],
+						['next', 'dev']
+					]
+						.map(i => i.join(' '))
+						.join(' && ')
 				})
 				packages.next = 'dev'
 				if (answers.languages.includes('typescript')) {
@@ -1188,24 +1213,36 @@ async function updateRuntime(state) {
 
 	// run setup
 	status('running setup...')
-	await spawn(`${run} our:setup`)
+	await spawn([...run, 'our:setup'])
 	status('...ran setup')
 
-	// yarn pnp
-	if (answers.packageManager === 'yarn' && answers.nowWebsite) {
-		status('yarn disabling plug and play...')
-		await spawn(commands.yarn.disablepnp)
-		status('...yarn disabled plug and play')
+	// run package manager clean
+	status(`running ${answers.packageManager} cleaning...`)
+	if (answers.packageManager === 'yarn') {
+		// disable pnp for now
+		if (answers.nowWebsite) {
+			status('yarn disabling plug and play...')
+			await spawn(commands.yarn.disablepnp)
+			status('...yarn disabled plug and play')
+		}
+		// clean npm files
+		await unlink(`./package-lock.json`)
+	} else {
+		// clean yarn files
+		await rmdir(`./.pnp`)
+		await unlink(`./.pnp.js`)
+		await unlink(`./yarn.lock`)
 	}
+	status(`...ran ${answers.packageManager} cleaning`)
 
 	// run clean
 	status('running clean...')
-	await spawn(`${run} our:clean`)
+	await spawn([...run, 'our:clean'])
 	status('...ran clean')
 
 	// run compile
 	status('running compile...')
-	await spawn(`${run} our:compile`)
+	await spawn([...run, 'our:compile'])
 	status('...ran compile')
 
 	// read the updated package.json file

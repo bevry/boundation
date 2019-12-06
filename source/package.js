@@ -25,12 +25,19 @@ const typeChecker = require('typechecker')
 // ====================================
 // Fetchers
 
+async function isNPM() {
+	const npmlock = await exists(`./package-lock.json`)
+	const npm = npmlock
+	return npm
+}
+
 async function isYARN() {
 	const pnpjs = await exists(`./.pnp.js`)
 	const pnp = await exists(`./.pnp`)
-	const yarn = await exists(`./yarn.lock`)
-	const lock = await exists(`./package-lock.json`)
-	return !lock && (pnpjs || pnp || yarn)
+	const yarnlock = await exists(`./yarn.lock`)
+	const yarn = yarnlock || pnp || pnpjs
+	const npm = await isNPM()
+	return yarn && !npm
 }
 
 function getPackageName(packageData) {
@@ -318,16 +325,17 @@ function arrangePackage(state) {
 	for (const key in packageData) {
 		if (packageData.hasOwnProperty(key)) {
 			const value = packageData[key]
-			if (typeChecker.isArray(value)) {
-				if (value.length === 0) {
-					console.log(`trim: package.json:${key}`)
-					delete packageData[key]
-				}
-			} else if (typeChecker.isEmptyObject(value)) {
-				console.log(`trim: package.json:${key}`)
+			if (typeChecker.isArray(value) && typeChecker.isEmptyArray(value)) {
+				console.log(`trim: array: package.json:${key}`)
+				delete packageData[key]
+			} else if (
+				typeChecker.isPlainObject(value) &&
+				typeChecker.isEmptyPlainObject(value)
+			) {
+				console.log(`trim: empty: package.json:${key}`)
 				delete packageData[key]
 			} else if (value == null || value === '') {
-				console.log(`trim: package.json:${key}`)
+				console.log(`trim: null|'': package.json:${key}`)
 				delete packageData[key]
 			}
 		}
@@ -653,7 +661,6 @@ async function updatePackageData(state) {
 }
 
 module.exports = {
-	isYARN,
 	getPackageAuthor,
 	getPackageBinEntry,
 	getPackageDescription,
@@ -677,11 +684,13 @@ module.exports = {
 	hasPackageDependency,
 	hasPackageScript,
 	isES5,
+	isNPM,
 	isPackageCoffee,
 	isPackageDocPadPlugin,
 	isPackageJavaScript,
 	isPackageJSON,
 	isPackageTypeScript,
+	isYARN,
 	readPackage,
 	updatePackageData,
 	writePackage
