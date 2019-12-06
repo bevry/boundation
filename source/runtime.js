@@ -614,7 +614,7 @@ async function updateRuntime(state) {
 			.map(i => i.join(' '))
 			.join(' && '),
 		'our:release:push': 'git push origin master && git push origin --tags',
-		'our:release': [...run, 'our:release:push']
+		'our:release': [...run, 'our:release:push'].join(' ')
 	}
 
 	// add test script
@@ -665,42 +665,21 @@ async function updateRuntime(state) {
 				"echo 'disabled due to https://spectrum.chat/zeit/general/resolved-deployments-fail-with-enospc-no-space-left-on-device-write~d1b9f61a-65e8-42a3-9042-f9c6a6fae6fd'"
 		} else {
 			packages.stylelint = 'dev'
-			packages['stylelint-config-standard'] = 'dev'
+			packages['stylelint-config-prettier'] = packages[
+				'stylelint-config-standard'
+			] = 'dev'
 			state.scripts['our:verify:stylelint'] = [
 				'stylelint',
 				'--fix',
 				`'${sourcePath}/**/*.css'`
 			].join(' ')
 			packageData.stylelint = {
-				extends: 'stylelint-config-standard',
-				rules: {
-					'at-rule-empty-line-before': null,
-					'custom-property-empty-line-before': null,
-					'declaration-empty-line-before': null,
-					indentation: 'tab',
-					'max-empty-lines': 2,
-					'no-descending-specificity': null,
-					'no-duplicate-selectors': null,
-					'rule-empty-line-before': null,
-					'selector-list-comma-newline-after': null
-				},
+				extends: [
+					'stylelint-config-standard',
+					'stylelint-prettier/recommended'
+				],
+				plugins: ['stylelint-prettier'],
 				ignoreFiles: ['**/vendor/*.css', 'node_modules']
-			}
-			if (answers.languages.includes('jsx')) {
-				// jsx compatibility
-				Object.assign(packageData.stylelint.rules, {
-					'block-closing-brace-empty-line-before': null,
-					'block-closing-brace-newline-after': null,
-					'block-closing-brace-newline-before': null,
-					'block-closing-brace-space-before': null,
-					'block-opening-brace-newline-after': null,
-					'block-opening-brace-space-after': null,
-					'block-opening-brace-space-before': null,
-					'declaration-block-semicolon-newline-after': null,
-					'declaration-block-semicolon-space-after': null,
-					'declaration-block-semicolon-space-before': null,
-					'declaration-block-trailing-semicolon': null
-				})
 			}
 		}
 	}
@@ -758,7 +737,9 @@ async function updateRuntime(state) {
 		packages.typescript = packages[
 			'@typescript-eslint/eslint-plugin'
 		] = packages['@typescript-eslint/parser'] = 'dev'
-		state.scripts['our:verify:typescript'] = 'tsc --noEmit --project .'
+		state.scripts[
+			'our:verify:typescript'
+		] = `tsc --noEmit --project ${answers.tsconfig}`
 	}
 
 	// Types
@@ -906,7 +887,9 @@ async function updateRuntime(state) {
 		// surge
 		if (answers.website === 'surge') {
 			packages.surge = 'dev'
-			state.scripts['my:deploy'] = `surge ./${answers.staticDirectory}`
+			state.scripts[
+				'my:deploy'
+			] = `surge ./${answers.staticDirectory} ${answers.deployTarget}`
 		}
 		// now
 		else if (answers.nowWebsite) {
@@ -962,6 +945,14 @@ async function updateRuntime(state) {
 
 	// remove self
 	packages[packageData.name] = false
+
+	// adjust package.json:type
+	// if edition autoloader, or website, then use commonjs regardless
+	// as otherwise node scripts will fail
+	packageData.type =
+		answers.modules && !state.useEditionAutoloader && !answers.website
+			? 'module'
+			: 'commonjs'
 
 	// remove old scripts
 	delete state.scripts['our:setup:docpad']
@@ -1102,7 +1093,7 @@ async function updateRuntime(state) {
 	}
 
 	// tsconfig
-	if (answers.languages.includes('typescript')) {
+	if (answers.tsconfig === 'tsconfig.json') {
 		// based from
 		// https://blogs.msdn.microsoft.com/typescript/2018/08/27/typescript-and-babel-7/
 		// https://github.com/zeit/next-plugins/tree/master/packages/next-typescript

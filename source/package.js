@@ -92,7 +92,7 @@ function hasSyntax(packageData, syntax) {
 }
 
 function getPackageModules(packageData) {
-	return hasSyntax(packageData, 'import')
+	return hasSyntax(packageData, 'import') || packageData.types === 'module'
 }
 
 function getPackageRepoUrl(packageData) {
@@ -360,7 +360,7 @@ function arrangePackage(state) {
 	// package keys
 	packageData = arrangekeys(
 		packageData,
-		'title name version private description homepage license keywords badges funding author sponsors maintainers contributors bugs repository engines editions boundation bin types main browser module jspm dependencies optionalDependencies devDependencies peerDependencies scripts now eslintConfig prettier babel'
+		'title name version private description homepage license keywords badges funding author sponsors maintainers contributors bugs repository engines editions bin types type main browser module jspm dependencies optionalDependencies devDependencies peerDependencies scripts now eslintConfig prettier babel'
 	)
 
 	// ---------------------------------
@@ -368,6 +368,7 @@ function arrangePackage(state) {
 
 	// scripts
 	let scripts = Object.assign({}, state.userScripts, state.scripts)
+	console.log({ scripts, user: state.userScripts })
 
 	// merge in editions[].scripts
 	Object.assign(
@@ -489,14 +490,17 @@ async function readPackage(state) {
 		// deploy to my:deploy
 		if (packageData.scripts.deploy) {
 			userScripts['my:deploy'] = packageData.scripts.deploy
+			delete packageData.scripts.deploy
 		}
 
-		// keep my:* scripts
+		// keep my:* scripts, and scripts with no parts
 		Object.keys(packageData.scripts).forEach(function(key) {
 			const value = packageData.scripts[key]
 			if (special.includes(key)) {
 				userScripts[key] = value
 			} else if (key.startsWith('my:')) {
+				userScripts[key] = value
+			} else if (!key.includes(':')) {
 				userScripts[key] = value
 			}
 		})

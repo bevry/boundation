@@ -182,6 +182,15 @@ async function getQuestions(state) {
 			}
 		},
 		{
+			name: 'deployTarget',
+			message: 'For the static website, what is the deploy target?',
+			validate: isSpecified,
+			filter: trim,
+			when({ staticDirectory, website }) {
+				return staticDirectory && website === 'surge'
+			}
+		},
+		{
 			name: 'nowWebsite',
 			type: 'confirm',
 			message: 'Will it be a Now by Zeit website?',
@@ -311,6 +320,16 @@ async function getQuestions(state) {
 			},
 			ignore({ website }) {
 				return website
+			}
+		},
+		{
+			name: 'tsconfig',
+			message: 'What should the path of the tsconfig file be?',
+			validate: isSpecified,
+			filter: trim,
+			default: 'tsconfig.json',
+			ignore({ language }) {
+				return language !== 'typescript'
 			}
 		},
 		{
