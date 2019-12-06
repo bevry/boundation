@@ -25,6 +25,14 @@ const typeChecker = require('typechecker')
 // ====================================
 // Fetchers
 
+async function isYARN() {
+	const pnpjs = await exists(`./.pnp.js`)
+	const pnp = await exists(`./.pnp`)
+	const yarn = await exists(`./yarn.lock`)
+	const lock = await exists(`./package-lock.json`)
+	return !lock && (pnpjs || pnp || yarn)
+}
+
 function getPackageName(packageData) {
 	return packageData.name || null
 }
@@ -645,6 +653,7 @@ async function updatePackageData(state) {
 }
 
 module.exports = {
+	isYARN,
 	getPackageAuthor,
 	getPackageBinEntry,
 	getPackageDescription,
