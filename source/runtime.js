@@ -292,10 +292,10 @@ async function scaffoldEditions(state) {
 					await write(
 						sourceEdition.mainPath,
 						[
-							useStrict(answers.modules),
+							useStrict(answers.sourceModule),
 							exportOrExports(
 								"class MyPlugin extends require('docpad-baseplugin') {",
-								answers.modules
+								answers.sourceModule
 							),
 							"\tget name () { return 'myplugin' }",
 							'\tget initialConfig () { return {} }',
@@ -309,8 +309,8 @@ async function scaffoldEditions(state) {
 					await write(
 						sourceEdition.mainPath,
 						[
-							useStrict(answers.modules),
-							exportOrExports("'@todo'", answers.modules),
+							useStrict(answers.sourceModule),
+							exportOrExports("'@todo'", answers.sourceModule),
 							''
 						].join('\n')
 					)
@@ -330,9 +330,13 @@ async function scaffoldEditions(state) {
 						await write(
 							sourceEdition.testPath,
 							[
-								useStrict(answers.modules),
-								importOrRequire('{equal}', 'assert-helpers', answers.modules),
-								importOrRequire('kava', 'kava', answers.modules),
+								useStrict(answers.sourceModule),
+								importOrRequire(
+									'{equal}',
+									'assert-helpers',
+									answers.sourceModule
+								),
+								importOrRequire('kava', 'kava', answers.sourceModule),
 								'',
 								`kava.suite('${packageData.name}', function (suite, test) {`,
 								"\ttest('no tests yet', function () {",
@@ -346,8 +350,8 @@ async function scaffoldEditions(state) {
 						await write(
 							sourceEdition.testPath,
 							[
-								useStrict(answers.modules),
-								exportOrExports("'@todo'", answers.modules),
+								useStrict(answers.sourceModule),
+								exportOrExports("'@todo'", answers.sourceModule),
 								''
 							].join('\n')
 						)
@@ -438,7 +442,7 @@ async function scaffoldEditions(state) {
 				browserEdition.directory || '.',
 				browserEdition.main
 			)
-			if (answers.modules) {
+			if (answers.sourceModule) {
 				packageData.module = packageData.browser
 			}
 		} else {
@@ -456,7 +460,7 @@ async function scaffoldEditions(state) {
 		}
 		if (answers.browser) {
 			packageData.browser = packageData.main
-			if (answers.modules) {
+			if (answers.sourceModule) {
 				packageData.module = packageData.browser
 			}
 		} else {
@@ -950,9 +954,7 @@ async function updateRuntime(state) {
 	// if edition autoloader, or website, then use commonjs regardless
 	// as otherwise node scripts will fail
 	packageData.type =
-		answers.modules && !state.useEditionAutoloader && !answers.website
-			? 'module'
-			: 'commonjs'
+		answers.packageModule && !state.useEditionAutoloader ? 'module' : 'commonjs'
 
 	// remove old scripts
 	delete state.scripts['our:setup:docpad']

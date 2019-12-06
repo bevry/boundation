@@ -90,7 +90,10 @@ async function generateEditions(state) {
 			{
 				description: 'source',
 				directory: '.',
-				tags: [...answers.languages, answers.modules ? 'import' : 'require']
+				tags: [
+					...answers.languages,
+					answers.sourceModule ? 'import' : 'require'
+				]
 			}
 		]
 	} else {
@@ -112,7 +115,7 @@ async function generateEditions(state) {
 					}
 				})
 			)
-			if (answers.modules) {
+			if (answers.sourceModule) {
 				editions[0].tags.push('import')
 			} else {
 				editions[0].tags.push('require')
@@ -135,7 +138,7 @@ async function generateEditions(state) {
 					}
 				})
 			)
-			if (answers.modules) {
+			if (answers.sourceModule) {
 				editions[0].tags.push('import')
 			} else {
 				editions[0].tags.push('require')
@@ -233,7 +236,7 @@ async function generateEditions(state) {
 					main: `${answers.mainEntry}.js`,
 					test: `${answers.testEntry}.js`,
 					bin: `${answers.binEntry}.js`,
-					tags: ['javascript', answers.modules ? 'import' : 'require'],
+					tags: ['javascript', answers.sourceModule ? 'import' : 'require'],
 					targets: answers.browsers,
 					engines: {
 						node: false,
@@ -259,7 +262,7 @@ async function generateEditions(state) {
 						main: `${answers.mainEntry}.js`,
 						test: `${answers.testEntry}.js`,
 						bin: `${answers.binEntry}.js`,
-						tags: ['javascript', 'require'],
+						tags: ['javascript', answers.packageModule ? 'import' : 'require'],
 						targets: {
 							node: version
 						},
@@ -314,13 +317,18 @@ async function generateEditions(state) {
 			// populate babel
 			if (edition.babel === true) {
 				edition.babel = {
-					sourceType: answers.modules ? 'module' : 'script',
+					sourceType: answers.sourceModule ? 'module' : 'script',
 					presets: [
 						[
 							'@babel/preset-env',
 							{
 								targets: edition.targets,
-								modules: edition.tags.includes('import') ? false : 'commonjs'
+								modules:
+									answers.sourceModule === answers.packageModule
+										? false
+										: answers.packageModule
+										? 'auto'
+										: 'commonjs'
 							}
 						]
 					],
@@ -330,9 +338,11 @@ async function generateEditions(state) {
 					edition.babel.presets.push('@babel/preset-typescript')
 					edition.babel.plugins.push(
 						'@babel/plugin-proposal-optional-chaining',
-						'@babel/proposal-class-properties',
-						'add-module-exports'
+						'@babel/proposal-class-properties'
 					)
+					if (!answers.packageModule) {
+						edition.babel.plugins.push('add-module-exports')
+					}
 				}
 			}
 

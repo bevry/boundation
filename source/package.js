@@ -91,8 +91,12 @@ function hasSyntax(packageData, syntax) {
 	return tags.includes(syntax)
 }
 
-function getPackageModules(packageData) {
-	return hasSyntax(packageData, 'import') || packageData.types === 'module'
+function isSourceModule(packageData) {
+	return hasSyntax(packageData, 'import')
+}
+
+function isPackageModule(packageData) {
+	return packageData.type === 'module'
 }
 
 function getPackageRepoUrl(packageData) {
@@ -368,7 +372,6 @@ function arrangePackage(state) {
 
 	// scripts
 	let scripts = Object.assign({}, state.userScripts, state.scripts)
-	console.log({ scripts, user: state.userScripts })
 
 	// merge in editions[].scripts
 	Object.assign(
@@ -614,6 +617,7 @@ async function updatePackageData(state) {
 				'daviddm',
 				'daviddmdev',
 				'---',
+				'githubsponsors',
 				'patreon',
 				'flattr',
 				'liberapay',
@@ -624,6 +628,7 @@ async function updatePackageData(state) {
 				'wishlist'
 			],
 			config: {
+				githubSponsorsUsername: 'balupton',
 				buymeacoffeeUsername: 'balupton',
 				cryptoURL: 'https://bevry.me/crypto',
 				flattrUsername: 'balupton',
@@ -672,7 +677,6 @@ module.exports = {
 	getPackageFlowtypeDependency,
 	getPackageKeywords,
 	getPackageMainEntry,
-	getPackageModules,
 	getPackageName,
 	getPackageNodeEngineVersion,
 	getPackageOrganisation,
@@ -693,7 +697,9 @@ module.exports = {
 	isPackageDocPadPlugin,
 	isPackageJavaScript,
 	isPackageJSON,
+	isPackageModule,
 	isPackageTypeScript,
+	isSourceModule,
 	isYARN,
 	readPackage,
 	updatePackageData,

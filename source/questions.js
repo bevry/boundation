@@ -27,7 +27,6 @@ const {
 	getPackageFlowtypeDependency,
 	getPackageKeywords,
 	getPackageMainEntry,
-	getPackageModules,
 	getPackageName,
 	getPackageNodeEngineVersion,
 	getPackageOrganisation,
@@ -40,12 +39,14 @@ const {
 	hasEditions,
 	hasPackageDependency,
 	isES5,
-	isYARN,
 	isPackageCoffee,
 	isPackageDocPadPlugin,
 	isPackageJavaScript,
 	isPackageJSON,
-	isPackageTypeScript
+	isPackageModule,
+	isPackageTypeScript,
+	isSourceModule,
+	isYARN
 } = require('./package')
 const { getNowAliases, getNowName } = require('./website')
 const { versionComparator } = require('./versions')
@@ -333,16 +334,25 @@ async function getQuestions(state) {
 			}
 		},
 		{
-			name: 'modules',
+			name: 'sourceModule',
 			type: 'confirm',
-			message: 'Will it use ES6 Modules?',
+			message: 'Will the source code use ES6 Modules?',
 			default({ language }) {
 				return Boolean(
-					language === 'typescript' ? true : getPackageModules(packageData)
+					language === 'typescript' ? true : isSourceModule(packageData)
 				)
 			},
 			skip({ language }) {
 				return language !== 'esnext'
+			}
+		},
+		{
+			name: 'packageModule',
+			type: 'confirm',
+			message: 'Will the compiled code use ES6 Modules?',
+			default: isPackageModule(packageData),
+			skip({ sourceModule, website }) {
+				return sourceModule === false || website
 			}
 		},
 		{
