@@ -276,8 +276,9 @@ async function getQuestions(state) {
 			name: 'languages',
 			type: 'checkbox',
 			choices: [
-				'esnext',
 				'typescript',
+				'esnext',
+				'es5',
 				'coffeescript',
 				'json',
 				'react',
@@ -291,8 +292,8 @@ async function getQuestions(state) {
 			default({ website, nextWebsite }) {
 				const types = [
 					isES5(packageData) && 'es5',
-					isPackageJavaScript(packageData) && 'esnext',
 					isPackageTypeScript(packageData) && 'typescript',
+					isPackageJavaScript(packageData) && 'esnext',
 					isPackageCoffee(packageData) && 'coffeescript',
 					isPackageJSON(packageData) && 'json',
 					(hasPackageDependency(packageData, 'react') || nextWebsite) &&
@@ -329,17 +330,17 @@ async function getQuestions(state) {
 			validate: isSpecified,
 			filter: trim,
 			default: 'tsconfig.json',
-			ignore({ language }) {
-				return language !== 'typescript'
+			ignore({ languages }) {
+				return languages.includes('typescript') === false
 			}
 		},
 		{
 			name: 'sourceModule',
 			type: 'confirm',
 			message: 'Will the source code use ES6 Modules?',
-			default({ language }) {
+			default({ languages }) {
 				return Boolean(
-					language === 'typescript' ? true : isSourceModule(packageData)
+					languages.includes('typescript') ? true : isSourceModule(packageData)
 				)
 			},
 			skip({ language }) {

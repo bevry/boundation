@@ -912,7 +912,7 @@ async function updateRuntime(state) {
 				})
 				packages.next = 'dev'
 				if (answers.languages.includes('typescript')) {
-					packages['@types/next'] = packages['@zeit/next-typescript'] = 'dev'
+					packages['@types/next'] = 'dev'
 				}
 			}
 		}
@@ -1073,7 +1073,9 @@ async function updateRuntime(state) {
 			'esnextguardian.js',
 			'nakefile.js',
 			'next.config.js',
-			'tsconfig.json'
+			'npm-debug.log',
+			'tsconfig.json',
+			'yarn-error.log'
 		]
 			.filter(i => i)
 			.map(file => unlink(file))
@@ -1139,29 +1141,23 @@ async function updateRuntime(state) {
 					},
 					include: [answers.sourceDirectory]
 			  }
-		// website
-		if (answers.website) {
-			// next website
-			if (answers.website.includes('next')) {
-				// next.config.js
-				const next = [
-					`const withTypescript = require('@zeit/next-typescript')`,
-					mdx ? `const withMDX = require('@zeit/next-mdx')` : '',
-					`module.exports = ${mdx ? 'withMDX(' : ''}withTypescript({`,
-					`	target: 'serverless'`,
-					`})${mdx ? ')' : ''}`
-				].filter(i => i)
-				await write('next.config.js', next.join('\n') + '\n')
-
-				// .babelrc
-				const babel = {
-					presets: ['next/babel', '@zeit/next-typescript/babel']
-				}
-				await write('.babelrc', JSON.stringify(babel, null, '  ') + '\n')
-			}
-		}
 		await write('tsconfig.json', JSON.stringify(tsconfig, null, '  ') + '\n')
 		status('...wrote tsconfig file')
+	}
+	// next mdx website
+	if (mdx && answers.website && answers.website.includes('next')) {
+		if (!(await exists('next.config.js'))) {
+			const next =
+				[
+					`const withMDX = require('@zeit/next-mdx')`,
+					`module.exports = withMDX({`,
+					`	target: 'serverless'`,
+					`})`
+				]
+					.filter(i => i)
+					.join('\n') + '\n'
+			await write('next.config.js', next)
+		}
 	}
 
 	// yarn pnp
