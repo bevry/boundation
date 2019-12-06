@@ -1144,15 +1144,16 @@ async function updateRuntime(state) {
 		await write('tsconfig.json', JSON.stringify(tsconfig, null, '  ') + '\n')
 		status('...wrote tsconfig file')
 	}
+
 	// next mdx website
-	if (mdx && answers.website && answers.website.includes('next')) {
+	if (answers.website && answers.website.includes('next')) {
 		if (!(await exists('next.config.js'))) {
 			const next =
 				[
-					`const withMDX = require('@zeit/next-mdx')`,
-					`module.exports = withMDX({`,
+					mdx ? `const withMDX = require('@zeit/next-mdx')` : '',
+					`module.exports = ${mdx ? 'withMDX(' : ''}{`,
 					`	target: 'serverless'`,
-					`})`
+					`}${mdx ? ')' : ''}`
 				]
 					.filter(i => i)
 					.join('\n') + '\n'
