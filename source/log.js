@@ -14,5 +14,9 @@ function error(...m) {
 function success(...m) {
 	process.stderr.write(chalk.bold.underline.green(...m) + '\n')
 }
+function fatal(...m) {
+	error(...m)
+	process.exit(1)
+}
 
-module.exports = { status, warn, error, success }
+module.exports = { status, warn, error, success, fatal }

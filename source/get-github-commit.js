@@ -2,7 +2,7 @@
 'use strict'
 
 // Local
-const { warn } = require('./log')
+const { warn, fatal } = require('./log')
 const {
 	fetchGithubAuthQueryString,
 	redactGithubAuthQueryString
@@ -26,6 +26,12 @@ async function getGithubCommit(slug, fallback = 'master') {
 		const result = await response.json()
 		if (result.message) {
 			throw new Error(result.message + '\n' + url)
+		}
+		if (!result[0] || !result[0].sha) {
+			return fatal(
+				new Error(`${url} did not return the expected result`),
+				result
+			)
 		}
 		const commit = result[0].sha
 		return commit
