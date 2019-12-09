@@ -1,6 +1,6 @@
 {
   "name": "boundation",
-  "version": "1.35.0",
+  "version": "1.36.0",
   "description": "Automatic scaffolding and upgrading of your JavaScript ecosystem projects using Bevry's best practices",
   "homepage": "https://github.com/bevry/boundation",
   "license": "MIT",
@@ -22,6 +22,7 @@
       "daviddm",
       "daviddmdev",
       "---",
+      "githubsponsors",
       "patreon",
       "flattr",
       "liberapay",
@@ -32,6 +33,7 @@
       "wishlist"
     ],
     "config": {
+      "githubSponsorsUsername": "balupton",
       "buymeacoffeeUsername": "balupton",
       "cryptoURL": "https://bevry.me/crypto",
       "flattrUsername": "balupton",
@@ -77,14 +79,12 @@
       }
     }
   ],
-  "boundation": {
-    "adaptive": false
-  },
   "bin": "source/bin.js",
+  "type": "commonjs",
   "main": "source/index.js",
   "dependencies": {
     "@bevry/testen": "^3.0.1",
-    "arrangekeys": "^2.3.0",
+    "arrangekeys": "^2.4.0",
     "chalk": "^3.0.0",
     "errlop": "^1.6.0",
     "fetch-h2": "^2.2.2",
@@ -94,17 +94,17 @@
     "js-yaml": "^3.13.1",
     "safeps": "^9.2.0",
     "semver": "^6.3.0",
-    "typechecker": "^6.0.0"
+    "typechecker": "^6.2.0"
   },
   "devDependencies": {
-    "assert-helpers": "^5.7.0",
+    "assert-helpers": "^5.8.0",
     "eslint": "^6.7.2",
     "eslint-config-bevry": "^2.2.0",
     "eslint-config-prettier": "^6.7.0",
     "eslint-plugin-prettier": "^3.1.1",
     "kava": "^4.3.0",
     "prettier": "^1.19.1",
-    "projectz": "^1.14.0",
+    "projectz": "^1.15.0",
     "valid-directory": "^1.5.0"
   },
   "scripts": {
@@ -139,5 +139,8 @@
   "prettier": {
     "semi": false,
     "singleQuote": true
+  },
+  "boundation": {
+    "adaptive": false
   }
 }
