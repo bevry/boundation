@@ -11,8 +11,8 @@ const skipAllArg = '--auto'
 const skipAll = process.argv.includes(skipAllArg)
 
 // Fetch
-function fetch(value, ...args) {
-	return typeof value === 'function' ? value(...args) : value
+function fetch(q, value, ...args) {
+	return typeof value === 'function' ? value.call(q, ...args) : value
 }
 
 // Action
@@ -24,9 +24,11 @@ async function getAnswers(questions, user) {
 			const { name, skip, when, ignore, arg } = question
 			if (typeof question.default === 'function') {
 				const fn = question.default
+				if (typeof question.choices === 'function')
+					question.choices = question.choices.bind(question)
 				question.default = function(answers) {
 					const values = Object.assign({}, defaults, answers)
-					const value = fn(values)
+					const value = fetch(question, fn, values)
 					return value
 				}
 			}
@@ -36,7 +38,9 @@ async function getAnswers(questions, user) {
 					opaque = false
 
 				// fetch values
-				const value = await Promise.resolve(fetch(question.default, answers))
+				const value = await Promise.resolve(
+					fetch(question, question.default, answers)
+				)
 				const values = Object.assign({ [name]: value }, defaults, answers)
 
 				// check args
@@ -62,12 +66,12 @@ async function getAnswers(questions, user) {
 					if (when || ignore) {
 						// check ignore
 						if (when != null) {
-							result = fetch(when, values)
+							result = fetch(question, when, values)
 							if (!result) reason = 'when'
 						}
 						// check ignore
 						if (!reason && ignore != null) {
-							result = fetch(ignore, values)
+							result = fetch(question, ignore, values)
 							if (result) reason = 'ignore'
 						}
 					}
@@ -76,7 +80,7 @@ async function getAnswers(questions, user) {
 					if (!reason) {
 						// check skip
 						if (skip != null) {
-							result = fetch(skip, values)
+							result = fetch(question, skip, values)
 							if (result) {
 								reason = 'skip'
 								opaque = true
