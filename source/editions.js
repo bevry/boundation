@@ -142,7 +142,7 @@ async function generateEditions(state) {
 			})
 
 			if (answers.flowtype) {
-				edition.tags.add('flow type comments')
+				add(edition.tags, 'flow type comments')
 			}
 
 			editions.set('source', edition)
@@ -165,7 +165,7 @@ async function generateEditions(state) {
 			})
 
 			if (answers.flowtype) {
-				edition.tags.add('flow type comments')
+				add(edition.tags, 'flow type comments')
 			}
 
 			editions.set('source', edition)
@@ -424,27 +424,29 @@ async function generateEditions(state) {
 
 			// ensure description exists
 			if (!edition.description) {
-				const description = []
-				if (edition.directory === answers.sourceDirectory) {
-					description.push(answers.language)
-				} else if (browserVersion) {
-					description.push(`${answers.language} compiled for web browsers`)
+				const description = [
+					answers.language,
+					edition.directory === answers.sourceDirectory
+						? 'source code'
+						: 'compiled'
+				]
+				if (edition.targets && edition.targets.es) {
+					description.push(`against ${edition.targets.es}`)
+				}
+				if (browserVersion) {
+					description.push(`for web browsers`)
 					if (
 						typeof browserVersion === 'string' &&
 						browserVersion !== 'defaults'
 					) {
 						description.push(`[${browserVersion}]`)
 					}
-				} else if (nodeVersion) {
-					description.push(`${answers.language} compiled for Node.js`)
+				}
+				if (nodeVersion) {
+					description.push(browserVersion ? 'and' : 'for', `Node.js`)
 					if (typeof nodeVersion === 'string') {
 						description.push(`${nodeVersion}`)
 					}
-				} else {
-					description.push(`${answers.language} compiled`)
-				}
-				if (edition.targets && edition.targets.es) {
-					description.push(`against ${edition.targets.es}`)
 				}
 				if (has(edition.tags, 'require')) {
 					description.push('with require for modules')
