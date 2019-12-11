@@ -128,9 +128,19 @@ async function updateEngines(state) {
 		)
 	} else {
 		let recompile = false
+		let skip = false
 
 		/* eslint no-loop-func:0 */
 		for (const edition of nodeEditions) {
+			if (skip) {
+				console.log(
+					`The edition [${edition.directory}] will be trimmed, as a previous edition already passes all targets`
+				)
+				edition.active = false
+				recompile = true
+				continue
+			}
+
 			status(`determining engines for edition [${edition.directory}]...`)
 
 			// Fetch the target and the range
