@@ -2,6 +2,20 @@
 
 const { bevryOrganisationsList } = require('./data')
 
+function has(s = [], i) {
+	// @ts-ignore
+	const check = s.has || s.includes
+	return check ? check.call(s, i) : s[i] != null
+}
+
+function add(s, ...a) {
+	const add = s.add || s.push
+	for (const i of a) {
+		add.call(s, i)
+	}
+	return s
+}
+
 function isBevryOrganisation(organisation) {
 	return bevryOrganisationsList.includes(organisation)
 }
@@ -50,6 +64,8 @@ function uniq(list) {
 }
 
 module.exports = {
+	has,
+	add,
 	isBevryOrganisation,
 	trim,
 	slugit,

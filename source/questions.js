@@ -410,17 +410,80 @@ async function getQuestions(state) {
 			}
 		},
 		{
-			name: 'adaptive',
-			type: 'confirm',
-			message: 'Would you like adaptive support for older environments?',
+			name: 'compilerNode',
+			type: 'list',
+			message: 'Which compiler to use for the Node.js editions?',
+			validate: isSpecified,
+			choices({ language }) {
+				return language === 'typescript'
+					? ['typescript', 'babel']
+					: language === 'coffeescript'
+					? ['babel', 'coffeescript']
+					: ['babel']
+			},
 			default({ language }) {
-				return language !== 'json' && language !== 'es5'
+				return language === 'typescript'
+					? 'typescript'
+					: language === 'coffeescript'
+					? 'coffeescript'
+					: 'babel'
 			},
-			skip({ browser, language }) {
-				return browser || language === 'json' || language === 'es5'
+			ignore({ website, language }) {
+				return (
+					website ||
+					['esnext', 'typescript', 'coffeescript'].includes(language) === false
+				)
+			}
+		},
+		{
+			name: 'compilerBrowser',
+			type: 'list',
+			message: 'Which compiler to use for the browser edition?',
+			validate: isSpecified,
+			choices({ language }) {
+				return language === 'typescript'
+					? ['typescript', 'babel']
+					: language === 'coffeescript'
+					? ['babel', 'coffeescript']
+					: ['babel']
 			},
-			ignore({ website }) {
-				return website
+			default({ language }) {
+				return language === 'typescript' ? 'typescript' : 'babel'
+			},
+			ignore({ browser, language }) {
+				return (
+					!browser ||
+					['esnext', 'typescript', 'coffeescript'].includes(language) === false
+				)
+			}
+		},
+		{
+			name: 'targets',
+			type: 'checkbox',
+			message: 'Which targets should editions be generated for?',
+			validate: isSpecified,
+			choices({ compilerNode, compilerBrowser }) {
+				const targets = []
+				if (compilerBrowser) targets.push('browser')
+				if (compilerNode === 'babel' || compilerBrowser === 'babel')
+					targets.push('maximum', 'desired', 'minimum')
+				if (compilerNode === 'typescript' || compilerBrowser === 'typescript')
+					targets.push(
+						'ESNext',
+						'ES2018',
+						'ES2017',
+						'ES2016',
+						'ES2015',
+						'ES5',
+						'ES3'
+					)
+				return targets
+			},
+			default(opts) {
+				return this.choices(opts)
+			},
+			skip({ compilerNode, compilerBrowser }) {
+				return !compilerNode && !compilerBrowser
 			}
 		},
 		{

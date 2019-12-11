@@ -173,6 +173,7 @@ async function updateEngines(state) {
 			)
 			const trim = passedUnique.length === 0
 			const range = nodeMajorVersions(passed).join(' || ')
+			skip = failed.length === 0
 
 			// log the results
 			console.log(
@@ -213,7 +214,7 @@ async function updateEngines(state) {
 			// trim
 			if (trim) {
 				console.log(
-					`The edition [${edition.directory}] had no unique versions which it passed, so it will been trimmed`
+					`The edition [${edition.directory}] will be trimmed, as it has no unique passing versions`
 				)
 				edition.active = false
 				recompile = true
@@ -540,6 +541,7 @@ async function updateRuntime(state) {
 		'@babel/preset-typescript': false,
 		'@babel/plugin-proposal-class-properties': false,
 		'@babel/plugin-proposal-object-rest-spread': false,
+		'@babel/plugin-proposal-optional-chaining': false,
 		'babel-plugin-add-module-exports': false,
 		typescript: false,
 		'typescript-eslint-parser': false,
@@ -880,20 +882,14 @@ async function updateRuntime(state) {
 		state.scripts['our:verify:flow'] = 'flow check'
 	}
 
-	// babel
-	if (state.babelEditions.length) {
-		packages['@babel/core'] = packages['@babel/cli'] = packages[
-			'@babel/preset-env'
-		] = packages['@babel/plugin-proposal-object-rest-spread'] = 'dev'
-	}
-
-	// typescript
-	if (answers.language === 'typescript') {
-		packages['@babel/core'] = packages['@babel/preset-typescript'] = packages[
-			'@babel/plugin-proposal-class-properties'
-		] = packages['@babel/plugin-proposal-object-rest-spread'] = packages[
-			'babel-plugin-add-module-exports'
-		] = packages['@babel/plugin-proposal-optional-chaining'] = 'dev'
+	// edition deps
+	for (const edition of state.editions) {
+		for (const dep of edition.dependencies) {
+			packages[dep] = true
+		}
+		for (const devDep of edition.devDependencies) {
+			packages[devDep] = 'dev'
+		}
 	}
 
 	// deploy
@@ -1145,7 +1141,6 @@ async function updateRuntime(state) {
 						isolatedModules: answers.language === 'typescript',
 						maxNodeModuleJsDepth: 5,
 						moduleResolution: 'node',
-						noEmit: true,
 						strict: true,
 						target: 'esnext'
 					},

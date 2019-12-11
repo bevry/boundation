@@ -9,6 +9,7 @@ const mandatoryScriptsList = 'our:setup our:compile our:meta our:verify our:depl
 // Local
 const { status } = require('./log')
 const {
+	has,
 	repoToWebsite,
 	repoToOrganisation,
 	without,
@@ -88,7 +89,7 @@ function hasSyntax(packageData, syntax) {
 		packageData.editions.length &&
 		packageData.editions[0]
 	const tags = (edition && (edition.tags || edition.syntaxes)) || []
-	return tags.includes(syntax)
+	return has(tags, syntax)
 }
 
 function isSourceModule(packageData) {
@@ -115,8 +116,7 @@ function isES5(packageData) {
 	return (
 		packageData.editions &&
 		packageData.editions[0] &&
-		packageData.editions[0].tags &&
-		packageData.editions[0].tags.includes('es5')
+		has(packageData.editions[0].tags, 'es5')
 	)
 }
 

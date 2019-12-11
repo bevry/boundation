@@ -6,6 +6,7 @@ const pathUtil = require('path')
 
 // Local
 const { status } = require('./log')
+const { add, has } = require('./util.js')
 
 // Helpers
 class Edition {
@@ -15,7 +16,27 @@ class Edition {
 			writable: true
 		})
 
+		Object.defineProperty(this, 'dependencies', {
+			enumerable: false,
+			writable: true
+		})
+
+		Object.defineProperty(this, 'devDependencies', {
+			enumerable: false,
+			writable: true
+		})
+
+		Object.defineProperty(this, 'compiler', {
+			enumerable: false,
+			writable: true
+		})
+
 		Object.defineProperty(this, 'scripts', {
+			enumerable: false,
+			writable: true
+		})
+
+		Object.defineProperty(this, 'compiler', {
 			enumerable: false,
 			writable: true
 		})
@@ -71,14 +92,17 @@ class Edition {
 			}
 		})
 
-		Object.assign(this, { active: true }, opts)
+		opts.tags = new Set(opts.tags || [])
+		opts.dependencies = new Set(opts.dependencies || [])
+		opts.devDependencies = new Set(opts.devDependencies || [])
+
+		Object.assign(this, { scripts: {}, active: true }, opts)
 	}
 }
 
 // Actions
 async function generateEditions(state) {
 	const { answers, packageData } = state
-	let babel = false
 
 	// log
 	status('updating editions...')
@@ -97,58 +121,57 @@ async function generateEditions(state) {
 			}
 		]
 	} else {
-		const editions = []
+		const editions = new Map()
 
 		// Generate base editions based on language
 		if (answers.language === 'es5') {
-			babel = true
-			editions.push(
-				new Edition({
-					directory: answers.sourceDirectory,
-					main: `${answers.mainEntry}.js`,
-					test: `${answers.testEntry}.js`,
-					bin: `${answers.binEntry}.js`,
-					tags: ['javascript', 'es5'],
-					engines: {
-						node: true,
-						browsers: answers.browsers && !answers.adaptive
-					}
-				})
-			)
-			if (answers.sourceModule) {
-				editions[0].tags.push('import')
-			} else {
-				editions[0].tags.push('require')
-			}
+			const edition = new Edition({
+				directory: answers.sourceDirectory,
+				main: `${answers.mainEntry}.js`,
+				test: `${answers.testEntry}.js`,
+				bin: `${answers.binEntry}.js`,
+				tags: [
+					'javascript',
+					'es5',
+					answers.sourceModule ? 'import' : 'require'
+				],
+				engines: {
+					node: true,
+					browsers: answers.browsers
+				}
+			})
+
 			if (answers.flowtype) {
-				editions[0].tags.push('flow type comments')
+				edition.tags.add('flow type comments')
 			}
+
+			editions.set('source', edition)
 		} else if (answers.language === 'esnext') {
-			babel = true
-			editions.push(
-				new Edition({
-					directory: answers.sourceDirectory,
-					main: `${answers.mainEntry}.js`,
-					test: `${answers.testEntry}.js`,
-					bin: `${answers.binEntry}.js`,
-					tags: ['javascript', 'esnext'],
-					engines: {
-						node: true,
-						browsers: answers.browsers && !answers.adaptive
-					}
-				})
-			)
-			if (answers.sourceModule) {
-				editions[0].tags.push('import')
-			} else {
-				editions[0].tags.push('require')
-			}
+			const edition = new Edition({
+				directory: answers.sourceDirectory,
+				main: `${answers.mainEntry}.js`,
+				test: `${answers.testEntry}.js`,
+				bin: `${answers.binEntry}.js`,
+				tags: [
+					'javascript',
+					'esnext',
+					answers.sourceModule ? 'import' : 'require'
+				],
+				engines: {
+					node: true,
+					browsers:
+						answers.browsers && answers.targets.includes('browser') === false
+				}
+			})
+
 			if (answers.flowtype) {
-				editions[0].tags.push('flow type comments')
+				edition.tags.add('flow type comments')
 			}
+
+			editions.set('source', edition)
 		} else if (answers.language === 'typescript') {
-			babel = true
-			editions.push(
+			editions.set(
+				'source',
 				new Edition({
 					directory: answers.sourceDirectory,
 					main: `${answers.mainEntry}.ts`,
@@ -157,34 +180,10 @@ async function generateEditions(state) {
 					tags: ['typescript', 'import'],
 					engines: false
 				})
-
-				/*
-				...['ES3', 'ES5', 'ES2015', 'ES2016', 'ES2017', 'ES2018', 'ESNEXT'].reverse().map(function (target) {
-					const syntax = target.toLocaleLowerCase()
-					const directory = `edition-${syntax}`
-					return new Edition({
-						directory,
-						main: `${answers.mainEntry}.js`,
-						test: `${answers.testEntry}.js`,
-						tags: [
-							'javascript',
-							syntax,
-							'require'
-						],
-						engines: {
-							node: true,
-							browsers: false
-						},
-						scripts: {
-							[`our:compile:${directory}`]: `tsc --module commonjs --target ${target} --outDir ./${directory}`
-						}
-					})
-				})
-				*/
 			)
 		} else if (answers.language === 'coffeescript') {
-			babel = true
-			editions.push(
+			editions.set(
+				'source',
 				new Edition({
 					directory: answers.sourceDirectory,
 					main: `${answers.mainEntry}.coffee`,
@@ -192,8 +191,12 @@ async function generateEditions(state) {
 					bin: `${answers.binEntry}.coffee`,
 					tags: ['coffeescript', 'require'],
 					engines: false
-				}),
+				})
+			)
+			editions.set(
+				'esnext',
 				new Edition({
+					compiler: 'coffeescript',
 					directory: 'edition-esnext',
 					main: `${answers.mainEntry}.js`,
 					test: `${answers.testEntry}.js`,
@@ -201,15 +204,14 @@ async function generateEditions(state) {
 					tags: ['javascript', 'esnext', 'require'],
 					engines: {
 						node: true,
-						browsers: answers.browsers && !answers.adaptive
-					},
-					scripts: {
-						'our:compile:edition-esnext': `coffee -bco ./edition-esnext ./${answers.sourceDirectory}`
+						browsers:
+							answers.browsers && answers.targets.includes('browser') === false
 					}
 				})
 			)
 		} else if (answers.language === 'json') {
-			editions.push(
+			editions.set(
+				'source',
 				new Edition({
 					description: 'JSON',
 					directory: answers.sourceDirectory,
@@ -219,7 +221,8 @@ async function generateEditions(state) {
 					tags: ['json'],
 					engines: {
 						node: true,
-						browsers: answers.browsers && !answers.adaptive
+						browsers:
+							answers.browsers && answers.targets.includes('browser') === false
 					}
 				})
 			)
@@ -227,44 +230,51 @@ async function generateEditions(state) {
 			throw new Error('language should have been defined, but it was missing')
 		}
 
-		// Add the browser edition if necessary
-		if (answers.adaptive && answers.browsers) {
-			babel = true
-			editions.push(
-				new Edition({
-					directory: 'edition-browsers',
-					main: `${answers.mainEntry}.js`,
-					test: `${answers.testEntry}.js`,
-					bin: `${answers.binEntry}.js`,
-					tags: ['javascript', answers.sourceModule ? 'import' : 'require'],
-					targets: answers.browsers,
-					engines: {
-						node: false,
-						browsers: answers.browsers
-					}
-				})
-			)
-		}
-
 		// Add the compiled editions if necessary
-		if (answers.adaptive && babel) {
-			// max should be first, as it is our most desired compilation target for editions
-			// e.g. node 11 (max), node 10 (desired), node 0.12 (min)
-			const versions = new Set([
-				answers.maximumSupportNodeVersion,
-				answers.desiredNodeVersion,
-				answers.minimumSupportNodeVersion
-			])
-			for (const version of versions) {
-				editions.push(
+		for (const target of answers.targets) {
+			if (target === 'browser') {
+				editions.set(
+					'browser',
 					new Edition({
-						directory: `edition-node-${version}`,
+						compiler: answers.compilerBrowser,
+						// for legacy b/c reasons this is not "edition-browser"
+						directory: 'edition-browsers',
+						main: `${answers.mainEntry}.js`,
+						test: `${answers.testEntry}.js`,
+						bin: `${answers.binEntry}.js`,
+						tags: ['javascript', answers.sourceModule ? 'import' : 'require'],
+						targets: {
+							es: 'ESNext',
+							browsers: answers.browsers
+						},
+						engines: {
+							node: false,
+							browsers: answers.browsers
+						}
+					})
+				)
+			} else if (answers.compilerNode === 'babel') {
+				let version
+				if (target === 'desired') {
+					version = answers.desiredNodeVersion
+				} else if (target === 'minimum') {
+					version = answers.minimumSupportNodeVersion
+				} else if (target === 'maximum') {
+					version = answers.maximumSupportNodeVersion
+				} else {
+					throw new Error(`invalid target: ${target}`)
+				}
+				editions.set(
+					`node-${version}`,
+					new Edition({
+						compiler: 'babel',
+						directory: `edition-node-${target}`,
 						main: `${answers.mainEntry}.js`,
 						test: `${answers.testEntry}.js`,
 						bin: `${answers.binEntry}.js`,
 						tags: ['javascript', answers.packageModule ? 'import' : 'require'],
 						targets: {
-							node: version
+							node: target
 						},
 						engines: {
 							node: true,
@@ -272,6 +282,35 @@ async function generateEditions(state) {
 						}
 					})
 				)
+			} else if (answers.compilerNode === 'typescript') {
+				const syntax = target.toLocaleLowerCase()
+				const directory = `edition-${syntax}`
+				editions.set(
+					syntax,
+					new Edition({
+						compiler: 'typescript',
+						directory,
+						main: `${answers.mainEntry}.js`,
+						test: `${answers.testEntry}.js`,
+						bin: `${answers.binEntry}.js`,
+						tags: [
+							'javascript',
+							syntax,
+							answers.packageModule ? 'import' : 'require'
+						],
+						targets: {
+							es: target
+						},
+						engines: {
+							node: true,
+							browsers:
+								answers.browsers &&
+								answers.targets.includes('browser') === false
+						}
+					})
+				)
+			} else {
+				throw new Error(`invalid target: ${target}`)
 			}
 		}
 
@@ -285,37 +324,54 @@ async function generateEditions(state) {
 				(edition.engines && edition.engines.node)
 
 			// add compilation details
-			if (
-				edition.directory !== answers.sourceDirectory &&
-				edition.targets &&
-				!edition.scripts
-			) {
+			if (edition.compiler === 'coffeescript') {
+				edition.scripts[
+					`our:compile:${edition.directory}`
+				] = `coffee -bco ./${edition.directory} ./${answers.sourceDirectory}`
+			} else if (edition.compiler === 'typescript') {
+				edition.scripts[`our:compile:${edition.directory}`] = [
+					'tsc',
+					has(edition.tags, 'require')
+						? '--module commonjs'
+						: '--module ESNext',
+					`--target ${edition.targets.es}`,
+					`--outDir ./${edition.directory}`,
+					`--project ${answers.tsconfig}`,
+					// fix typescript embedding the source directory inside the output
+					`&& test -d ${edition.directory}/${answers.sourceDirectory}`,
+					`&& (`,
+					`mv ${edition.directory}/${answers.sourceDirectory} edition-temp`,
+					`&& rm -Rf ${edition.directory}`,
+					`&& mv edition-temp ${edition.directory}`,
+					`) || true`
+				]
+					.filter(part => part)
+					.join(' ')
+			} else if (edition.compiler === 'babel') {
 				if (answers.language === 'coffeescript') {
 					// add coffee compile script
-					edition.babel = true
-					edition.scripts = {
-						[`our:compile:${edition.directory}`]: `env BABEL_ENV=${edition.directory} coffee -bcto ./${edition.directory}/ ./${answers.sourceDirectory}`
-					}
+					edition.scripts[`our:compile:${edition.directory}`] = [
+						`env BABEL_ENV=${edition.directory}`,
+						'coffee -bcto',
+						`./${edition.directory}/`,
+						`./${answers.sourceDirectory}`
+					]
+						.filter(part => part)
+						.join(' ')
 				} else {
-					// add custom babel env
-					edition.babel = true
-
 					// add babel compile script
-					const parts = [
+					edition.scripts[`our:compile:${edition.directory}`] = [
 						`env BABEL_ENV=${edition.directory}`,
 						'babel',
 						answers.language === 'typescript' ? '--extensions ".ts,.tsx"' : '',
 						`--out-dir ./${edition.directory}`,
 						`./${answers.sourceDirectory}`
-					].filter(part => part)
-					edition.scripts = {
-						[`our:compile:${edition.directory}`]: parts.join(' ')
-					}
+					]
+						.filter(part => part)
+						.join(' ')
 				}
-			}
 
-			// populate babel
-			if (edition.babel === true) {
+				// populate babel
 				edition.babel = {
 					sourceType: answers.sourceModule ? 'module' : 'script',
 					presets: [
@@ -334,48 +390,76 @@ async function generateEditions(state) {
 					],
 					plugins: ['@babel/proposal-object-rest-spread']
 				}
+
+				add(
+					edition.devDependencies,
+					'@babel/core',
+					'@babel/cli',
+					'@babel/preset-env',
+					'@babel/plugin-proposal-object-rest-spread'
+				)
+
+				if (answers.sourceModule && !answers.packageModule) {
+					add(edition.devDependencies, 'babel-plugin-add-module-exports')
+					add(edition.babel.plugins, 'add-module-exports')
+				}
+
 				if (answers.language === 'typescript') {
-					edition.babel.presets.push('@babel/preset-typescript')
-					edition.babel.plugins.push(
+					add(edition.babel.presets, '@babel/preset-typescript')
+					add(
+						edition.babel.plugins,
 						'@babel/plugin-proposal-optional-chaining',
 						'@babel/proposal-class-properties'
 					)
-					if (!answers.packageModule) {
-						edition.babel.plugins.push('add-module-exports')
-					}
+					add(
+						edition.devDependencies,
+						'@babel/core',
+						'@babel/preset-typescript',
+						'@babel/plugin-proposal-class-properties',
+						'@babel/plugin-proposal-object-rest-spread',
+						'@babel/plugin-proposal-optional-chaining'
+					)
 				}
 			}
 
 			// ensure description exists
 			if (!edition.description) {
+				const description = []
 				if (edition.directory === answers.sourceDirectory) {
-					edition.description = `${answers.language} source code`
+					description.push(answers.language)
 				} else if (browserVersion) {
-					edition.description = `${answers.language} compiled for browsers`
+					description.push(`${answers.language} compiled for web browsers`)
 					if (
 						typeof browserVersion === 'string' &&
 						browserVersion !== 'defaults'
 					) {
-						edition.description += ` [${browserVersion}]`
+						description.push(`[${browserVersion}]`)
 					}
 				} else if (nodeVersion) {
-					edition.description = `${answers.language} compiled for node.js`
+					description.push(`${answers.language} compiled for Node.js`)
 					if (typeof nodeVersion === 'string') {
-						edition.description += ` ${nodeVersion}`
+						description.push(`${nodeVersion}`)
 					}
 				} else {
-					edition.description = `${answers.language} compiled` // for node.js >=${answers.minimumSupportNodeVersion}`
+					description.push(`${answers.language} compiled`)
 				}
-				if (edition.tags.includes('require')) {
-					edition.description += ' with require for modules'
-				} else if (edition.tags.includes('import')) {
-					edition.description += ' with import for modules'
+				if (edition.targets && edition.targets.es) {
+					description.push(`against ${edition.targets.es}`)
 				}
+				if (has(edition.tags, 'require')) {
+					description.push('with require for modules')
+				} else if (has(edition.tags, 'import')) {
+					description.push('with import for modules')
+				}
+				edition.description = description.join(' ')
 			}
+
+			// fix tags
+			edition.tags = Array.from(edition.tags.values())
 		})
 
 		// prepare
-		state.editions = editions
+		state.editions = Array.from(editions.values())
 	}
 
 	// log
