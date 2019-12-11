@@ -337,7 +337,7 @@ async function getQuestions(state) {
 		{
 			name: 'sourceModule',
 			type: 'confirm',
-			message: 'Will the source code use ES6 Modules?',
+			message: 'Will the source code use import for modules?',
 			default({ languages }) {
 				return Boolean(
 					languages.includes('typescript') ? true : isSourceModule(packageData)
@@ -350,7 +350,7 @@ async function getQuestions(state) {
 		{
 			name: 'packageModule',
 			type: 'confirm',
-			message: 'Will the compiled code use ES6 Modules?',
+			message: 'Will the compiled code use import for modules?',
 			default: isPackageModule(packageData),
 			skip({ sourceModule, website }) {
 				return sourceModule === false || website

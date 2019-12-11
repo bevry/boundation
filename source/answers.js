@@ -12,7 +12,7 @@ const skipAll = process.argv.includes(skipAllArg)
 
 // Fetch
 function fetch(q, value, ...args) {
-	return typeof value === 'function' ? value.call(q, ...args) : value
+	return typeof value === 'function' ? value.apply(q, args) : value
 }
 
 // Action
@@ -23,12 +23,17 @@ async function getAnswers(questions, user) {
 		questions.forEach(function(question) {
 			const { name, skip, when, ignore, arg } = question
 			if (typeof question.default === 'function') {
-				const fn = question.default
+				const qc = question.choices
 				if (typeof question.choices === 'function')
-					question.choices = question.choices.bind(question)
+					question.choices = function(answers) {
+						const values = Object.assign({}, defaults, answers)
+						const value = fetch(question, qc, values)
+						return value
+					}
+				const qd = question.default
 				question.default = function(answers) {
 					const values = Object.assign({}, defaults, answers)
-					const value = fetch(question, fn, values)
+					const value = fetch(question, qd, values)
 					return value
 				}
 			}
