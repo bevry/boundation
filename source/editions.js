@@ -6,7 +6,7 @@ const pathUtil = require('path')
 
 // Local
 const { status } = require('./log')
-const { add, has } = require('./util.js')
+const { add, has, strip } = require('./util.js')
 
 // Helpers
 class Edition {
@@ -268,13 +268,13 @@ async function generateEditions(state) {
 					`node-${version}`,
 					new Edition({
 						compiler: 'babel',
-						directory: `edition-node-${target}`,
+						directory: `edition-node-${version}`,
 						main: `${answers.mainEntry}.js`,
 						test: `${answers.testEntry}.js`,
 						bin: `${answers.binEntry}.js`,
 						tags: ['javascript', answers.packageModule ? 'import' : 'require'],
 						targets: {
-							node: target
+							node: version
 						},
 						engines: {
 							node: true,
@@ -378,7 +378,7 @@ async function generateEditions(state) {
 						[
 							'@babel/preset-env',
 							{
-								targets: edition.targets,
+								targets: strip(edition.targets, 'es'),
 								modules:
 									answers.sourceModule === answers.packageModule
 										? false

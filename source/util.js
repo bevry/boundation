@@ -16,6 +16,13 @@ function add(s, ...a) {
 	return s
 }
 
+function strip(o, ...a) {
+	for (const i of a) {
+		delete o[i]
+	}
+	return o
+}
+
 function isBevryOrganisation(organisation) {
 	return bevryOrganisationsList.includes(organisation)
 }
@@ -66,6 +73,7 @@ function uniq(list) {
 module.exports = {
 	has,
 	add,
+	strip,
 	isBevryOrganisation,
 	trim,
 	slugit,
