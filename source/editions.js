@@ -399,10 +399,13 @@ async function generateEditions(state) {
 					'@babel/plugin-proposal-object-rest-spread'
 				)
 
-				if (answers.sourceModule && !answers.packageModule) {
-					add(edition.devDependencies, 'babel-plugin-add-module-exports')
-					add(edition.babel.plugins, 'add-module-exports')
-				}
+				// disabled as typescript compiler doesn't support this compat
+				// so having it only on babel screws with consistency
+				// plus it causes inconsistency between browser and node editions
+				// if (answers.sourceModule && !answers.packageModule) {
+				// 	add(edition.devDependencies, 'babel-plugin-add-module-exports')
+				// 	add(edition.babel.plugins, 'add-module-exports')
+				// }
 
 				if (answers.language === 'typescript') {
 					add(edition.babel.presets, '@babel/preset-typescript')
