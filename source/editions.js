@@ -74,21 +74,21 @@ class Edition {
 		Object.defineProperty(this, 'mainPath', {
 			enumerable: false,
 			get() {
-				return pathUtil.join(this.directory || '.', this.main)
+				return this.main && pathUtil.join(this.directory || '.', this.main)
 			}
 		})
 
 		Object.defineProperty(this, 'testPath', {
 			enumerable: false,
 			get() {
-				return pathUtil.join(this.directory || '.', this.test)
+				return this.test && pathUtil.join(this.directory || '.', this.test)
 			}
 		})
 
 		Object.defineProperty(this, 'binPath', {
 			enumerable: false,
 			get() {
-				return pathUtil.join(this.directory || '.', this.bin)
+				return this.bin && pathUtil.join(this.directory || '.', this.bin)
 			}
 		})
 
@@ -111,14 +111,15 @@ async function generateEditions(state) {
 	if (answers.website) {
 		delete packageData.main
 		state.editions = [
-			{
+			new Edition({
 				description: 'source',
 				directory: '.',
 				tags: [
+					'website',
 					...answers.languages,
 					answers.sourceModule ? 'import' : 'require'
 				]
-			}
+			})
 		]
 	} else {
 		const editions = new Map()
