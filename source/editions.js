@@ -458,9 +458,6 @@ async function generateEditions(state) {
 				}
 				edition.description = description.join(' ')
 			}
-
-			// fix tags
-			edition.tags = Array.from(edition.tags.values())
 		})
 
 		// prepare

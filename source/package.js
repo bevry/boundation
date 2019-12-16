@@ -318,9 +318,14 @@ function arrangePackage(state) {
 		}
 
 		// arrange keys of editions
-		packageData.editions = activeEditions.map(edition =>
-			arrangekeys(edition, 'description directory entry tags engines')
-		)
+		packageData.editions = activeEditions.map(function(edition) {
+			const result = arrangekeys(
+				edition,
+				'description directory entry tags engines'
+			)
+			if (result.tags) result.tags = Array.from(result.tags.values())
+			return result
+		})
 	} else {
 		delete packageData.editions
 	}
