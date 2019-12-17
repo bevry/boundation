@@ -141,6 +141,10 @@
     "singleQuote": true
   },
   "boundation": {
-    "adaptive": false
+    "desiredNodeVersion": 12,
+    "minimumSupportNodeVersion": 12,
+    "maximumSupportNodeVersion": 12,
+    "minimumTestNodeVersion": 12,
+    "maximumTestNodeVersion": 12
   }
 }
