@@ -62,11 +62,11 @@
     "url": "https://github.com/bevry/boundation.git"
   },
   "engines": {
-    "node": ">=8"
+    "node": ">=12"
   },
   "editions": [
     {
-      "description": "esnext source code with require for modules",
+      "description": "esnext source code for Node.js with require for modules",
       "directory": "source",
       "entry": "index.js",
       "tags": [
@@ -75,7 +75,7 @@
         "require"
       ],
       "engines": {
-        "node": "8 || 10 || 12"
+        "node": "12"
       }
     }
   ],
@@ -83,29 +83,29 @@
   "type": "commonjs",
   "main": "source/index.js",
   "dependencies": {
-    "@bevry/testen": "^3.0.1",
+    "@bevry/testen": "^3.6.0",
     "arrangekeys": "^2.4.0",
     "chalk": "^3.0.0",
-    "errlop": "^1.6.0",
+    "errlop": "^2.0.0",
     "fetch-h2": "^2.2.2",
-    "get-cli-arg": "^2.2.0",
-    "githubauthquerystring": "^2.2.0",
-    "inquirer": "^7.0.0",
+    "get-cli-arg": "^2.3.0",
+    "githubauthquerystring": "^2.3.0",
+    "inquirer": "^7.0.1",
     "js-yaml": "^3.13.1",
-    "safeps": "^9.2.0",
-    "semver": "^6.3.0",
-    "typechecker": "^6.2.0"
+    "safeps": "^9.3.0",
+    "semver": "^7.1.1",
+    "typechecker": "^6.3.0"
   },
   "devDependencies": {
     "assert-helpers": "^5.8.0",
     "eslint": "^6.7.2",
-    "eslint-config-bevry": "^2.2.0",
+    "eslint-config-bevry": "^2.3.0",
     "eslint-config-prettier": "^6.7.0",
-    "eslint-plugin-prettier": "^3.1.1",
-    "kava": "^4.3.0",
+    "eslint-plugin-prettier": "^3.1.2",
+    "kava": "^4.4.0",
     "prettier": "^1.19.1",
-    "projectz": "^1.15.0",
-    "valid-directory": "^1.5.0"
+    "projectz": "^1.16.0",
+    "valid-directory": "^1.6.0"
   },
   "scripts": {
     "our:clean": "rm -Rf ./docs ./edition* ./es2015 ./es5 ./out ./.next",
@@ -141,6 +141,7 @@
     "singleQuote": true
   },
   "boundation": {
+    "compileNode": false,
     "desiredNodeVersion": 12,
     "minimumSupportNodeVersion": 12,
     "maximumSupportNodeVersion": 12,

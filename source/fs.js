@@ -8,7 +8,7 @@ const pathUtil = require('path')
 const fsUtil = require('fs')
 const safeps = require('safeps')
 const yaml = require('js-yaml')
-const Errlop = require('errlop')
+const Errlop = require('errlop').default
 
 // Local
 const { status } = require('./log')

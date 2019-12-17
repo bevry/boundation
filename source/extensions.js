@@ -1,7 +1,8 @@
 /* eslint no-console:0 */
 'use strict'
 
-const Errlop = require('errlop')
+// Import
+const Errlop = require('errlop').default
 
 // Process unhandled rejections
 process.on('unhandledRejection', function unhandledRejection(error) {

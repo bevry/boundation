@@ -13,7 +13,7 @@ const {
 	spawn,
 	writeYAML
 } = require('./fs')
-const Errlop = require('errlop')
+const Errlop = require('errlop').default
 
 // External
 const { fetch } = require('fetch-h2')

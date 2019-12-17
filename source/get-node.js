@@ -2,7 +2,7 @@
 
 // External
 const { fetch } = require('fetch-h2')
-const Errlop = require('errlop')
+const Errlop = require('errlop').default
 
 // Local
 const now = new Date().getTime()

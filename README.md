@@ -55,9 +55,9 @@ Automatic scaffolding and upgrading of your JavaScript ecosystem projects using 
 <p>This package is published with the following editions:</p>
 
 <ul><li><code>boundation</code> aliases <code>boundation/source/index.js</code></li>
-<li><code>boundation/source/index.js</code> is esnext source code with require for modules</li></ul>
+<li><code>boundation/source/index.js</code> is esnext source code for Node.js with require for modules</li></ul>
 
-<p>Environments older than Node.js v8 may need <a href="https://babeljs.io/docs/usage/polyfill/" title="A polyfill that emulates missing ECMAScript environment features">Babel's Polyfill</a> or something similar.</p>
+<p>Environments older than Node.js v12 may need <a href="https://babeljs.io/docs/usage/polyfill/" title="A polyfill that emulates missing ECMAScript environment features">Babel's Polyfill</a> or something similar.</p>
 
 <!-- /INSTALL -->
 

@@ -411,6 +411,21 @@ async function getQuestions(state) {
 			}
 		},
 		{
+			name: 'compileNode',
+			type: 'confirm',
+			message: 'Would you like to compile your source code for Node.js?',
+			default: true,
+			skip({ language }) {
+				return ['typescript', 'coffeescript'].includes(language)
+			},
+			when({ website, language }) {
+				return (
+					!website ||
+					['esnext', 'typescript', 'coffeescript'].includes(language)
+				)
+			}
+		},
+		{
 			name: 'compilerNode',
 			type: 'list',
 			message: 'Which compiler to use for the Node.js editions?',
@@ -429,10 +444,21 @@ async function getQuestions(state) {
 					? 'coffeescript'
 					: 'babel'
 			},
-			ignore({ website, language }) {
+			when({ compileNode, language }) {
+				return compileNode
+			}
+		},
+		{
+			name: 'compileBrowser',
+			type: 'confirm',
+			message: 'Would you like to compile your source code for web browsers?',
+			default: true,
+			skip({ language }) {
+				return ['typescript', 'coffeescript'].includes(language)
+			},
+			when({ browser, language }) {
 				return (
-					website ||
-					['esnext', 'typescript', 'coffeescript'].includes(language) === false
+					browser && ['esnext', 'typescript', 'coffeescript'].includes(language)
 				)
 			}
 		},
@@ -451,11 +477,8 @@ async function getQuestions(state) {
 			default({ language }) {
 				return language === 'typescript' ? 'typescript' : 'babel'
 			},
-			ignore({ browser, language }) {
-				return (
-					!browser ||
-					['esnext', 'typescript', 'coffeescript'].includes(language) === false
-				)
+			when({ compileBrowser }) {
+				return compileBrowser
 			}
 		},
 		{
@@ -467,9 +490,9 @@ async function getQuestions(state) {
 				const targets = []
 				if (compilerBrowser) targets.push('browser')
 				if (compilerNode === 'coffeescript') targets.push('esnext')
-				if (compilerNode === 'babel' || compilerBrowser === 'babel')
+				if (compilerNode === 'babel')
 					targets.push('maximum', 'desired', 'minimum')
-				if (compilerNode === 'typescript' || compilerBrowser === 'typescript')
+				if (compilerNode === 'typescript')
 					targets.push(
 						'ESNext',
 						'ES2018',
@@ -484,8 +507,8 @@ async function getQuestions(state) {
 			default(opts) {
 				return this.choices(opts)
 			},
-			skip({ compilerNode, compilerBrowser }) {
-				return !compilerNode && !compilerBrowser
+			when({ compilerNode, compilerBrowser }) {
+				return compilerNode || compilerBrowser
 			}
 		},
 		{
@@ -566,8 +589,8 @@ async function getQuestions(state) {
 			message: `Change the minimum supported node version from ${nodeEngineVersion} to ${nodeMinimumLTSVersion}`,
 			type: 'confirm',
 			default: false,
-			skip({ website, adaptive }) {
-				return website || alreadyLTS || !adaptive
+			skip({ website }) {
+				return website || alreadyLTS
 			}
 		},
 		{
@@ -766,6 +789,7 @@ async function getAnswers(state) {
 
 	// Apply
 	state.answers = answers
+	answers.targets = answers.targets || []
 
 	// Return
 	return answers

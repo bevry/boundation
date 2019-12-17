@@ -3,7 +3,7 @@
 // External
 const inquirer = require('inquirer')
 const chalk = require('chalk')
-const Errlop = require('errlop')
+const Errlop = require('errlop').default
 const getarg = require('get-cli-arg')
 
 // Local
