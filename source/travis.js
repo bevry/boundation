@@ -10,6 +10,7 @@
 const curlFlags = '-fsSL'
 
 // Local
+const { writePackage } = require('./package')
 const { status } = require('./log')
 const { getGithubCommit } = require('./get-github-commit')
 const { spawn, readYAML, writeYAML } = require('./fs')
@@ -226,6 +227,9 @@ async function updateTravis(state) {
 
 	// note we are now finished with the travis file
 	status('...wrote the travis file')
+
+	// write the package.json file
+	await writePackage(state)
 
 	// log
 	status('...customised travis')

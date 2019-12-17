@@ -33,9 +33,9 @@ async function init(state) {
 
 	await updateBaseFiles(state)
 
-	await updateTravis(state)
-
 	await updateRuntime(state)
+
+	await updateTravis(state)
 
 	// and finish it all up
 	status('running release prepare...')
