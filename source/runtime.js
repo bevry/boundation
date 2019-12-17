@@ -69,23 +69,6 @@ function useStrict(modules = true) {
 	return modules ? '' : "'use strict'\n"
 }
 
-// function completeVersion (value) {
-// 	const version = value.toString()
-// 	const parts = version.split('.').length
-// 	if (parts === 2) {
-// 		return version + '.0'
-// 	}
-// 	else if (parts === 1) {
-// 		return version + '.0.0'
-// 	}
-// 	else {
-// 		return version
-// 	}
-// }
-// function completeVersions (list) {
-// 	return list.map(completeVersion)
-// }
-
 // Update engines
 async function updateEngines(state) {
 	const { answers, supportedNodeVersions, nodeVersions, packageData } = state
@@ -129,6 +112,7 @@ async function updateEngines(state) {
 	} else {
 		let recompile = false
 		let skip = false
+		let debug = ''
 
 		/* eslint no-loop-func:0 */
 		for (const edition of nodeEditions) {
@@ -176,6 +160,7 @@ async function updateEngines(state) {
 			skip = failed.length === 0
 
 			// log the results
+			debug += versions.messages.join('\n\n')
 			console.log(
 				[
 					`target:      ${target || '*'}`,
@@ -187,29 +172,6 @@ async function updateEngines(state) {
 					`trim:        ${trim ? 'yes' : 'no'}`
 				].join('\n')
 			)
-
-			// error if unsuccessful
-			if (passed.length === 0) {
-				console.error(versions.messages.join('\n\n'))
-				throw new Error(
-					`The edition [${
-						edition.directory
-					}] had no node versions [${numbers.join(
-						', '
-					)}] which its tests passed`
-				)
-			}
-
-			// error if target failed
-			if (
-				typeof target === 'string' &&
-				nodeMajorVersions(failed).includes(target)
-			) {
-				console.error(versions.messages.join('\n\n'))
-				throw new Error(
-					`The edition [${edition.directory}] failed on its target [${target}]`
-				)
-			}
 
 			// trim
 			if (trim) {
@@ -235,6 +197,18 @@ async function updateEngines(state) {
 					edition.engines.node
 				}] against [${numbers.join(', ')}]`
 			)
+		}
+
+		// verify we have editions that pass on our targets
+		for (const version of supportedNodeVersions) {
+			if (!allPassedVersions.has(version)) {
+				console.error(debug.trim())
+				throw new Error(
+					`There were no editions which the node versions [${supportedNodeVersions.join(
+						', '
+					)}] which passed`
+				)
+			}
 		}
 
 		// if there has been an editions change, try again with an updated runtime
