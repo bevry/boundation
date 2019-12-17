@@ -194,22 +194,6 @@ async function generateEditions(state) {
 					engines: false
 				})
 			)
-			editions.set(
-				'esnext',
-				new Edition({
-					compiler: 'coffeescript',
-					directory: 'edition-esnext',
-					main: `${answers.mainEntry}.js`,
-					test: `${answers.testEntry}.js`,
-					bin: `${answers.binEntry}.js`,
-					tags: ['javascript', 'esnext', 'require'],
-					engines: {
-						node: true,
-						browsers:
-							answers.browsers && answers.targets.includes('browser') === false
-					}
-				})
-			)
 		} else if (answers.language === 'json') {
 			editions.set(
 				'source',
@@ -302,6 +286,26 @@ async function generateEditions(state) {
 						targets: {
 							es: target
 						},
+						engines: {
+							node: true,
+							browsers:
+								answers.browsers &&
+								answers.targets.includes('browser') === false
+						}
+					})
+				)
+			} else if (answers.compilerNode === 'coffeescript') {
+				const syntax = target.toLocaleLowerCase()
+				const directory = `edition-${syntax}`
+				editions.set(
+					syntax,
+					new Edition({
+						compiler: 'coffeescript',
+						directory,
+						main: `${answers.mainEntry}.js`,
+						test: `${answers.testEntry}.js`,
+						bin: `${answers.binEntry}.js`,
+						tags: ['javascript', 'esnext', 'require'],
 						engines: {
 							node: true,
 							browsers:

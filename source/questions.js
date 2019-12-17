@@ -465,6 +465,7 @@ async function getQuestions(state) {
 			choices({ compilerNode, compilerBrowser }) {
 				const targets = []
 				if (compilerBrowser) targets.push('browser')
+				if (compilerNode === 'coffeescript') targets.push('esnext')
 				if (compilerNode === 'babel' || compilerBrowser === 'babel')
 					targets.push('maximum', 'desired', 'minimum')
 				if (compilerNode === 'typescript' || compilerBrowser === 'typescript')
