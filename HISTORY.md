@@ -1,15 +1,48 @@
 # History
 
+## v1.37.0 2019 December 18
+
+-   fix zero targets
+-   update boundation config for latest
+-   support multiple bin executables
+-   fix coffeescript compile target
+-   trim editions that fail rather than error
+-   move travis to after runtime
+-   fix website edition
+-   fix edition tags being output as an object
+-   don’t do babel workaround for default exports
+-   fix non-automated prior answers to choices
+-   fix babel after recent typescript compiler support
+-   edition description improvements
+-   support typescript compiler
+-   question function context is now the question
+-   skip subsequent editions if prior one passed all targets
+-   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
+
 ## v1.36.0 2019 December 9
 
+-   correctly make dependanbot only submit PRs for security yet merge all
+-   do not proceed if get commit failed
+-   re-add `next.config.js` creation for serverless setting
+-   fixes for typescript next.js websites
+-   support module outputs, add github sponsors badge
+-   fixes for typescript websites
+-   spawn fixes, dep updates, fix false priate trim
+-   yarn detect, fix lts defaulting for website/json
+-   fix npm private
 -   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
 
 ## v1.35.0 2019 December 1
 
+-   fix dependabot security value
 -   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
 
 ## v1.34.0 2019 December 1
 
+-   sort `package.json:jspm` field
+-   ensure latest is not installed as exact
+-   fix isES5 check
+-   change dependanbot `update_type` to `security`
 -   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
 
 ## v1.33.0 2019 December 1
@@ -18,10 +51,17 @@
 
 ## v1.32.0 2019 November 18
 
+-   fix `bin.js` being `index.js`
+-   fix bin being replaced accidentally
 -   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
 
 ## v1.31.0 2019 November 18
 
+-   fix `--lts` causing node version to reduce if higher
+-   support `package.json:boundation` configuration
+-   support ES5 and source browser editions
+-   fix dependabot, support ts ? chaining, fix versions compat, update deps
+-   fix a type error with node major version
 -   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
 
 ## v1.30.0 2019 November 13
