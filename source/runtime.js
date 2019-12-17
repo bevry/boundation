@@ -38,6 +38,20 @@ const commands = {
 }
 
 // Helpers
+function binEntry(answers, binEntry) {
+	if (answers.binExecutable) {
+		if (answers.binExecutable === answers.name) {
+			return binEntry
+		} else {
+			const result = {}
+			for (const executable of answers.binExecutable.split(/,\s*/)) {
+				result[executable] = binEntry
+			}
+			return result
+		}
+	}
+	return null
+}
 function peerDepInstallLocation(packageData, key) {
 	return (packageData.peerDependencies || {})[key] ? 'dev' : true
 }
@@ -380,6 +394,7 @@ async function scaffoldEditions(state) {
 				await write(
 					'bin.js',
 					[
+						'#!/usr/bin/env node',
 						"'use strict'",
 						'',
 						`/** @type {typeof import("./${sourceEdition.binPath}") } */`,
@@ -387,7 +402,7 @@ async function scaffoldEditions(state) {
 						''
 					].join('\n')
 				)
-				packageData.bin = 'bin.js'
+				packageData.bin = binEntry(answers, 'bin.js')
 			}
 		}
 		// delete the edition autoloader if it is not needed
@@ -410,13 +425,27 @@ async function scaffoldEditions(state) {
 			) {
 				await unlink('bin.js')
 			}
-
 			if (answers.binEntry) {
-				packageData.bin = nodeEdition.binPath
+				if (nodeEdition !== sourceEdition) {
+					await write(
+						'bin.js',
+						[
+							'#!/usr/bin/env node',
+							"'use strict'",
+							'',
+							`/** @type {typeof import("./${sourceEdition.binPath}") } */`,
+							`module.exports = require('./${nodeEdition.binPath}')`,
+							''
+						].join('\n')
+					)
+					packageData.bin = binEntry(answers, 'bin.js')
+				} else {
+					packageData.bin = binEntry(answers, nodeEdition.binPath)
+					await unlink('bin.js')
+				}
 			} else {
-				delete packageData.bin
+				await unlink('bin.js')
 			}
-
 			packageData.main = nodeEdition.mainPath
 			state.test = nodeEdition.testPath
 		}
@@ -455,11 +484,7 @@ async function scaffoldEditions(state) {
 		if (answers.testEntry) {
 			state.test = answers.testEntry + '.js'
 		}
-		if (answers.binEntry) {
-			packageData.bin = answers.binEntry + '.js'
-		} else {
-			delete packageData.bin
-		}
+		packageData.bin = binEntry(answers, answers.binEntry + '.js')
 	}
 }
 

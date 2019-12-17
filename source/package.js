@@ -252,14 +252,21 @@ function getPackageTestEntry(packageData) {
 }
 
 function getPackageBinEntry(packageData) {
-	const entry = getBasename(packageData.bin) || null
-	if (entry && typeof entry !== 'string') {
-		throw new Error(
-			'Boundation currently cannot handle projects with multiple package.json:bin entries. Sorry.\n' +
-				'https://github.com/bevry/boundation/issues/24'
-		)
+	const bin = packageData.bin
+	if (bin) {
+		const entry = typeof bin === 'string' ? bin : Object.values(bin)[0]
+		return getBasename(entry)
 	}
-	return entry
+	return null
+}
+
+function getPackageBinExecutable(packageData) {
+	const bin = packageData.bin
+	if (bin) {
+		if (typeof bin === 'string') return null
+		return Object.keys(bin).join(', ')
+	}
+	return null
 }
 
 function getWebsiteType(packageData, nowData) {
@@ -677,6 +684,7 @@ async function updatePackageData(state) {
 module.exports = {
 	getPackageAuthor,
 	getPackageBinEntry,
+	getPackageBinExecutable,
 	getPackageDescription,
 	getPackageDocumentationDependency,
 	getPackageFlowtypeDependency,

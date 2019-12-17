@@ -23,6 +23,7 @@ const {
 const {
 	getPackageAuthor,
 	getPackageBinEntry,
+	getPackageBinExecutable,
 	getPackageDescription,
 	getPackageFlowtypeDependency,
 	getPackageKeywords,
@@ -533,12 +534,27 @@ async function getQuestions(state) {
 		},
 		{
 			name: 'binEntry',
-			message: 'What is the bin entry filename (without extension)?',
+			message: 'What is the filename of the bin entry (without extension)?',
 			validate: isSpecified,
 			filter: trim,
 			default: getPackageBinEntry(packageData) || 'bin',
 			skip() {
 				return getPackageBinEntry(packageData)
+			},
+			when({ bin }) {
+				return bin
+			}
+		},
+		{
+			name: 'binExecutable',
+			message: 'What is the name of the bin executable(s)?',
+			validate: isSpecified,
+			filter: trim,
+			default({ name }) {
+				return getPackageBinExecutable(packageData) || name
+			},
+			skip() {
+				return getPackageBinExecutable(packageData)
 			},
 			when({ bin }) {
 				return bin
