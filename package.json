@@ -1,18 +1,18 @@
 {
   "name": "boundation",
-  "version": "1.39.0",
+  "version": "1.40.0",
   "description": "Automatic scaffolding and upgrading of your JavaScript ecosystem projects using Bevry's best practices",
   "homepage": "https://github.com/bevry/boundation",
   "license": "MIT",
   "keywords": [
+    ".travis.yml",
     "npm",
     "package.json",
-    "travis.yml",
-    ".travis.yml",
-    "travisci",
-    "travis",
+    "scaffold",
     "scaffolding",
-    "scaffold"
+    "travis",
+    "travis.yml",
+    "travisci"
   ],
   "badges": {
     "list": [
@@ -51,8 +51,7 @@
     "Benjamin Lupton <b@lupton.cc> (http://balupton.com)"
   ],
   "contributors": [
-    "Benjamin Lupton <b@lupton.cc> (http://balupton.com)",
-    "dependabot-preview[bot] (http://github.com/apps/dependabot-preview)"
+    "Benjamin Lupton <b@lupton.cc> (http://balupton.com)"
   ],
   "bugs": {
     "url": "https://github.com/bevry/boundation/issues"
@@ -66,7 +65,7 @@
   },
   "editions": [
     {
-      "description": "esnext source code for Node.js with require for modules",
+      "description": "ESNext source code for Node.js with Require for modules",
       "directory": "source",
       "entry": "index.js",
       "tags": [
@@ -84,12 +83,12 @@
   "main": "source/index.js",
   "dependencies": {
     "@bevry/testen": "^3.6.0",
-    "arrangekeys": "^2.4.0",
+    "arrangekeys": "^3.0.1",
     "chalk": "^3.0.0",
     "errlop": "^2.0.0",
     "fetch-h2": "^2.2.2",
-    "get-cli-arg": "^2.3.0",
-    "githubauthquerystring": "^2.3.0",
+    "get-cli-arg": "^3.0.0",
+    "githubauthquerystring": "^3.0.1",
     "inquirer": "^7.0.1",
     "js-yaml": "^3.13.1",
     "safeps": "^9.3.0",
@@ -104,7 +103,7 @@
     "eslint-plugin-prettier": "^3.1.2",
     "kava": "^4.4.0",
     "prettier": "^1.19.1",
-    "projectz": "^1.16.0",
+    "projectz": "^1.19.0",
     "valid-directory": "^1.6.0"
   },
   "scripts": {
@@ -123,9 +122,9 @@
     "our:setup:install": "npm install",
     "our:test": "npm run our:verify && npm test",
     "our:verify": "npm run our:verify:directory && npm run our:verify:eslint && npm run our:verify:prettier",
-    "our:verify:directory": "npx valid-directory",
+    "our:verify:directory": "valid-directory",
     "our:verify:eslint": "eslint --fix --ignore-pattern '**/*.d.ts' --ignore-pattern '**/vendor/' --ignore-pattern '**/node_modules/' --ext .mjs,.js,.jsx,.ts,.tsx ./source",
-    "our:verify:prettier": "prettier --write ./source/**",
+    "our:verify:prettier": "prettier --write ./source/** *.md",
     "test": "node ./source/test.js"
   },
   "eslintConfig": {

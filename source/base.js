@@ -143,7 +143,6 @@ async function updateBaseFiles({ answers, packageData }) {
 	}.${answers.organisation}.surge.sh/docs/${
 		answers.language === 'typescript' ? 'globals.html' : ''
 	})`
-	const oldDocumentationLinks = /\[(Complete )?(API )?Documentation.\]\([^)]+?\)/g
 	if ((await exists('README.md')) === false) {
 		status('writing readme file...')
 		await write(
@@ -172,7 +171,16 @@ async function updateBaseFiles({ answers, packageData }) {
 		content = content.toString()
 		const original = content
 		// remove old documentation locations
-		content = content.replace(oldDocumentationLinks, '')
+		content = content
+			.replace(
+				/\[(Complete )?(Technical )?(API )?Documentation\.?\]\(.+?surge[^)]+\)/,
+				''
+			)
+			.replace(/\[Web Demonstration\.?\]/, '[Web Browser Demonstration.]')
+			.replace(
+				/\[(Tutorials & Guides|Documentation)\.?\]/,
+				'[Tutorials & Guides.]'
+			)
 		// insert new documentaiton under usage
 		const foundDocumentation = original !== content || answers.docs
 		if (foundDocumentation) {

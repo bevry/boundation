@@ -19,7 +19,7 @@ const { exists, write, parse } = require('./fs')
 const { getNowName } = require('./website')
 
 // External
-const arrangekeys = require('arrangekeys')
+const arrangekeys = require('arrangekeys').default
 const pathUtil = require('path')
 const typeChecker = require('typechecker')
 

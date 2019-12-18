@@ -1,5 +1,13 @@
 # History
 
+## v1.40.0 2019 December 18
+
+-   correct readme format
+    -   fix missing fullstop
+    -   update tutes and guides link
+    -   improve web browser demonstration link
+-   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
+
 ## v1.39.0 2019 December 18
 
 -   correct readme format

@@ -746,7 +746,9 @@ async function updateRuntime(state) {
 
 	// prettier
 	if (packages.prettier) {
-		state.scripts['our:verify:prettier'] = `prettier --write ${sourcePath}/**`
+		state.scripts[
+			'our:verify:prettier'
+		] = `prettier --write ${sourcePath}/** *.md`
 	}
 
 	// typescript

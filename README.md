@@ -33,35 +33,6 @@ Automatic scaffolding and upgrading of your JavaScript ecosystem projects using 
 <!-- /DESCRIPTION -->
 
 
-<!-- INSTALL/ -->
-
-<h2>Install</h2>
-
-<a href="https://npmjs.com" title="npm is a package manager for javascript"><h3>npm</h3></a>
-<h4>Install Globally</h4>
-<ul>
-<li>Install: <code>npm install --global boundation</code></li>
-<li>Executable: <code>boundation</code></li>
-</ul>
-<h4>Install Locally</h4>
-<ul>
-<li>Install: <code>npm install --save boundation</code></li>
-<li>Executable: <code>npx boundation</code></li>
-<li>Require: <code>require('boundation')</code></li>
-</ul>
-
-<h3><a href="https://editions.bevry.me" title="Editions are the best way to produce and consume packages you care about.">Editions</a></h3>
-
-<p>This package is published with the following editions:</p>
-
-<ul><li><code>boundation</code> aliases <code>boundation/source/index.js</code></li>
-<li><code>boundation/source/index.js</code> is esnext source code for Node.js with require for modules</li></ul>
-
-<p>Environments older than Node.js v12 may need <a href="https://babeljs.io/docs/usage/polyfill/" title="A polyfill that emulates missing ECMAScript environment features">Babel's Polyfill</a> or something similar.</p>
-
-<!-- /INSTALL -->
-
-
 ## Usage
 
 Install the package globally. Then run `boundation` on your project or in an empty directory.
@@ -106,6 +77,34 @@ secret env GITHUB_CLIENT_ID GITHUB_CLIENT_SECRET NPM_AUTHTOKEN TRAVIS_NOTIFICATI
 -   Automatic Babel support when needing to support browsers and older targets
 -   Optional DocPad Plugin support
 -   Automatic package dependency upgrades
+
+<!-- INSTALL/ -->
+
+<h2>Install</h2>
+
+<a href="https://npmjs.com" title="npm is a package manager for javascript"><h3>npm</h3></a>
+<h4>Install Globally</h4>
+<ul>
+<li>Install: <code>npm install --global boundation</code></li>
+<li>Executable: <code>boundation</code></li>
+</ul>
+<h4>Install Locally</h4>
+<ul>
+<li>Install: <code>npm install --save boundation</code></li>
+<li>Executable: <code>npx boundation</code></li>
+<li>Import: <code>import * as pkg from ('boundation')</code></li>
+<li>Require: <code>const pkg = require('boundation')</code></li>
+</ul>
+
+<h3><a href="https://editions.bevry.me" title="Editions are the best way to produce and consume packages you care about.">Editions</a></h3>
+
+<p>This package is published with the following editions:</p>
+
+<ul><li><code>boundation</code> aliases <code>boundation/source/index.js</code></li>
+<li><code>boundation/source/index.js</code> is <a href="https://en.wikipedia.org/wiki/ECMAScript#ES.Next" title="ECMAScript Next">ESNext</a> source code for <a href="https://nodejs.org" title="Node.js is a JavaScript runtime built on Chrome's V8 JavaScript engine">Node.js</a> with <a href="https://nodejs.org/dist/latest-v5.x/docs/api/modules.html" title="Node/CJS Modules">Require</a> for modules</li></ul>
+
+<!-- /INSTALL -->
+
 
 <!-- HISTORY/ -->
 

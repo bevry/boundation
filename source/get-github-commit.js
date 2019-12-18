@@ -4,8 +4,8 @@
 // Local
 const { warn, fatal } = require('./log')
 const {
-	fetchGithubAuthQueryString,
-	redactGithubAuthQueryString
+	default: githubQueryString,
+	redact: redactGithubAuthQueryString
 } = require('githubauthquerystring')
 const ghapi = process.env.GITHUB_API || 'https://api.github.com'
 
@@ -13,7 +13,7 @@ const ghapi = process.env.GITHUB_API || 'https://api.github.com'
 const { fetch } = require('fetch-h2')
 
 async function getGithubCommit(slug, fallback = 'master') {
-	const url = `${ghapi}/repos/${slug}/commits?${fetchGithubAuthQueryString()}`
+	const url = `${ghapi}/repos/${slug}/commits?${githubQueryString}`
 	try {
 		const response = await fetch(url, {
 			headers: {
