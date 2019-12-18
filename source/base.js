@@ -138,10 +138,12 @@ async function updateBaseFiles({ answers, packageData }) {
 	status('...downloaded files')
 
 	// write the readme file
-	const docs = [
-		`[Complete API Documentation.](http://master.${answers.name}.${answers.organisation}.surge.sh/docs/)`,
-		`[API Documentation.](http://master.${answers.name}.${answers.organisation}.surge.sh/docs/)`
-	]
+	const newDocumentationLink = `[Complete API Documentation.](http://master.${
+		answers.name
+	}.${answers.organisation}.surge.sh/docs/${
+		answers.language === 'typescript' ? 'globals.html' : ''
+	})`
+	const oldDocumentationLinks = /\[(Complete )?(API )?Documentation.\]\([^)]+?\)/g
 	if ((await exists('README.md')) === false) {
 		status('writing readme file...')
 		await write(
@@ -151,7 +153,7 @@ async function updateBaseFiles({ answers, packageData }) {
 				'<!--BADGES -->',
 				'<!--DESCRIPTION -->',
 				'## Usage',
-				answers.docs && docs[0],
+				answers.docs && newDocumentationLink,
 				'<!--INSTALL -->',
 				'<!--HISTORY -->',
 				'<!--CONTRIBUTE -->',
@@ -169,11 +171,15 @@ async function updateBaseFiles({ answers, packageData }) {
 		let content = await read('README.md')
 		content = content.toString()
 		const original = content
-		// replace old docs text with new doc text
-		for (const doc of docs) {
-			content = content.replace(doc, '')
+		// remove old documentation locations
+		content = content.replace(oldDocumentationLinks, '')
+		// insert new documentaiton under usage
+		const foundDocumentation = original !== content || answers.docs
+		if (foundDocumentation) {
+			content = content.replace('## Usage', function(found) {
+				return found + '\n\n' + newDocumentationLink
+			})
 		}
-		const foundDocumentation = original !== content
 		// move the install section before the history section
 		let install = ''
 		content = content.replace(
@@ -184,9 +190,7 @@ async function updateBaseFiles({ answers, packageData }) {
 			}
 		)
 		content = content.replace('<!-- HISTORY/ -->', function(found) {
-			return (
-				(foundDocumentation ? docs[0] + '\n\n' : '') + install + '\n\n' + found
-			)
+			return install + '\n\n' + found
 		})
 		// write
 		await write('README.md', content)

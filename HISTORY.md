@@ -1,5 +1,11 @@
 # History
 
+## v1.39.0 2019 December 18
+
+-   correct readme format
+    -   docs link will now be after the usage header
+    -   typescript docs link will go to the `globals` page to show the actual documentation and not a hosted readme
+
 ## v1.38.0 2019 December 18
 
 -   added browser entry
