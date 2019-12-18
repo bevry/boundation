@@ -3,7 +3,7 @@
 
 // Local
 const { status } = require('./log')
-const { without, uniq } = require('./util')
+const { without, uniq, toggle } = require('./util')
 const {
 	contains,
 	exec,
@@ -38,6 +38,24 @@ const commands = {
 }
 
 // Helpers
+function updateBrowser({ answers, browserEdition, packageData }) {
+	if (answers.browser) {
+		if (browserEdition) {
+			packageData.browser = browserEdition.browserPath
+			if (answers.sourceModule) {
+				packageData.module = packageData.browser
+			}
+		} else {
+			packageData.browser = answers.browserEntry + '.js'
+			if (answers.sourceModule) {
+				packageData.module = packageData.browser
+			}
+		}
+	} else {
+		delete packageData.browser
+		delete packageData.module
+	}
+}
 function binEntry(answers, binEntry) {
 	if (answers.binExecutable) {
 		if (answers.binExecutable === answers.name) {
@@ -218,9 +236,7 @@ async function updateEngines(state) {
 			if (!allPassedVersions.has(version)) {
 				console.error(debug.trim())
 				throw new Error(
-					`There were no editions which the node versions [${supportedNodeVersions.join(
-						', '
-					)}] which passed`
+					`No editions passed for required node version [${version}]`
 				)
 			}
 		}
@@ -262,13 +278,17 @@ async function updateEngines(state) {
 }
 
 async function scaffoldEditions(state) {
-	const { activeEditions, packageData, answers } = state
-	if (activeEditions.length) {
-		// fetch
-		const sourceEdition = state.sourceEdition
-		const nodeEdition = state.nodeEdition || sourceEdition
-		const browserEdition = state.browserEdition || sourceEdition
+	// fetch
+	const {
+		sourceEdition,
+		nodeEdition,
+		activeEditions,
+		packageData,
+		answers
+	} = state
 
+	// handle
+	if (activeEditions.length) {
 		// log
 		status('scaffolding edition files...')
 
@@ -451,18 +471,7 @@ async function scaffoldEditions(state) {
 		}
 
 		// browser path
-		if (answers.browser) {
-			packageData.browser = pathUtil.join(
-				browserEdition.directory || '.',
-				browserEdition.main
-			)
-			if (answers.sourceModule) {
-				packageData.module = packageData.browser
-			}
-		} else {
-			delete packageData.browser
-			delete packageData.module
-		}
+		updateBrowser(state)
 
 		// log
 		status('...scaffolded edition files')
@@ -472,15 +481,7 @@ async function scaffoldEditions(state) {
 		if (answers.mainEntry) {
 			packageData.main = answers.mainEntry + '.js'
 		}
-		if (answers.browser) {
-			packageData.browser = packageData.main
-			if (answers.sourceModule) {
-				packageData.module = packageData.browser
-			}
-		} else {
-			delete packageData.browser
-			delete packageData.module
-		}
+		updateBrowser(state)
 		if (answers.testEntry) {
 			state.test = answers.testEntry + '.js'
 		}
@@ -557,6 +558,7 @@ async function updateRuntime(state) {
 		'eslint-plugin-typescript': false,
 		'@typescript-eslint/eslint-plugin': false,
 		'valid-directory': false,
+		'valid-module': false,
 		documentation: false,
 		jsdoc: false,
 		minami: false,
@@ -946,10 +948,45 @@ async function updateRuntime(state) {
 		packages.kava = packages['assert-helpers'] = 'dev'
 	}
 
+	// browser path
+	updateBrowser(state)
+
 	// package
-	if (answers.npm && answers.name !== 'valid-directory') {
-		packages['valid-directory'] = 'dev'
-		state.scripts['our:verify:directory'] = 'npx valid-directory'
+	if (answers.npm) {
+		if (answers.name !== 'valid-directory') {
+			packages['valid-directory'] = 'dev'
+			state.scripts['our:verify:directory'] = 'valid-directory'
+		} else {
+			state.scripts['our:verify:directory'] = 'npx .'
+		}
+		if (packageData.module) {
+			if (answers.name !== 'valid-module') {
+				packages['valid-module'] = 'dev'
+				state.scripts['our:verify:module'] = 'valid-module'
+			} else {
+				state.scripts['our:verify:module'] = 'npx .'
+			}
+		}
+	}
+
+	// keywords
+	toggle(answers.keywords, 'website', answers.website)
+	toggle(answers.keywords, 'browser', answers.browser)
+	toggle(answers.keywords, 'module', packageData.module)
+	toggle(answers.keywords, 'coffeescript', answers.language === 'coffeescript')
+	toggle(answers.keywords, 'typescript', answers.language === 'typescript')
+	toggle(
+		answers.keywords,
+		['types', 'typed'],
+		packageData.types || packages.jsdoc
+	)
+	if (answers.npm && answers.language === 'typescript') {
+		try {
+			await exec(`cat ${sourceEdition.mainPath} | grep "export default"`)
+			answers.keywords.add('export-default')
+		} catch (err) {
+			answers.keywords.delete('export-default')
+		}
 	}
 
 	// remove self

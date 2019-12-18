@@ -138,28 +138,59 @@ async function updateBaseFiles({ answers, packageData }) {
 	status('...downloaded files')
 
 	// write the readme file
+	const docs = [
+		`[Complete API Documentation.](http://master.${answers.name}.${answers.organisation}.surge.sh/docs/)`,
+		`[API Documentation.](http://master.${answers.name}.${answers.organisation}.surge.sh/docs/)`
+	]
 	if ((await exists('README.md')) === false) {
 		status('writing readme file...')
 		await write(
 			'README.md',
 			[
 				'<!--TITLE -->',
-				'',
 				'<!--BADGES -->',
-				'',
 				'<!--DESCRIPTION -->',
-				'',
-				'<!--INSTALL -->',
-				'',
 				'## Usage',
-				'',
+				answers.docs && docs[0],
+				'<!--INSTALL -->',
 				'<!--HISTORY -->',
 				'<!--CONTRIBUTE -->',
 				'<!--BACKERS -->',
 				'<!--LICENSE -->'
-			].join('\n')
+			]
+				.filter(i => i)
+				.join('\n\n')
 		)
 		status('...wrote readme file')
+	} else {
+		// update the existing readme file
+		status('updating readme file...')
+		// read
+		let content = await read('README.md')
+		content = content.toString()
+		const original = content
+		// replace old docs text with new doc text
+		for (const doc of docs) {
+			content = content.replace(doc, '')
+		}
+		const foundDocumentation = original !== content
+		// move the install section before the history section
+		let install = ''
+		content = content.replace(
+			/<!-- INSTALL\/ -->.+?<!-- \/INSTALL -->/s,
+			function(found) {
+				install = found
+				return ''
+			}
+		)
+		content = content.replace('<!-- HISTORY/ -->', function(found) {
+			return (
+				(foundDocumentation ? docs[0] + '\n\n' : '') + install + '\n\n' + found
+			)
+		})
+		// write
+		await write('README.md', content)
+		status('...updated readme file')
 	}
 
 	// convert the history file

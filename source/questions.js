@@ -24,6 +24,7 @@ const {
 	getPackageAuthor,
 	getPackageBinEntry,
 	getPackageBinExecutable,
+	getPackageBrowserEntry,
 	getPackageDescription,
 	getPackageFlowtypeDependency,
 	getPackageKeywords,
@@ -303,7 +304,8 @@ async function getQuestions(state) {
 					website && 'html',
 					website && 'css'
 				]
-				const typesString = types.filter(value => value).join(' ') || 'esnext'
+				const typesString =
+					types.filter(value => value).join(' ') || 'typescript'
 				return typesString.split(' ')
 			}
 		},
@@ -533,6 +535,19 @@ async function getQuestions(state) {
 			}
 		},
 		{
+			name: 'browserEntry',
+			message: 'What is the filename of the browser entry (without extension)?',
+			validate: isSpecified,
+			filter: trim,
+			default({ mainEntry }) {
+				return getPackageBrowserEntry(packageData) || mainEntry
+			},
+			skip: editioned,
+			when({ browser, mainEntry }) {
+				return browser && mainEntry
+			}
+		},
+		{
 			name: 'testEntry',
 			message: 'What is the test entry filename (without extension)?',
 			validate: isSpecified,
@@ -588,9 +603,11 @@ async function getQuestions(state) {
 			arg: '--lts',
 			message: `Change the minimum supported node version from ${nodeEngineVersion} to ${nodeMinimumLTSVersion}`,
 			type: 'confirm',
-			default: false,
-			skip({ website }) {
-				return website || alreadyLTS
+			default() {
+				return !nodeEngineVersion
+			},
+			skip({ website, ltsNodeOnly }) {
+				return website || alreadyLTS || ltsNodeOnly
 			}
 		},
 		{
@@ -790,6 +807,7 @@ async function getAnswers(state) {
 	// Apply
 	state.answers = answers
 	answers.targets = answers.targets || []
+	answers.keywords = new Set(answers.keywords.split(/,\s*/))
 
 	// Return
 	return answers

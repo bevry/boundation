@@ -269,6 +269,10 @@ function getPackageBinExecutable(packageData) {
 	return null
 }
 
+function getPackageBrowserEntry(packageData) {
+	return getBasename(packageData.module) || null
+}
+
 function getWebsiteType(packageData, nowData) {
 	if (hasPackageDependency(packageData, 'next')) {
 		return '@now/next'
@@ -304,6 +308,9 @@ function getProjectType(packageData, nowData) {
 
 function arrangePackage(state) {
 	let packageData = JSON.parse(JSON.stringify(state.packageData))
+
+	// Keywords
+	packageData.keywords = Array.from(state.answers.keywords.values()).sort()
 
 	// ---------------------------------
 	// Editions
@@ -559,7 +566,6 @@ async function updatePackageData(state) {
 		{
 			name: answers.name,
 			description: answers.description,
-			keywords: answers.keywords.split(/,\s*/),
 			homepage: repoToWebsite(answers.repoUrl),
 			bugs: {
 				url: repoToWebsite(answers.repoUrl) + '/issues'
@@ -685,6 +691,7 @@ module.exports = {
 	getPackageAuthor,
 	getPackageBinEntry,
 	getPackageBinExecutable,
+	getPackageBrowserEntry,
 	getPackageDescription,
 	getPackageDocumentationDependency,
 	getPackageFlowtypeDependency,

@@ -23,6 +23,25 @@ function strip(o, ...a) {
 	return o
 }
 
+function addExtension(file, extension) {
+	return file ? `${file}.${extension}` : file
+}
+
+function toggle(set, value, mode) {
+	if (Array.isArray(value)) {
+		for (const v of value) {
+			toggle(set, v, mode)
+		}
+		return set
+	}
+	if (mode) {
+		set.add(value)
+	} else {
+		set.delete(value)
+	}
+	return set
+}
+
 function isBevryOrganisation(organisation) {
 	return bevryOrganisationsList.includes(organisation)
 }
@@ -71,19 +90,21 @@ function uniq(list) {
 }
 
 module.exports = {
-	has,
 	add,
-	strip,
+	addExtension,
+	has,
 	isBevryOrganisation,
-	trim,
-	slugit,
-	isSpecified,
-	isNumber,
 	isGitUrl,
-	repoToWebsite,
-	repoToSlug,
+	isNumber,
+	isSpecified,
 	repoToOrganisation,
 	repoToProject,
-	without,
-	uniq
+	repoToSlug,
+	repoToWebsite,
+	slugit,
+	strip,
+	toggle,
+	trim,
+	uniq,
+	without
 }

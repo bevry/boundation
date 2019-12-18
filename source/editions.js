@@ -6,7 +6,13 @@ const pathUtil = require('path')
 
 // Local
 const { status } = require('./log')
-const { add, has, strip } = require('./util.js')
+const { add, has, strip, addExtension } = require('./util.js')
+const languageNames = {
+	typescript: 'TypeScript',
+	esnext: 'ESNext',
+	es5: 'ES5',
+	coffeescript: 'CoffeeScript'
+}
 
 // Helpers
 class Edition {
@@ -61,6 +67,11 @@ class Edition {
 			}
 		})
 
+		Object.defineProperty(this, 'browser', {
+			enumerable: false,
+			writable: true
+		})
+
 		Object.defineProperty(this, 'test', {
 			enumerable: false,
 			writable: true
@@ -75,6 +86,15 @@ class Edition {
 			enumerable: false,
 			get() {
 				return this.main && pathUtil.join(this.directory || '.', this.main)
+			}
+		})
+
+		Object.defineProperty(this, 'browserPath', {
+			enumerable: false,
+			get() {
+				return (
+					this.browser && pathUtil.join(this.directory || '.', this.browser)
+				)
 			}
 		})
 
@@ -128,9 +148,10 @@ async function generateEditions(state) {
 		if (answers.language === 'es5') {
 			const edition = new Edition({
 				directory: answers.sourceDirectory,
-				main: `${answers.mainEntry}.js`,
-				test: `${answers.testEntry}.js`,
-				bin: `${answers.binEntry}.js`,
+				main: addExtension(answers.mainEntry, `js`),
+				browser: addExtension(answers.browserEntry, `js`),
+				test: addExtension(answers.testEntry, `js`),
+				bin: addExtension(answers.binEntry, `js`),
 				tags: [
 					'javascript',
 					'es5',
@@ -150,9 +171,10 @@ async function generateEditions(state) {
 		} else if (answers.language === 'esnext') {
 			const edition = new Edition({
 				directory: answers.sourceDirectory,
-				main: `${answers.mainEntry}.js`,
-				test: `${answers.testEntry}.js`,
-				bin: `${answers.binEntry}.js`,
+				main: addExtension(answers.mainEntry, `js`),
+				browser: addExtension(answers.browserEntry, `js`),
+				test: addExtension(answers.testEntry, `js`),
+				bin: addExtension(answers.binEntry, `js`),
 				tags: [
 					'javascript',
 					'esnext',
@@ -175,9 +197,10 @@ async function generateEditions(state) {
 				'source',
 				new Edition({
 					directory: answers.sourceDirectory,
-					main: `${answers.mainEntry}.ts`,
-					test: `${answers.testEntry}.ts`,
-					bin: `${answers.binEntry}.js`,
+					main: addExtension(answers.mainEntry, `ts`),
+					browser: addExtension(answers.browserEntry, `ts`),
+					test: addExtension(answers.testEntry, `ts`),
+					bin: addExtension(answers.binEntry, `js`),
 					tags: ['typescript', 'import'],
 					engines: false
 				})
@@ -187,9 +210,10 @@ async function generateEditions(state) {
 				'source',
 				new Edition({
 					directory: answers.sourceDirectory,
-					main: `${answers.mainEntry}.coffee`,
-					test: `${answers.testEntry}.coffee`,
-					bin: `${answers.binEntry}.coffee`,
+					main: addExtension(answers.mainEntry, `coffee`),
+					browser: addExtension(answers.browserEntry, `coffee`),
+					test: addExtension(answers.testEntry, `coffee`),
+					bin: addExtension(answers.binEntry, `coffee`),
 					tags: ['coffeescript', 'require'],
 					engines: false
 				})
@@ -200,9 +224,10 @@ async function generateEditions(state) {
 				new Edition({
 					description: 'JSON',
 					directory: answers.sourceDirectory,
-					main: `${answers.mainEntry}.json`,
-					test: `${answers.testEntry}.js`,
-					bin: `${answers.binEntry}.js`,
+					main: addExtension(answers.mainEntry, `json`),
+					browser: addExtension(answers.browserEntry, `json`),
+					test: addExtension(answers.testEntry, `js`),
+					bin: addExtension(answers.binEntry, `js`),
 					tags: ['json'],
 					engines: {
 						node: true,
@@ -224,12 +249,14 @@ async function generateEditions(state) {
 						compiler: answers.compilerBrowser,
 						// for legacy b/c reasons this is not "edition-browser"
 						directory: 'edition-browsers',
-						main: `${answers.mainEntry}.js`,
-						test: `${answers.testEntry}.js`,
-						bin: `${answers.binEntry}.js`,
+						main: addExtension(answers.browserEntry, `js`),
+						browser: addExtension(answers.browserEntry, `js`),
+						test: addExtension(answers.testEntry, `js`),
+						bin: addExtension(answers.binEntry, `js`),
 						tags: ['javascript', answers.sourceModule ? 'import' : 'require'],
 						targets: {
 							es: 'ESNext',
+							esmodules: answers.sourceModule,
 							browsers: answers.browsers
 						},
 						engines: {
@@ -254,9 +281,10 @@ async function generateEditions(state) {
 					new Edition({
 						compiler: 'babel',
 						directory: `edition-node-${version}`,
-						main: `${answers.mainEntry}.js`,
-						test: `${answers.testEntry}.js`,
-						bin: `${answers.binEntry}.js`,
+						main: addExtension(answers.mainEntry, `js`),
+						browser: addExtension(answers.browserEntry, `js`),
+						test: addExtension(answers.testEntry, `js`),
+						bin: addExtension(answers.binEntry, `js`),
 						tags: ['javascript', answers.packageModule ? 'import' : 'require'],
 						targets: {
 							node: version
@@ -275,9 +303,10 @@ async function generateEditions(state) {
 					new Edition({
 						compiler: 'typescript',
 						directory,
-						main: `${answers.mainEntry}.js`,
-						test: `${answers.testEntry}.js`,
-						bin: `${answers.binEntry}.js`,
+						main: addExtension(answers.mainEntry, `js`),
+						browser: addExtension(answers.browserEntry, `js`),
+						test: addExtension(answers.testEntry, `js`),
+						bin: addExtension(answers.binEntry, `js`),
 						tags: [
 							'javascript',
 							syntax,
@@ -302,9 +331,10 @@ async function generateEditions(state) {
 					new Edition({
 						compiler: 'coffeescript',
 						directory,
-						main: `${answers.mainEntry}.js`,
-						test: `${answers.testEntry}.js`,
-						bin: `${answers.binEntry}.js`,
+						main: addExtension(answers.mainEntry, `js`),
+						browser: addExtension(answers.browserEntry, `js`),
+						test: addExtension(answers.testEntry, `js`),
+						bin: addExtension(answers.binEntry, `js`),
 						tags: ['javascript', 'esnext', 'require'],
 						engines: {
 							node: true,
@@ -385,6 +415,7 @@ async function generateEditions(state) {
 							{
 								targets: strip(edition.targets, 'es'),
 								modules:
+									edition.targets.esmodules ||
 									answers.sourceModule === answers.packageModule
 										? false
 										: answers.packageModule
@@ -403,14 +434,6 @@ async function generateEditions(state) {
 					'@babel/preset-env',
 					'@babel/plugin-proposal-object-rest-spread'
 				)
-
-				// disabled as typescript compiler doesn't support this compat
-				// so having it only on babel screws with consistency
-				// plus it causes inconsistency between browser and node editions
-				// if (answers.sourceModule && !answers.packageModule) {
-				// 	add(edition.devDependencies, 'babel-plugin-add-module-exports')
-				// 	add(edition.babel.plugins, 'add-module-exports')
-				// }
 
 				if (answers.language === 'typescript') {
 					add(edition.babel.presets, '@babel/preset-typescript')
@@ -433,12 +456,13 @@ async function generateEditions(state) {
 			// ensure description exists
 			if (!edition.description) {
 				const description = [
-					answers.language,
+					languageNames[answers.language] || answers.language,
 					edition.directory === answers.sourceDirectory
 						? 'source code'
 						: 'compiled'
 				]
 				if (edition.targets && edition.targets.es) {
+					// what the typescript compiler targets
 					description.push(`against ${edition.targets.es}`)
 				}
 				if (browserVersion) {
@@ -453,13 +477,14 @@ async function generateEditions(state) {
 				if (nodeVersion) {
 					description.push(browserVersion ? 'and' : 'for', `Node.js`)
 					if (typeof nodeVersion === 'string') {
+						// typescript compiler will be true, as typescript doesn't compile to specific node versions
 						description.push(`${nodeVersion}`)
 					}
 				}
 				if (has(edition.tags, 'require')) {
-					description.push('with require for modules')
+					description.push('with Require for modules')
 				} else if (has(edition.tags, 'import')) {
-					description.push('with import for modules')
+					description.push('with Import for modules')
 				}
 				edition.description = description.join(' ')
 			}
