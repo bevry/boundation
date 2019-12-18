@@ -1,5 +1,17 @@
 # History
 
+## v1.38.0 2019 December 18
+
+-   added browser entry
+    -   allows `browser` and `module` fields to point to a file that doesn't have anything to do with node
+-   correct readme format
+    -   install will now be before history
+    -   docs link will now after usage
+    -   docs link text changed
+-   toggle language keywords
+    -   enables projects to display the correct details for `export-default`
+-   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
+
 ## v1.37.0 2019 December 18
 
 -   fix zero targets
