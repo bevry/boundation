@@ -30,6 +30,7 @@ async function updateTravis(state) {
 	const awesomeTravisCommit = await getGithubCommit('bevry/awesome-travis')
 	const travisOriginal = await readYAML('.travis.yml')
 	const travis = {
+		version: '~> 1.0',
 		sudo: false,
 		language: 'node_js',
 		node_js: nodeVersions,
