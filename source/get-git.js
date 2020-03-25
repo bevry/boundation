@@ -13,7 +13,7 @@ async function getGitOriginUrl(cwd = process.cwd()) {
 	try {
 		const stdout = await exec('git remote get-url origin', {
 			cwd,
-			stdio: ['ignore', 'pipe', 'ignore']
+			stdio: ['ignore', 'pipe', 'ignore'],
 		})
 		const result = (stdout && stdout.toString().trim()) || null
 		detail.origin = result
@@ -37,7 +37,7 @@ async function getGitUsername(cwd = process.cwd()) {
 	try {
 		const stdout = await exec('git config --global user.name', {
 			cwd,
-			stdio: ['ignore', 'pipe', 'ignore']
+			stdio: ['ignore', 'pipe', 'ignore'],
 		})
 		const result = (stdout && stdout.toString().trim()) || null
 		detail.username = result
@@ -53,7 +53,7 @@ async function getGitBranch(cwd = process.cwd()) {
 	try {
 		const stdout = await exec('git rev-parse --abbrev-ref HEAD', {
 			cwd,
-			stdio: ['ignore', 'pipe', 'ignore']
+			stdio: ['ignore', 'pipe', 'ignore'],
 		})
 		const result = (stdout && stdout.toString().trim()) || null
 		result.branch = result
@@ -69,7 +69,7 @@ async function getGitEmail(cwd = process.cwd()) {
 	try {
 		const stdout = await exec('git config --global user.email', {
 			cwd,
-			stdio: ['ignore', 'pipe', 'ignore']
+			stdio: ['ignore', 'pipe', 'ignore'],
 		})
 		const result = (stdout && stdout.toString().trim()) || null
 		detail.email = result
@@ -85,5 +85,5 @@ module.exports = {
 	getGitProject,
 	getGitUsername,
 	getGitBranch,
-	getGitEmail
+	getGitEmail,
 }

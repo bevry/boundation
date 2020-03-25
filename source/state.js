@@ -11,25 +11,25 @@ module.exports = {
 	unsupportedNodeVersions: null,
 	editions: [],
 	get activeEditions() {
-		return this.editions.filter(edition => edition.active !== false)
+		return this.editions.filter((edition) => edition.active !== false)
 	},
 	get babelEditions() {
-		return this.activeEditions.filter(edition => edition.babel)
+		return this.activeEditions.filter((edition) => edition.babel)
 	},
 	get compiledEditions() {
 		return this.activeEditions.filter(
-			edition =>
+			(edition) =>
 				edition.engines && (edition.engines.node || edition.engines.browsers)
 		)
 	},
 	get nodeEditions() {
 		return this.activeEditions.filter(
-			edition => edition.engines && edition.engines.node
+			(edition) => edition.engines && edition.engines.node
 		)
 	},
 	get browserEditions() {
 		return this.activeEditions.filter(
-			edition => edition.engines && edition.engines.browsers
+			(edition) => edition.engines && edition.engines.browsers
 		)
 	},
 	get useEditionAutoloader() {
@@ -59,5 +59,5 @@ module.exports = {
 		return sourceEdition
 	},
 	userScripts: {},
-	scripts: {}
+	scripts: {},
 }

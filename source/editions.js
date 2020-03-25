@@ -11,7 +11,7 @@ const languageNames = {
 	typescript: 'TypeScript',
 	esnext: 'ESNext',
 	es5: 'ES5',
-	coffeescript: 'CoffeeScript'
+	coffeescript: 'CoffeeScript',
 }
 
 // Helpers
@@ -19,42 +19,42 @@ class Edition {
 	constructor(opts) {
 		Object.defineProperty(this, 'targets', {
 			enumerable: false,
-			writable: true
+			writable: true,
 		})
 
 		Object.defineProperty(this, 'dependencies', {
 			enumerable: false,
-			writable: true
+			writable: true,
 		})
 
 		Object.defineProperty(this, 'devDependencies', {
 			enumerable: false,
-			writable: true
+			writable: true,
 		})
 
 		Object.defineProperty(this, 'compiler', {
 			enumerable: false,
-			writable: true
+			writable: true,
 		})
 
 		Object.defineProperty(this, 'scripts', {
 			enumerable: false,
-			writable: true
+			writable: true,
 		})
 
 		Object.defineProperty(this, 'compiler', {
 			enumerable: false,
-			writable: true
+			writable: true,
 		})
 
 		Object.defineProperty(this, 'babel', {
 			enumerable: false,
-			writable: true
+			writable: true,
 		})
 
 		Object.defineProperty(this, 'active', {
 			enumerable: false,
-			writable: true
+			writable: true,
 		})
 
 		Object.defineProperty(this, 'main', {
@@ -64,29 +64,29 @@ class Edition {
 			},
 			set(value) {
 				this.entry = value
-			}
+			},
 		})
 
 		Object.defineProperty(this, 'browser', {
 			enumerable: false,
-			writable: true
+			writable: true,
 		})
 
 		Object.defineProperty(this, 'test', {
 			enumerable: false,
-			writable: true
+			writable: true,
 		})
 
 		Object.defineProperty(this, 'bin', {
 			enumerable: false,
-			writable: true
+			writable: true,
 		})
 
 		Object.defineProperty(this, 'mainPath', {
 			enumerable: false,
 			get() {
 				return this.main && pathUtil.join(this.directory || '.', this.main)
-			}
+			},
 		})
 
 		Object.defineProperty(this, 'browserPath', {
@@ -95,21 +95,21 @@ class Edition {
 				return (
 					this.browser && pathUtil.join(this.directory || '.', this.browser)
 				)
-			}
+			},
 		})
 
 		Object.defineProperty(this, 'testPath', {
 			enumerable: false,
 			get() {
 				return this.test && pathUtil.join(this.directory || '.', this.test)
-			}
+			},
 		})
 
 		Object.defineProperty(this, 'binPath', {
 			enumerable: false,
 			get() {
 				return this.bin && pathUtil.join(this.directory || '.', this.bin)
-			}
+			},
 		})
 
 		opts.tags = new Set(opts.tags || [])
@@ -137,9 +137,9 @@ async function generateEditions(state) {
 				tags: [
 					'website',
 					...answers.languages,
-					answers.sourceModule ? 'import' : 'require'
-				]
-			})
+					answers.sourceModule ? 'import' : 'require',
+				],
+			}),
 		]
 	} else {
 		const editions = new Map()
@@ -155,12 +155,12 @@ async function generateEditions(state) {
 				tags: [
 					'javascript',
 					'es5',
-					answers.sourceModule ? 'import' : 'require'
+					answers.sourceModule ? 'import' : 'require',
 				],
 				engines: {
 					node: true,
-					browsers: answers.browsers
-				}
+					browsers: answers.browsers,
+				},
 			})
 
 			if (answers.flowtype) {
@@ -178,13 +178,13 @@ async function generateEditions(state) {
 				tags: [
 					'javascript',
 					'esnext',
-					answers.sourceModule ? 'import' : 'require'
+					answers.sourceModule ? 'import' : 'require',
 				],
 				engines: {
 					node: true,
 					browsers:
-						answers.browsers && answers.targets.includes('browser') === false
-				}
+						answers.browsers && answers.targets.includes('browser') === false,
+				},
 			})
 
 			if (answers.flowtype) {
@@ -202,7 +202,7 @@ async function generateEditions(state) {
 					test: addExtension(answers.testEntry, `ts`),
 					bin: addExtension(answers.binEntry, `js`),
 					tags: ['typescript', 'import'],
-					engines: false
+					engines: false,
 				})
 			)
 		} else if (answers.language === 'coffeescript') {
@@ -215,7 +215,7 @@ async function generateEditions(state) {
 					test: addExtension(answers.testEntry, `coffee`),
 					bin: addExtension(answers.binEntry, `coffee`),
 					tags: ['coffeescript', 'require'],
-					engines: false
+					engines: false,
 				})
 			)
 		} else if (answers.language === 'json') {
@@ -232,8 +232,8 @@ async function generateEditions(state) {
 					engines: {
 						node: true,
 						browsers:
-							answers.browsers && answers.targets.includes('browser') === false
-					}
+							answers.browsers && answers.targets.includes('browser') === false,
+					},
 				})
 			)
 		} else {
@@ -257,12 +257,12 @@ async function generateEditions(state) {
 						targets: {
 							es: 'ESNext',
 							esmodules: answers.sourceModule,
-							browsers: answers.browsers
+							browsers: answers.browsers,
 						},
 						engines: {
 							node: false,
-							browsers: answers.browsers
-						}
+							browsers: answers.browsers,
+						},
 					})
 				)
 			} else if (answers.compilerNode === 'babel') {
@@ -287,12 +287,12 @@ async function generateEditions(state) {
 						bin: addExtension(answers.binEntry, `js`),
 						tags: ['javascript', answers.packageModule ? 'import' : 'require'],
 						targets: {
-							node: version
+							node: version,
 						},
 						engines: {
 							node: true,
-							browsers: false
-						}
+							browsers: false,
+						},
 					})
 				)
 			} else if (answers.compilerNode === 'typescript') {
@@ -310,17 +310,17 @@ async function generateEditions(state) {
 						tags: [
 							'javascript',
 							syntax,
-							answers.packageModule ? 'import' : 'require'
+							answers.packageModule ? 'import' : 'require',
 						],
 						targets: {
-							es: target
+							es: target,
 						},
 						engines: {
 							node: true,
 							browsers:
 								answers.browsers &&
-								answers.targets.includes('browser') === false
-						}
+								answers.targets.includes('browser') === false,
+						},
 					})
 				)
 			} else if (answers.compilerNode === 'coffeescript') {
@@ -340,8 +340,8 @@ async function generateEditions(state) {
 							node: true,
 							browsers:
 								answers.browsers &&
-								answers.targets.includes('browser') === false
-						}
+								answers.targets.includes('browser') === false,
+						},
 					})
 				)
 			} else {
@@ -350,7 +350,7 @@ async function generateEditions(state) {
 		}
 
 		// autogenerate various fields
-		editions.forEach(function(edition) {
+		editions.forEach(function (edition) {
 			const browserVersion =
 				(edition.targets && edition.targets.browsers) ||
 				(edition.engines && edition.engines.browsers)
@@ -378,9 +378,9 @@ async function generateEditions(state) {
 					`mv ${edition.directory}/${answers.sourceDirectory} edition-temp`,
 					`&& rm -Rf ${edition.directory}`,
 					`&& mv edition-temp ${edition.directory}`,
-					`) || true`
+					`) || true`,
 				]
-					.filter(part => part)
+					.filter((part) => part)
 					.join(' ')
 			} else if (edition.compiler === 'babel') {
 				if (answers.language === 'coffeescript') {
@@ -389,9 +389,9 @@ async function generateEditions(state) {
 						`env BABEL_ENV=${edition.directory}`,
 						'coffee -bcto',
 						`./${edition.directory}/`,
-						`./${answers.sourceDirectory}`
+						`./${answers.sourceDirectory}`,
 					]
-						.filter(part => part)
+						.filter((part) => part)
 						.join(' ')
 				} else {
 					// add babel compile script
@@ -400,9 +400,9 @@ async function generateEditions(state) {
 						'babel',
 						answers.language === 'typescript' ? '--extensions ".ts,.tsx"' : '',
 						`--out-dir ./${edition.directory}`,
-						`./${answers.sourceDirectory}`
+						`./${answers.sourceDirectory}`,
 					]
-						.filter(part => part)
+						.filter((part) => part)
 						.join(' ')
 				}
 
@@ -420,11 +420,11 @@ async function generateEditions(state) {
 										? false
 										: answers.packageModule
 										? 'auto'
-										: 'commonjs'
-							}
-						]
+										: 'commonjs',
+							},
+						],
 					],
-					plugins: ['@babel/proposal-object-rest-spread']
+					plugins: ['@babel/proposal-object-rest-spread'],
 				}
 
 				add(
@@ -459,7 +459,7 @@ async function generateEditions(state) {
 					languageNames[answers.language] || answers.language,
 					edition.directory === answers.sourceDirectory
 						? 'source code'
-						: 'compiled'
+						: 'compiled',
 				]
 				if (edition.targets && edition.targets.es) {
 					// what the typescript compiler targets
@@ -497,7 +497,7 @@ async function generateEditions(state) {
 	// log
 	console.log(
 		'editions:',
-		state.editions.map(edition => edition.directory).join(', ')
+		state.editions.map((edition) => edition.directory).join(', ')
 	)
 	status('...updated editions')
 }

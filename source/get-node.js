@@ -35,10 +35,7 @@ async function getMinimumNodeLTSVersion() {
 
 async function getMaximumNodeLTSVersion() {
 	const lts = await getNodeLTSVersions()
-	return lts
-		.reverse()
-		.find(isLTS)[0]
-		.replace('v', '')
+	return lts.reverse().find(isLTS)[0].replace('v', '')
 }
 
 module.exports = { getMinimumNodeLTSVersion, getMaximumNodeLTSVersion }

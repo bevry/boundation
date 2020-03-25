@@ -24,17 +24,17 @@ async function updateVersions(state) {
 
 	// fetch node versions
 	state.nodeVersions = allNodeVersions.filter(
-		version =>
+		(version) =>
 			versionComparator(version, answers.minimumTestNodeVersion) >= 0 &&
 			versionComparator(version, answers.maximumTestNodeVersion) <= 0
 	)
 	state.unsupportedNodeVersions = state.nodeVersions.filter(
-		version =>
+		(version) =>
 			versionComparator(version, answers.minimumSupportNodeVersion) < 0 ||
 			versionComparator(version, answers.maximumSupportNodeVersion) > 0
 	)
 	state.supportedNodeVersions = state.nodeVersions.filter(
-		version =>
+		(version) =>
 			versionComparator(version, answers.minimumSupportNodeVersion) >= 0 &&
 			versionComparator(version, answers.maximumSupportNodeVersion) <= 0
 	)

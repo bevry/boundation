@@ -20,24 +20,24 @@ async function getAnswers(questions, user) {
 	try {
 		// find defaults
 		const defaults = {}
-		questions.forEach(function(question) {
+		questions.forEach(function (question) {
 			const { name, skip, when, ignore, arg } = question
 			if (typeof question.default === 'function') {
 				const qc = question.choices
 				if (typeof question.choices === 'function')
-					question.choices = function(answers) {
+					question.choices = function (answers) {
 						const values = Object.assign({}, defaults, answers)
 						const value = fetch(question, qc, values)
 						return value
 					}
 				const qd = question.default
-				question.default = function(answers) {
+				question.default = function (answers) {
 					const values = Object.assign({}, defaults, answers)
 					const value = fetch(question, qd, values)
 					return value
 				}
 			}
-			question.when = async function(answers) {
+			question.when = async function (answers) {
 				let reason,
 					result,
 					opaque = false
@@ -106,7 +106,7 @@ async function getAnswers(questions, user) {
 				// if we are not proceeding then ignore
 				if (reason) {
 					const value = defaults[name]
-					const color = opaque ? v => v : chalk.dim
+					const color = opaque ? (v) => v : chalk.dim
 					const message = [
 						'Automated',
 						chalk.bold.underline(name),
@@ -119,9 +119,9 @@ async function getAnswers(questions, user) {
 								: question.type === 'password'
 								? '[hidden]'
 								: value
-						)
+						),
 					]
-						.map(v => color(v))
+						.map((v) => color(v))
 						.join(' ')
 					console.log(message)
 				}

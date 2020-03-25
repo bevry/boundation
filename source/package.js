@@ -13,7 +13,7 @@ const {
 	repoToWebsite,
 	repoToOrganisation,
 	without,
-	isBevryOrganisation
+	isBevryOrganisation,
 } = require('./util')
 const { exists, write, parse } = require('./fs')
 const { getNowName } = require('./website')
@@ -130,7 +130,9 @@ function hasPackageScript(packageData, key) {
 
 function hasPackageScriptPrefix(packageData, key) {
 	return Boolean(
-		Object.keys(packageData.scripts || {}).find(value => value.startsWith(key))
+		Object.keys(packageData.scripts || {}).find((value) =>
+			value.startsWith(key)
+		)
 	)
 }
 
@@ -208,7 +210,7 @@ function hasPackageDependency(packageData, key) {
 	const {
 		dependencies = {},
 		devDependencies = {},
-		peerDependencies = {}
+		peerDependencies = {},
 	} = packageData
 	return (
 		Boolean(dependencies[key]) ||
@@ -332,7 +334,7 @@ function arrangePackage(state) {
 		}
 
 		// arrange keys of editions
-		packageData.editions = activeEditions.map(function(edition) {
+		packageData.editions = activeEditions.map(function (edition) {
 			const result = arrangekeys(
 				edition,
 				'description directory entry tags engines'
@@ -395,7 +397,7 @@ function arrangePackage(state) {
 	// merge in editions[].scripts
 	Object.assign(
 		scripts,
-		...activeEditions.map(edition => edition.scripts || {})
+		...activeEditions.map((edition) => edition.scripts || {})
 	)
 
 	// inject empty mandatory scripts if they don't exist
@@ -447,10 +449,10 @@ function arrangePackage(state) {
 
 	// perform the alpha sort, with my: scripts first, then our: scripts, then everything else
 	const myScripts = Array.from(list)
-		.filter(key => key.startsWith('my:'))
+		.filter((key) => key.startsWith('my:'))
 		.sort()
 	const ourScripts = Array.from(list)
-		.filter(key => key.startsWith('our:'))
+		.filter((key) => key.startsWith('our:'))
 		.sort()
 	scripts = arrangekeys(scripts, myScripts.concat(ourScripts))
 
@@ -516,7 +518,7 @@ async function readPackage(state) {
 		}
 
 		// keep my:* scripts, and scripts with no parts
-		Object.keys(packageData.scripts).forEach(function(key) {
+		Object.keys(packageData.scripts).forEach(function (key) {
 			const value = packageData.scripts[key]
 			if (special.includes(key)) {
 				userScripts[key] = value
@@ -560,7 +562,7 @@ async function updatePackageData(state) {
 			author: answers.author,
 			engines: {},
 			dependencies: {},
-			devDependencies: {}
+			devDependencies: {},
 		},
 		packageDataLocal || {},
 		{
@@ -568,13 +570,13 @@ async function updatePackageData(state) {
 			description: answers.description,
 			homepage: repoToWebsite(answers.repoUrl),
 			bugs: {
-				url: repoToWebsite(answers.repoUrl) + '/issues'
+				url: repoToWebsite(answers.repoUrl) + '/issues',
 			},
 			repository: {
 				type: 'git',
-				url: repoToWebsite(answers.repoUrl) + '.git'
+				url: repoToWebsite(answers.repoUrl) + '.git',
 			},
-			scripts: {}
+			scripts: {},
 		}
 	)
 
@@ -612,7 +614,7 @@ async function updatePackageData(state) {
 					.split(/, +/)
 					.sort()
 					.slice(-1)[0]
-					.replace(/^[\d-+]+ +/, '')
+					.replace(/^[\d-+]+ +/, ''),
 			]
 		}
 	}
@@ -643,7 +645,7 @@ async function updatePackageData(state) {
 				'opencollective',
 				'crypto',
 				'paypal',
-				'wishlist'
+				'wishlist',
 			],
 			config: {
 				githubSponsorsUsername: 'balupton',
@@ -654,8 +656,8 @@ async function updatePackageData(state) {
 				opencollectiveUsername: 'bevry',
 				patreonUsername: 'bevry',
 				paypalURL: 'https://bevry.me/paypal',
-				wishlistURL: 'https://bevry.me/wishlist'
-			}
+				wishlistURL: 'https://bevry.me/wishlist',
+			},
 		}
 		packageData.funding = 'https://bevry.me/fund'
 	}
@@ -667,7 +669,7 @@ async function updatePackageData(state) {
 		!packageData.badges.list.length
 	) {
 		packageData.badges = {
-			list: ['travisci', 'npmversion', 'npmdownloads', 'daviddm', 'daviddmdev']
+			list: ['travisci', 'npmversion', 'npmdownloads', 'daviddm', 'daviddmdev'],
 		}
 	}
 
@@ -723,5 +725,5 @@ module.exports = {
 	isYARN,
 	readPackage,
 	updatePackageData,
-	writePackage
+	writePackage,
 }

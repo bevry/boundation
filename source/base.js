@@ -11,7 +11,7 @@ const {
 	rename,
 	unlink,
 	spawn,
-	writeYAML
+	writeYAML,
 } = require('./fs')
 const Errlop = require('errlop').default
 
@@ -33,12 +33,12 @@ async function download(opts) {
 			}
 			const localData = (await read(file)).toString()
 			const localLines = localData.split('\n')
-			const localCustomIndex = localLines.findIndex(line =>
+			const localCustomIndex = localLines.findIndex((line) =>
 				/^# CUSTOM/i.test(line)
 			)
 			if (localCustomIndex !== -1) {
 				const remoteLines = data.split('\n')
-				const remoteCustomIndex = remoteLines.findIndex(line =>
+				const remoteCustomIndex = remoteLines.findIndex((line) =>
 					/^# CUSTOM/i.test(line)
 				)
 				data = remoteLines
@@ -101,21 +101,21 @@ async function updateBaseFiles({ answers, packageData }) {
 		'https://raw.githubusercontent.com/bevry/base/master/.editorconfig',
 		{
 			url: 'https://raw.githubusercontent.com/bevry/base/master/.gitignore',
-			custom: true
+			custom: true,
 		},
 		'https://raw.githubusercontent.com/bevry/base/master/LICENSE.md',
-		'https://raw.githubusercontent.com/bevry/base/master/CONTRIBUTING.md'
+		'https://raw.githubusercontent.com/bevry/base/master/CONTRIBUTING.md',
 	]
 	if (answers.type === 'package') {
 		downloads.push({
 			url: 'https://raw.githubusercontent.com/bevry/base/master/HISTORY.md',
-			overwrite: false
+			overwrite: false,
 		})
 	}
 	if (answers.npm) {
 		downloads.push({
 			url: 'https://raw.githubusercontent.com/bevry/base/master/.npmignore',
-			custom: true
+			custom: true,
 		})
 	} else {
 		await unlink('.npmignore')
@@ -134,7 +134,7 @@ async function updateBaseFiles({ answers, packageData }) {
 	} else {
 		await unlink('coffeelint.json')
 	}
-	await Promise.all(downloads.map(i => download(i)))
+	await Promise.all(downloads.map((i) => download(i)))
 	status('...downloaded files')
 
 	// write the readme file
@@ -157,9 +157,9 @@ async function updateBaseFiles({ answers, packageData }) {
 				'<!--HISTORY -->',
 				'<!--CONTRIBUTE -->',
 				'<!--BACKERS -->',
-				'<!--LICENSE -->'
+				'<!--LICENSE -->',
 			]
-				.filter(i => i)
+				.filter((i) => i)
 				.join('\n\n')
 		)
 		status('...wrote readme file')
@@ -184,7 +184,7 @@ async function updateBaseFiles({ answers, packageData }) {
 		// insert new documentaiton under usage
 		const foundDocumentation = original !== content || answers.docs
 		if (foundDocumentation) {
-			content = content.replace('## Usage', function(found) {
+			content = content.replace('## Usage', function (found) {
 				return found + '\n\n' + newDocumentationLink
 			})
 		}
@@ -192,12 +192,12 @@ async function updateBaseFiles({ answers, packageData }) {
 		let install = ''
 		content = content.replace(
 			/<!-- INSTALL\/ -->.+?<!-- \/INSTALL -->/s,
-			function(found) {
+			function (found) {
 				install = found
 				return ''
 			}
 		)
-		content = content.replace('<!-- HISTORY/ -->', function(found) {
+		content = content.replace('<!-- HISTORY/ -->', function (found) {
 			return install + '\n\n' + found
 		})
 		// write
@@ -232,7 +232,7 @@ async function updateBaseFiles({ answers, packageData }) {
 				'open_collective: bevry',
 				'ko_fi: balupton',
 				'liberapay: bevry',
-				"custom: ['https://bevry.me/fund']"
+				"custom: ['https://bevry.me/fund']",
 			].join('\n')
 		)
 	}
@@ -253,20 +253,20 @@ async function updateBaseFiles({ answers, packageData }) {
 				allowed_updates: [
 					{
 						match: {
-							update_type: 'security'
-						}
-					}
+							update_type: 'security',
+						},
+					},
 				],
 				automerged_updates: [
 					{
 						match: {
 							dependency_type: 'all',
-							update_type: 'all'
-						}
-					}
-				]
-			}
-		]
+							update_type: 'all',
+						},
+					},
+				],
+			},
+		],
 	})
 }
 

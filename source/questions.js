@@ -14,11 +14,11 @@ const {
 	getGitOrganisation,
 	getGitOriginUrl,
 	getGitProject,
-	getGitUsername
+	getGitUsername,
 } = require('./get-git')
 const {
 	getMaximumNodeLTSVersion,
-	getMinimumNodeLTSVersion
+	getMinimumNodeLTSVersion,
 } = require('./get-node')
 const {
 	getPackageAuthor,
@@ -48,7 +48,7 @@ const {
 	isPackageModule,
 	isPackageTypeScript,
 	isSourceModule,
-	isYARN
+	isYARN,
 } = require('./package')
 const { getNowAliases, getNowName } = require('./website')
 const { versionComparator } = require('./versions')
@@ -77,14 +77,14 @@ async function getQuestions(state) {
 			message: 'What will be the package name?',
 			validate: isSpecified,
 			filter: trim,
-			default: getPackageName(packageData) || pathUtil.basename(cwd)
+			default: getPackageName(packageData) || pathUtil.basename(cwd),
 		},
 		{
 			name: 'description',
 			message: 'and the package description?',
 			validate: isSpecified,
 			filter: trim,
-			default: getPackageDescription(packageData)
+			default: getPackageDescription(packageData),
 		},
 		{
 			name: 'keywords',
@@ -94,14 +94,14 @@ async function getQuestions(state) {
 			default: getPackageKeywords(packageData),
 			skip({ keywords }) {
 				return keywords
-			}
+			},
 		},
 		{
 			name: 'repoUrl',
 			message: 'What will the git URL be?',
 			validate: isGitUrl,
 			filter: trim,
-			default: (await getGitOriginUrl(cwd)) || getPackageRepoUrl(cwd)
+			default: (await getGitOriginUrl(cwd)) || getPackageRepoUrl(cwd),
 		},
 		{
 			name: 'author',
@@ -110,14 +110,15 @@ async function getQuestions(state) {
 			filter: trim,
 			default:
 				getPackageAuthor(packageData) ||
-				`${new Date().getFullYear()}+ ${(await getGitUsername(cwd)) ||
-					'name'} <${(await getGitEmail(cwd)) || 'email'}>`
+				`${new Date().getFullYear()}+ ${
+					(await getGitUsername(cwd)) || 'name'
+				} <${(await getGitEmail(cwd)) || 'email'}>`,
 		},
 		{
 			name: 'organisation',
 			message: 'What is the organisation username for the package?',
 			default:
-				(await getGitOrganisation(cwd)) || getPackageOrganisation(packageData)
+				(await getGitOrganisation(cwd)) || getPackageOrganisation(packageData),
 		},
 		{
 			name: 'type',
@@ -125,7 +126,7 @@ async function getQuestions(state) {
 			choices: ['package', 'website'],
 			message: 'What type of project will this be?',
 			validate: isSpecified,
-			default: getProjectType(packageData, nowData)
+			default: getProjectType(packageData, nowData),
 		},
 		{
 			name: 'website',
@@ -137,13 +138,13 @@ async function getQuestions(state) {
 				'now',
 				'surge',
 				'custom',
-				'external'
+				'external',
 			],
 			message: 'What type of website will this be?',
 			default: getWebsiteType(packageData, nowData),
 			when({ type }) {
 				return type === 'website'
-			}
+			},
 		},
 		{
 			name: 'docpadWebsite',
@@ -155,7 +156,7 @@ async function getQuestions(state) {
 			skip: true,
 			when({ docpadWebsite }) {
 				return docpadWebsite
-			}
+			},
 		},
 		{
 			name: 'staticWebsite',
@@ -169,7 +170,7 @@ async function getQuestions(state) {
 			skip: true,
 			when({ staticWebsite }) {
 				return staticWebsite
-			}
+			},
 		},
 		{
 			name: 'staticDirectory',
@@ -182,7 +183,7 @@ async function getQuestions(state) {
 			},
 			when({ staticWebsite }) {
 				return staticWebsite
-			}
+			},
 		},
 		{
 			name: 'deployTarget',
@@ -191,7 +192,7 @@ async function getQuestions(state) {
 			filter: trim,
 			when({ staticDirectory, website }) {
 				return staticDirectory && website === 'surge'
-			}
+			},
 		},
 		{
 			name: 'nowWebsite',
@@ -203,7 +204,7 @@ async function getQuestions(state) {
 			skip: true,
 			when({ nowWebsite }) {
 				return nowWebsite
-			}
+			},
 		},
 		{
 			name: 'nowName',
@@ -214,7 +215,7 @@ async function getQuestions(state) {
 			skip: getNowName(nowData),
 			when({ nowWebsite }) {
 				return nowWebsite
-			}
+			},
 		},
 		{
 			name: 'nowAliases',
@@ -226,7 +227,7 @@ async function getQuestions(state) {
 			},
 			when({ nowWebsite }) {
 				return nowWebsite
-			}
+			},
 		},
 		{
 			name: 'travisWebsite',
@@ -238,7 +239,7 @@ async function getQuestions(state) {
 			skip: true,
 			when({ travisWebsite }) {
 				return travisWebsite
-			}
+			},
 		},
 		{
 			name: 'nextWebsite',
@@ -250,7 +251,7 @@ async function getQuestions(state) {
 			skip: true,
 			when({ nextWebsite }) {
 				return nextWebsite
-			}
+			},
 		},
 		{
 			name: 'docpadPlugin',
@@ -262,7 +263,7 @@ async function getQuestions(state) {
 			},
 			ignore({ website }) {
 				return website
-			}
+			},
 		},
 		{
 			name: 'packageManager',
@@ -272,7 +273,7 @@ async function getQuestions(state) {
 			async default() {
 				const yarn = await isYARN()
 				return yarn ? 'yarn' : 'npm'
-			}
+			},
 		},
 		{
 			name: 'languages',
@@ -287,7 +288,7 @@ async function getQuestions(state) {
 				'jsx',
 				'mdx',
 				'html',
-				'css'
+				'css',
 			],
 			message: 'What programming languages will the source code be written in?',
 			validate: isSpecified,
@@ -302,12 +303,12 @@ async function getQuestions(state) {
 						'react',
 					(hasPackageDependency(packageData, 'react') || nextWebsite) && 'jsx',
 					website && 'html',
-					website && 'css'
+					website && 'css',
 				]
 				const typesString =
-					types.filter(value => value).join(' ') || 'typescript'
+					types.filter((value) => value).join(' ') || 'typescript'
 				return typesString.split(' ')
-			}
+			},
 		},
 		{
 			name: 'language',
@@ -325,7 +326,7 @@ async function getQuestions(state) {
 			},
 			ignore({ website }) {
 				return website
-			}
+			},
 		},
 		{
 			name: 'tsconfig',
@@ -335,7 +336,7 @@ async function getQuestions(state) {
 			default: 'tsconfig.json',
 			ignore({ languages }) {
 				return languages.includes('typescript') === false
-			}
+			},
 		},
 		{
 			name: 'sourceModule',
@@ -348,7 +349,7 @@ async function getQuestions(state) {
 			},
 			skip({ language }) {
 				return language !== 'esnext'
-			}
+			},
 		},
 		{
 			name: 'packageModule',
@@ -357,7 +358,7 @@ async function getQuestions(state) {
 			default: isPackageModule(packageData),
 			skip({ sourceModule, website }) {
 				return sourceModule === false || website
-			}
+			},
 		},
 		{
 			name: 'flowtype',
@@ -373,7 +374,7 @@ async function getQuestions(state) {
 			},
 			ignore({ website }) {
 				return website
-			}
+			},
 		},
 		{
 			name: 'npm',
@@ -385,7 +386,7 @@ async function getQuestions(state) {
 			},
 			ignore({ website }) {
 				return website
-			}
+			},
 		},
 		{
 			name: 'browser',
@@ -399,7 +400,7 @@ async function getQuestions(state) {
 			},
 			skip({ language }) {
 				return language === 'json'
-			}
+			},
 		},
 		{
 			name: 'browsers',
@@ -410,7 +411,7 @@ async function getQuestions(state) {
 			},
 			skip({ language }) {
 				return language === 'json'
-			}
+			},
 		},
 		{
 			name: 'compileNode',
@@ -425,7 +426,7 @@ async function getQuestions(state) {
 					!website ||
 					['esnext', 'typescript', 'coffeescript'].includes(language)
 				)
-			}
+			},
 		},
 		{
 			name: 'compilerNode',
@@ -448,7 +449,7 @@ async function getQuestions(state) {
 			},
 			when({ compileNode, language }) {
 				return compileNode
-			}
+			},
 		},
 		{
 			name: 'compileBrowser',
@@ -462,7 +463,7 @@ async function getQuestions(state) {
 				return (
 					browser && ['esnext', 'typescript', 'coffeescript'].includes(language)
 				)
-			}
+			},
 		},
 		{
 			name: 'compilerBrowser',
@@ -481,7 +482,7 @@ async function getQuestions(state) {
 			},
 			when({ compileBrowser }) {
 				return compileBrowser
-			}
+			},
 		},
 		{
 			name: 'targets',
@@ -492,9 +493,10 @@ async function getQuestions(state) {
 				const targets = []
 				if (compilerBrowser) targets.push('browser')
 				if (compilerNode === 'coffeescript') targets.push('esnext')
-				if (compilerNode === 'babel')
+				if (compilerNode === 'babel') {
 					targets.push('maximum', 'desired', 'minimum')
-				if (compilerNode === 'typescript')
+				}
+				if (compilerNode === 'typescript') {
 					targets.push(
 						'ESNext',
 						'ES2018',
@@ -504,6 +506,7 @@ async function getQuestions(state) {
 						'ES5',
 						'ES3'
 					)
+				}
 				return targets
 			},
 			default(opts) {
@@ -511,7 +514,7 @@ async function getQuestions(state) {
 			},
 			when({ compilerNode, compilerBrowser }) {
 				return compilerNode || compilerBrowser
-			}
+			},
 		},
 		{
 			name: 'sourceDirectory',
@@ -521,7 +524,7 @@ async function getQuestions(state) {
 			default: 'source',
 			ignore({ website }) {
 				return website
-			}
+			},
 		},
 		{
 			name: 'mainEntry',
@@ -532,7 +535,7 @@ async function getQuestions(state) {
 			skip: editioned,
 			ignore({ website }) {
 				return website
-			}
+			},
 		},
 		{
 			name: 'browserEntry',
@@ -545,7 +548,7 @@ async function getQuestions(state) {
 			skip: editioned,
 			when({ browser, mainEntry }) {
 				return browser && mainEntry
-			}
+			},
 		},
 		{
 			name: 'testEntry',
@@ -556,7 +559,7 @@ async function getQuestions(state) {
 			skip: editioned,
 			ignore({ website }) {
 				return website
-			}
+			},
 		},
 		{
 			name: 'bin',
@@ -568,7 +571,7 @@ async function getQuestions(state) {
 			},
 			when({ npm }) {
 				return npm
-			}
+			},
 		},
 		{
 			name: 'binEntry',
@@ -581,7 +584,7 @@ async function getQuestions(state) {
 			},
 			when({ bin }) {
 				return bin
-			}
+			},
 		},
 		{
 			name: 'binExecutable',
@@ -596,7 +599,7 @@ async function getQuestions(state) {
 			},
 			when({ bin }) {
 				return bin
-			}
+			},
 		},
 		{
 			name: 'ltsNodeOnly',
@@ -608,7 +611,7 @@ async function getQuestions(state) {
 			},
 			skip({ website, ltsNodeOnly }) {
 				return website || alreadyLTS || ltsNodeOnly
-			}
+			},
 		},
 		{
 			name: 'desiredNodeVersion',
@@ -620,7 +623,7 @@ async function getQuestions(state) {
 			validate: isNumber,
 			skip({ ltsNodeOnly, nowWebsite }) {
 				return ltsNodeOnly || nowWebsite
-			}
+			},
 		},
 		{
 			name: 'minimumSupportNodeVersion',
@@ -637,7 +640,7 @@ async function getQuestions(state) {
 			},
 			skip({ ltsNodeOnly, website }) {
 				return ltsNodeOnly || website
-			}
+			},
 		},
 		{
 			name: 'maximumSupportNodeVersion',
@@ -652,7 +655,7 @@ async function getQuestions(state) {
 			},
 			skip({ ltsNodeOnly, website }) {
 				return ltsNodeOnly || website
-			}
+			},
 		},
 		{
 			name: 'minimumTestNodeVersion',
@@ -663,7 +666,7 @@ async function getQuestions(state) {
 				website,
 				desiredNodeVersion,
 				minimumSupportNodeVersion,
-				language
+				language,
 			}) {
 				return website || language === 'json'
 					? desiredNodeVersion
@@ -675,7 +678,7 @@ async function getQuestions(state) {
 			},
 			skip({ ltsNodeOnly, website, language }) {
 				return ltsNodeOnly || website || language === 'json'
-			}
+			},
 		},
 		{
 			name: 'maximumTestNodeVersion',
@@ -686,7 +689,7 @@ async function getQuestions(state) {
 				website,
 				desiredNodeVersion,
 				maximumSupportNodeVersion,
-				language
+				language,
 			}) {
 				return website || language === 'json'
 					? desiredNodeVersion
@@ -696,7 +699,7 @@ async function getQuestions(state) {
 			},
 			skip({ ltsNodeOnly, website, language }) {
 				return ltsNodeOnly || website || language === 'json'
-			}
+			},
 		},
 		{
 			name: 'upgradeAllDependencies',
@@ -705,7 +708,7 @@ async function getQuestions(state) {
 			default: true,
 			ignore({ nowWebsite }) {
 				return nowWebsite
-			}
+			},
 		},
 		{
 			name: 'kava',
@@ -714,7 +717,7 @@ async function getQuestions(state) {
 			default: true,
 			ignore({ website, nowWebsite, docpadPlugin }) {
 				return docpadPlugin || (website && !nowWebsite)
-			}
+			},
 		},
 		{
 			name: 'docs',
@@ -728,14 +731,14 @@ async function getQuestions(state) {
 			},
 			ignore({ website }) {
 				return website
-			}
+			},
 		},
 		{
 			name: 'travisUpdateEnvironment',
 			type: 'confirm',
 			message:
 				'Would you like to update the remote travis environment variables?',
-			default: true
+			default: true,
 		},
 		{
 			name: 'deployBranch',
@@ -745,7 +748,7 @@ async function getQuestions(state) {
 			default: (await getGitBranch(cwd)) || 'master',
 			when({ travisWebsite }) {
 				return travisWebsite
-			}
+			},
 		},
 		{
 			name: 'surgeLogin',
@@ -756,7 +759,7 @@ async function getQuestions(state) {
 			skip: defaults.surgeLogin,
 			when({ docs, website, travisUpdateEnvironment }) {
 				return travisUpdateEnvironment && (docs || website === 'surge')
-			}
+			},
 		},
 		{
 			name: 'surgeToken',
@@ -768,7 +771,7 @@ async function getQuestions(state) {
 			skip: defaults.surgeToken,
 			when({ surgeLogin }) {
 				return surgeLogin
-			}
+			},
 		},
 		{
 			name: 'npmAuthToken',
@@ -780,7 +783,7 @@ async function getQuestions(state) {
 			skip: defaults.npmAuthToken,
 			when({ npm }) {
 				return npm
-			}
+			},
 		},
 		{
 			name: 'travisEmail',
@@ -792,8 +795,8 @@ async function getQuestions(state) {
 			},
 			when({ travisUpdateEnvironment }) {
 				return travisUpdateEnvironment
-			}
-		}
+			},
+		},
 	]
 }
 
@@ -807,7 +810,7 @@ async function getAnswers(state) {
 	// Apply
 	state.answers = answers
 	answers.targets = answers.targets || []
-	answers.keywords = new Set(answers.keywords.split(/,\s*/))
+	answers.keywords = new Set((answers.keywords || '').split(/,\s*/))
 
 	// Return
 	return answers

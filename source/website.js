@@ -41,7 +41,7 @@ async function updateWebsite(state) {
 		const now = Object.assign(nowData || {}, {
 			version: 2,
 			name: answers.nowName,
-			alias: parseNowAliases(answers.nowAliases)
+			alias: parseNowAliases(answers.nowAliases),
 		})
 		// trim version 1 fields
 		if (nowData && nowData.version !== 2) {
@@ -55,7 +55,7 @@ async function updateWebsite(state) {
 			if (!now.routes)
 				now.routes = [
 					{ src: '/favicon.ico', dest: '/static/favicon.ico' },
-					{ src: '/robots.txt', dest: '/static/robots.txt' }
+					{ src: '/robots.txt', dest: '/static/robots.txt' },
 				]
 			if (!now.builds)
 				now.builds = [{ src: 'next.config.js', use: '@now/next' }]
@@ -64,7 +64,7 @@ async function updateWebsite(state) {
 		if (answers.staticWebsite) {
 			if (!now.builds)
 				now.builds = [
-					{ src: `${answers.staticDirectory}/**`, use: '@now/static' }
+					{ src: `${answers.staticDirectory}/**`, use: '@now/static' },
 				]
 		}
 		// export
@@ -76,5 +76,5 @@ module.exports = {
 	readWebsite,
 	getNowAliases,
 	getNowName,
-	updateWebsite
+	updateWebsite,
 }

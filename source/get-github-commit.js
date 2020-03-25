@@ -5,7 +5,7 @@
 const { warn, fatal } = require('./log')
 const {
 	default: githubQueryString,
-	redact: redactGithubAuthQueryString
+	redact: redactGithubAuthQueryString,
 } = require('githubauthquerystring')
 const ghapi = process.env.GITHUB_API || 'https://api.github.com'
 
@@ -17,8 +17,8 @@ async function getGithubCommit(slug, fallback = 'master') {
 	try {
 		const response = await fetch(url, {
 			headers: {
-				Accept: 'application/vnd.github.v3+json'
-			}
+				Accept: 'application/vnd.github.v3+json',
+			},
 		})
 		if (response.status < 200 || response.status >= 300) {
 			throw await response.text()

@@ -12,7 +12,7 @@ const {
 	rmdir,
 	spawn,
 	unlink,
-	write
+	write,
 } = require('./fs')
 const { readPackage, writePackage } = require('./package')
 const { versionComparator } = require('./versions')
@@ -28,13 +28,13 @@ const commands = {
 		install: ['yarn', 'install', '--ignore-engines'],
 		uninstall: ['yarn', 'remove', '--ignore-engines'],
 		pnp: ['yarn', '--pnp', '--ignore-engines'],
-		disablepnp: ['yarn', '--disable-pnp', '--ignore-engines']
+		disablepnp: ['yarn', '--disable-pnp', '--ignore-engines'],
 	},
 	npm: {
 		add: ['npm', 'install'],
 		install: ['npm', 'install'],
-		uninstall: ['npm', 'uninstall']
-	}
+		uninstall: ['npm', 'uninstall'],
+	},
 }
 
 // Helpers
@@ -80,14 +80,11 @@ function nodeMajorVersion(value) {
 		return null
 	}
 	return value.startsWith('0')
-		? value
-				.split('.')
-				.slice(0, 2)
-				.join('.')
+		? value.split('.').slice(0, 2).join('.')
 		: value.split('.')[0]
 }
 function nodeMajorVersions(array) {
-	return array.map(version => nodeMajorVersion(version))
+	return array.map((version) => nodeMajorVersion(version))
 }
 function importOrRequire(left, right, modules = true) {
 	return modules
@@ -118,7 +115,7 @@ async function updateEngines(state) {
 		const versions = new Versions(nodeVersions)
 		await versions.load()
 		await versions.install()
-		const numbers = versions.map(version => version.version)
+		const numbers = versions.map((version) => version.version)
 		await versions.test(`${answers.packageManager} test`, serial)
 		const passed = versions.json.passed || []
 		if (passed.length === 0) {
@@ -133,7 +130,9 @@ async function updateEngines(state) {
 		}
 
 		// add the versions to the list
-		passed.forEach(version => allPassedVersions.add(nodeMajorVersion(version)))
+		passed.forEach((version) =>
+			allPassedVersions.add(nodeMajorVersion(version))
+		)
 
 		// log
 		status(
@@ -175,17 +174,17 @@ async function updateEngines(state) {
 			// install and test the versions
 			await versions.load()
 			await versions.install()
-			const numbers = versions.map(version => version.version)
+			const numbers = versions.map((version) => version.version)
 			await versions.test(test, serial)
 			const passed = versions.json.passed || []
 			const failed = versions.json.failed || []
 
 			// update the sets
 			const passedUnique = passed.filter(
-				version => allPassedVersions.has(nodeMajorVersion(version)) === false
+				(version) => allPassedVersions.has(nodeMajorVersion(version)) === false
 			)
 			const failedUnique = failed.filter(
-				version => allPassedVersions.has(nodeMajorVersion(version)) === false
+				(version) => allPassedVersions.has(nodeMajorVersion(version)) === false
 			)
 			const trim = passedUnique.length === 0
 			const range = nodeMajorVersions(passed).join(' || ')
@@ -201,7 +200,7 @@ async function updateEngines(state) {
 					`failed:      ${failed.join(', ')}`,
 					`.unique:     ${failedUnique.join(', ')}`,
 					`range:       ${range}`,
-					`trim:        ${trim ? 'yes' : 'no'}`
+					`trim:        ${trim ? 'yes' : 'no'}`,
 				].join('\n')
 			)
 
@@ -219,7 +218,7 @@ async function updateEngines(state) {
 			edition.engines.node = range
 
 			// add the unique versions to the list
-			passedUnique.forEach(version =>
+			passedUnique.forEach((version) =>
 				allPassedVersions.add(nodeMajorVersion(version))
 			)
 
@@ -284,7 +283,7 @@ async function scaffoldEditions(state) {
 		nodeEdition,
 		activeEditions,
 		packageData,
-		answers
+		answers,
 	} = state
 
 	// handle
@@ -295,7 +294,7 @@ async function scaffoldEditions(state) {
 		// scaffold edition directories
 		await spawn(
 			['mkdir', '-p'].concat(
-				activeEditions.map(edition => edition.directory || '.')
+				activeEditions.map((edition) => edition.directory || '.')
 			)
 		)
 
@@ -319,7 +318,7 @@ async function scaffoldEditions(state) {
 							"\tget name () { return 'myplugin' }",
 							'\tget initialConfig () { return {} }',
 							'}',
-							''
+							'',
 						].join('\n')
 					)
 				}
@@ -330,7 +329,7 @@ async function scaffoldEditions(state) {
 						[
 							useStrict(answers.sourceModule),
 							exportOrExports("'@todo'", answers.sourceModule),
-							''
+							'',
 						].join('\n')
 					)
 			}
@@ -362,7 +361,7 @@ async function scaffoldEditions(state) {
 								"\t\tconsole.log('no tests yet')",
 								'\t})',
 								'})',
-								''
+								'',
 							].join('\n')
 						)
 					} else {
@@ -371,7 +370,7 @@ async function scaffoldEditions(state) {
 							[
 								useStrict(answers.sourceModule),
 								exportOrExports("'@todo'", answers.sourceModule),
-								''
+								'',
 							].join('\n')
 						)
 					}
@@ -389,7 +388,7 @@ async function scaffoldEditions(state) {
 					'',
 					`/** @type {typeof import("./${sourceEdition.mainPath}") } */`,
 					"module.exports = require('editions').requirePackage(__dirname, require)",
-					''
+					'',
 				].join('\n')
 			)
 			packageData.main = 'index.js'
@@ -403,7 +402,7 @@ async function scaffoldEditions(state) {
 						'',
 						`/** @type {typeof import("./${sourceEdition.testPath}") } */`,
 						`module.exports = require('editions').requirePackage(__dirname, require, '${nodeEdition.test}')`,
-						''
+						'',
 					].join('\n')
 				)
 				state.test = 'test.js'
@@ -419,7 +418,7 @@ async function scaffoldEditions(state) {
 						'',
 						`/** @type {typeof import("./${sourceEdition.binPath}") } */`,
 						`module.exports = require('editions').requirePackage(__dirname, require, '${nodeEdition.bin}')`,
-						''
+						'',
 					].join('\n')
 				)
 				packageData.bin = binEntry(answers, 'bin.js')
@@ -455,7 +454,7 @@ async function scaffoldEditions(state) {
 							'',
 							`/** @type {typeof import("./${sourceEdition.binPath}") } */`,
 							`module.exports = require('./${nodeEdition.binPath}')`,
-							''
+							'',
 						].join('\n')
 					)
 					packageData.bin = binEntry(answers, 'bin.js')
@@ -581,7 +580,7 @@ async function updateRuntime(state) {
 				? true
 				: answers.languages === 'coffeescript'
 				? 'dev'
-				: false
+				: false,
 	}
 
 	// Override the versions that are installed if these dependencies are needed
@@ -589,7 +588,7 @@ async function updateRuntime(state) {
 		next: 'canary',
 		now: 'canary',
 		'@zeit/next-typescript': 'canary',
-		'@zeit/next-mdx': 'canary'
+		'@zeit/next-mdx': 'canary',
 	}
 
 	// b/c compat
@@ -602,12 +601,12 @@ async function updateRuntime(state) {
 		taskgroup: 5,
 		'assert-helpers': 4,
 		'cli-spinners': 1,
-		'lazy-require': 2
+		'lazy-require': 2,
 	}
 	if (answers.minimumSupportNodeVersion < 8) {
-		Object.keys(compat).forEach(key => (versions[key] = compat[key]))
+		Object.keys(compat).forEach((key) => (versions[key] = compat[key]))
 	} else {
-		Object.keys(compat).forEach(key => (versions[key] = 'latest'))
+		Object.keys(compat).forEach((key) => (versions[key] = 'latest'))
 	}
 	if (answers.name === 'taskgroup') {
 		versions.ambi = 3
@@ -620,18 +619,18 @@ async function updateRuntime(state) {
 		'our:meta:projectz':
 			packageData.name === 'projectz' ? 'npx . compile' : 'projectz compile',
 		'our:test': [[...run, 'our:verify'], test]
-			.map(i => i.join(' '))
+			.map((i) => i.join(' '))
 			.join(' && '),
 		'our:release:prepare': [
 			[...run, 'our:clean'],
 			[...run, 'our:compile'],
 			[...run, 'our:test'],
-			[...run, 'our:meta']
+			[...run, 'our:meta'],
 		]
-			.map(i => i.join(' '))
+			.map((i) => i.join(' '))
 			.join(' && '),
 		'our:release:push': 'git push origin master && git push origin --tags',
-		'our:release': [...run, 'our:release:push'].join(' ')
+		'our:release': [...run, 'our:release:push'].join(' '),
 	}
 
 	// add test script
@@ -653,10 +652,10 @@ async function updateRuntime(state) {
 				[...run, 'our:release:check-changelog'],
 				[...run, 'our:release:check-dirty'],
 				[...run, 'our:release:tag'],
-				[...run, 'our:release:push']
+				[...run, 'our:release:push'],
 			]
-				.map(i => i.join(' '))
-				.join(' && ')
+				.map((i) => i.join(' '))
+				.join(' && '),
 		})
 
 	// docpad plugin
@@ -688,15 +687,15 @@ async function updateRuntime(state) {
 			state.scripts['our:verify:stylelint'] = [
 				'stylelint',
 				'--fix',
-				`'${sourcePath}/**/*.css'`
+				`'${sourcePath}/**/*.css'`,
 			].join(' ')
 			packageData.stylelint = {
 				extends: [
 					'stylelint-config-standard',
-					'stylelint-prettier/recommended'
+					'stylelint-prettier/recommended',
 				],
 				plugins: ['stylelint-prettier'],
-				ignoreFiles: ['**/vendor/*.css', 'node_modules']
+				ignoreFiles: ['**/vendor/*.css', 'node_modules'],
 			}
 		}
 	}
@@ -731,7 +730,7 @@ async function updateRuntime(state) {
 		}
 		packageData.prettier = {
 			semi: false,
-			singleQuote: true
+			singleQuote: true,
 		}
 		state.scripts['our:verify:eslint'] = [
 			'eslint',
@@ -740,15 +739,13 @@ async function updateRuntime(state) {
 			"--ignore-pattern '**/vendor/'",
 			"--ignore-pattern '**/node_modules/'",
 			'--ext .mjs,.js,.jsx,.ts,.tsx',
-			sourcePath
+			sourcePath,
 		].join(' ')
 	}
 
 	// prettier
 	if (packages.prettier) {
-		state.scripts[
-			'our:verify:prettier'
-		] = `prettier --write ${sourcePath}/** *.md`
+		state.scripts['our:verify:prettier'] = `prettier --write .`
 	}
 
 	// typescript
@@ -770,14 +767,16 @@ async function updateRuntime(state) {
 		sourceEdition &&
 			pathUtil.join(sourceEdition.directory, answers.mainEntry + '.d.ts'),
 		// e.g. source/index.ts
-		answers.language === 'typescript' && sourceEdition && sourceEdition.mainPath
-	].filter(v => v)
+		answers.language === 'typescript' &&
+			sourceEdition &&
+			sourceEdition.mainPath,
+	].filter((v) => v)
 	// fetch their existing status and convert back into the original location
 	const typePathsExisting = await Promise.all(
-		typePaths.map(v => exists(v).then(e => e && v))
+		typePaths.map((v) => exists(v).then((e) => e && v))
 	)
 	// find the first location that exists
-	const typePath = typePathsExisting.find(v => v)
+	const typePath = typePathsExisting.find((v) => v)
 	// and if exists, apply to types
 	if (typePath) {
 		packageData.types = typePath
@@ -811,7 +810,7 @@ async function updateRuntime(state) {
 		}
 
 		// Add the documentation engines
-		tools.forEach(function(tool) {
+		tools.forEach(function (tool) {
 			const out = tools.length === 1 ? './docs' : `./docs/${tool}`
 			packages[tool] = 'dev'
 			const parts = [`rm -Rf ${out}`, '&&']
@@ -875,7 +874,7 @@ async function updateRuntime(state) {
 				default:
 					throw new Error('unknown documentation tool')
 			}
-			state.scripts[`our:meta:docs:${tool}`] = parts.filter(v => v).join(' ')
+			state.scripts[`our:meta:docs:${tool}`] = parts.filter((v) => v).join(' ')
 		})
 	}
 
@@ -914,10 +913,10 @@ async function updateRuntime(state) {
 					'our:compile:next': 'next build',
 					start: [
 						[...run, 'our:verify'],
-						['next', 'dev']
+						['next', 'dev'],
 					]
-						.map(i => i.join(' '))
-						.join(' && ')
+						.map((i) => i.join(' '))
+						.join(' && '),
 				})
 				packages.next = 'dev'
 				if (answers.languages.includes('typescript')) {
@@ -1018,13 +1017,13 @@ async function updateRuntime(state) {
 
 	// handle the dependencies
 	const addDependencies = Object.keys(packages).filter(
-		key => packages[key] === true
+		(key) => packages[key] === true
 	)
 	const addDevDependencies = Object.keys(packages).filter(
-		key => packages[key] === 'dev'
+		(key) => packages[key] === 'dev'
 	)
 	const removeDependencies = Object.keys(packages).filter(
-		key =>
+		(key) =>
 			packages[key] === false &&
 			(packageData.dependencies[key] || packageData.devDependencies[key])
 	)
@@ -1035,13 +1034,13 @@ async function updateRuntime(state) {
 	}
 	function latestDependencies(array) {
 		return array
-			.filter(item => !isExact(versions[item]))
-			.map(item => `${item}@latest`)
+			.filter((item) => !isExact(versions[item]))
+			.map((item) => `${item}@latest`)
 	}
 	function exactDependencies(array) {
 		return array
-			.filter(item => isExact(versions[item]))
-			.map(item => `${item}@${versions[item]}`)
+			.filter((item) => isExact(versions[item]))
+			.map((item) => `${item}@${versions[item]}`)
 	}
 	function uninstallRaw(dependencies) {
 		if (!dependencies.length) return
@@ -1051,7 +1050,7 @@ async function updateRuntime(state) {
 			// yarn can only uninstall installed deps
 			// https://github.com/yarnpkg/yarn/issues/6919
 			dependencies = dependencies.filter(
-				dependency =>
+				(dependency) =>
 					packageData.dependencies[dependency] ||
 					packageData.devDependencies[dependency]
 			)
@@ -1119,10 +1118,10 @@ async function updateRuntime(state) {
 			'next.config.js',
 			'npm-debug.log',
 			'tsconfig.json',
-			'yarn-error.log'
+			'yarn-error.log',
 		]
-			.filter(i => i)
-			.map(file => unlink(file))
+			.filter((i) => i)
+			.map((file) => unlink(file))
 	)
 	status('...removed old files')
 
@@ -1161,7 +1160,7 @@ async function updateRuntime(state) {
 						moduleResolution: 'node',
 						sourceMap: true,
 						strict: true,
-						target: 'esnext'
+						target: 'esnext',
 					},
 					include: uniq([
 						'client',
@@ -1169,8 +1168,8 @@ async function updateRuntime(state) {
 						'scripts',
 						'server',
 						'shared',
-						answers.staticDirectory
-					])
+						answers.staticDirectory,
+					]),
 			  }
 			: {
 					compilerOptions: {
@@ -1180,9 +1179,9 @@ async function updateRuntime(state) {
 						maxNodeModuleJsDepth: 5,
 						moduleResolution: 'node',
 						strict: true,
-						target: 'esnext'
+						target: 'esnext',
 					},
-					include: [answers.sourceDirectory]
+					include: [answers.sourceDirectory],
 			  }
 		await write('tsconfig.json', JSON.stringify(tsconfig, null, '  ') + '\n')
 		status('...wrote tsconfig file')
@@ -1196,9 +1195,9 @@ async function updateRuntime(state) {
 					mdx ? `const withMDX = require('@zeit/next-mdx')` : '',
 					`module.exports = ${mdx ? 'withMDX(' : ''}{`,
 					`	target: 'serverless'`,
-					`}${mdx ? ')' : ''}`
+					`}${mdx ? ')' : ''}`,
 				]
-					.filter(i => i)
+					.filter((i) => i)
 					.join('\n') + '\n'
 			await write('next.config.js', next)
 		}

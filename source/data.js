@@ -9,5 +9,5 @@ module.exports = {
 	travisEmail: process.env.TRAVIS_NOTIFICATION_EMAIL,
 	surgeLogin: process.env.SURGE_LOGIN,
 	surgeToken: process.env.SURGE_TOKEN,
-	nowToken: process.env.NOW_TOKEN
+	nowToken: process.env.NOW_TOKEN,
 }

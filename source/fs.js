@@ -20,8 +20,8 @@ function exists(file) {
 		console.error({ err, cwd, file })
 		return Promise.resolve(false)
 	}
-	return new Promise(function(resolve) {
-		fsUtil.exists(file, function(exists) {
+	return new Promise(function (resolve) {
+		fsUtil.exists(file, function (exists) {
 			resolve(exists)
 		})
 	})
@@ -29,8 +29,8 @@ function exists(file) {
 
 function unlink(file) {
 	file = pathUtil.resolve(cwd, file)
-	return new Promise(function(resolve, reject) {
-		fsUtil.unlink(file, function(error) {
+	return new Promise(function (resolve, reject) {
+		fsUtil.unlink(file, function (error) {
 			if (error) {
 				if (error.message && error.message.includes('ENOENT')) return resolve()
 				return reject(error)
@@ -42,8 +42,8 @@ function unlink(file) {
 
 function rmdir(file) {
 	file = pathUtil.resolve(cwd, file)
-	return new Promise(function(resolve, reject) {
-		fsUtil.rmdir(file, { recursive: true }, function(error) {
+	return new Promise(function (resolve, reject) {
+		fsUtil.rmdir(file, { recursive: true }, function (error) {
 			if (error) {
 				if (error.message && error.message.includes('ENOENT')) return resolve()
 				return reject(error)
@@ -55,8 +55,8 @@ function rmdir(file) {
 
 function read(file) {
 	file = pathUtil.resolve(cwd, file)
-	return new Promise(function(resolve, reject) {
-		fsUtil.readFile(file, function(error, data) {
+	return new Promise(function (resolve, reject) {
+		fsUtil.readFile(file, function (error, data) {
 			if (error) return reject(error)
 			return resolve(data)
 		})
@@ -70,8 +70,8 @@ async function contains(file, data) {
 function rename(source, target) {
 	source = pathUtil.resolve(cwd, source)
 	target = pathUtil.resolve(cwd, target)
-	return new Promise(function(resolve, reject) {
-		fsUtil.rename(source, target, function(error) {
+	return new Promise(function (resolve, reject) {
+		fsUtil.rename(source, target, function (error) {
 			if (error) return reject(error)
 			return resolve()
 		})
@@ -80,8 +80,8 @@ function rename(source, target) {
 
 function write(file, data) {
 	file = pathUtil.resolve(cwd, file)
-	return new Promise(function(resolve, reject) {
-		fsUtil.writeFile(file, data, function(error) {
+	return new Promise(function (resolve, reject) {
+		fsUtil.writeFile(file, data, function (error) {
 			if (error) return reject(error)
 			return resolve()
 		})
@@ -102,8 +102,8 @@ function writeYAML(file, data) {
 function spawn(command, opts = {}) {
 	opts.cwd = opts.cwd || cwd
 	opts.stdio = opts.stdio == null ? 'inherit' : opts.stdio
-	return new Promise(function(resolve, reject) {
-		safeps.spawn(command, opts, function(err, stdout) {
+	return new Promise(function (resolve, reject) {
+		safeps.spawn(command, opts, function (err, stdout) {
 			if (err)
 				return reject(new Errlop(`spawn failed: ${command.join(' ')}`, err))
 			return resolve(stdout)
@@ -113,8 +113,8 @@ function spawn(command, opts = {}) {
 
 function exec(command, opts = {}) {
 	opts.cwd = opts.cwd || cwd
-	return new Promise(function(resolve, reject) {
-		safeps.exec(command, opts, function(err, stdout) {
+	return new Promise(function (resolve, reject) {
+		safeps.exec(command, opts, function (err, stdout) {
 			if (err) return reject(new Errlop(`exec failed: ${command}`, err))
 			return resolve(stdout)
 		})
@@ -148,5 +148,5 @@ module.exports = {
 	spawn,
 	unlink,
 	write,
-	writeYAML
+	writeYAML,
 }

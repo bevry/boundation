@@ -36,18 +36,18 @@ async function updateTravis(state) {
 		node_js: nodeVersions,
 		matrix: {
 			fast_finish: true,
-			allow_failures: unsupportedNodeVersions.map(version => ({
-				node_js: version
-			}))
+			allow_failures: unsupportedNodeVersions.map((version) => ({
+				node_js: version,
+			})),
 		},
 		cache: answers.packageManager,
 		install: [
-			`eval "$(curl ${curlFlags} https://raw.githubusercontent.com/bevry/awesome-travis/${awesomeTravisCommit}/scripts/node-install.bash)"`
+			`eval "$(curl ${curlFlags} https://raw.githubusercontent.com/bevry/awesome-travis/${awesomeTravisCommit}/scripts/node-install.bash)"`,
 		],
 		before_script: [
-			`eval "$(curl ${curlFlags} https://raw.githubusercontent.com/bevry/awesome-travis/${awesomeTravisCommit}/scripts/node-verify.bash)"`
+			`eval "$(curl ${curlFlags} https://raw.githubusercontent.com/bevry/awesome-travis/${awesomeTravisCommit}/scripts/node-verify.bash)"`,
 		],
-		after_success: []
+		after_success: [],
 	}
 
 	// default to travis-ci.com
@@ -70,13 +70,13 @@ async function updateTravis(state) {
 		if (state.travisTLD) {
 			spawn(['travis', 'env', 'clear', '--force', '--org', ...flags], {
 				stdio: false,
-				output: false
+				output: false,
 			})
 				.catch(noop)
 				.finally(() =>
 					spawn(['travis', 'disable', '--org', ...flags], {
 						stdio: false,
-						output: false
+						output: false,
 					}).catch(noop)
 				)
 		}
@@ -101,7 +101,7 @@ async function updateTravis(state) {
 			'DESIRED_NODE_VERSION',
 			answers.desiredNodeVersion,
 			'--public',
-			...flags
+			...flags,
 		])
 		if (answers.deployBranch) {
 			await spawn([
@@ -110,7 +110,7 @@ async function updateTravis(state) {
 				'set',
 				'DEPLOY_BRANCH',
 				answers.deployBranch,
-				...flags
+				...flags,
 			])
 		}
 		if (answers.surgeLogin) {
@@ -121,7 +121,7 @@ async function updateTravis(state) {
 				'SURGE_LOGIN',
 				answers.surgeLogin,
 				'--public',
-				...flags
+				...flags,
 			])
 		}
 		if (answers.surgeToken) {
@@ -131,7 +131,7 @@ async function updateTravis(state) {
 				'set',
 				'SURGE_TOKEN',
 				answers.surgeToken,
-				...flags
+				...flags,
 			])
 		}
 	}
@@ -153,7 +153,7 @@ async function updateTravis(state) {
 				'set',
 				'NPM_AUTHTOKEN',
 				answers.npmAuthToken,
-				...flags
+				...flags,
 			])
 			await spawn([
 				'travis',
@@ -162,7 +162,7 @@ async function updateTravis(state) {
 				'NPM_USERNAME',
 				'NPM_PASSWORD',
 				'NPM_EMAIL',
-				...flags
+				...flags,
 			])
 		}
 		await spawn([
@@ -172,7 +172,7 @@ async function updateTravis(state) {
 			'NPM_BRANCH_TAG',
 			'master:next',
 			'--public',
-			...flags
+			...flags,
 		])
 		await spawn([
 			'travis',
@@ -181,7 +181,7 @@ async function updateTravis(state) {
 			'GITHUB_API',
 			'https://bevry.me/api/github',
 			'--public',
-			...flags
+			...flags,
 		])
 		travis.after_success.push(
 			`eval "$(curl ${curlFlags} https://raw.githubusercontent.com/bevry/awesome-travis/${awesomeTravisCommit}/scripts/node-publish.bash)"`
@@ -199,7 +199,7 @@ async function updateTravis(state) {
 
 	// trim empty fields to prevent travis errors like:
 	// travis_run_after_success: command not found
-	Object.keys(travis).forEach(function(key) {
+	Object.keys(travis).forEach(function (key) {
 		const value = travis[key]
 		if (Array.isArray(value) && value.length === 0) {
 			delete travis[key]
@@ -222,7 +222,7 @@ async function updateTravis(state) {
 			answers.travisEmail,
 			'--add',
 			'notifications.email.recipients',
-			...flags
+			...flags,
 		])
 	}
 
