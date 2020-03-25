@@ -1,3 +1,4 @@
+version: ~> 1.0
 sudo: false
 language: node_js
 node_js:
@@ -7,12 +8,14 @@ matrix:
   allow_failures: []
 cache: npm
 install:
-  - eval "$(curl -fsSL https://raw.githubusercontent.com/bevry/awesome-travis/c91c9d5eef34ecb0e92029667fd5052640225fa3/scripts/node-install.bash)"
+  - >-
+    eval "$(curl -fsSL
+    https://raw.githubusercontent.com/bevry/awesome-travis/c91c9d5eef34ecb0e92029667fd5052640225fa3/scripts/node-install.bash)"
 before_script:
-  - eval "$(curl -fsSL https://raw.githubusercontent.com/bevry/awesome-travis/c91c9d5eef34ecb0e92029667fd5052640225fa3/scripts/node-verify.bash)"
+  - >-
+    eval "$(curl -fsSL
+    https://raw.githubusercontent.com/bevry/awesome-travis/c91c9d5eef34ecb0e92029667fd5052640225fa3/scripts/node-verify.bash)"
 after_success:
-  - eval "$(curl -fsSL https://raw.githubusercontent.com/bevry/awesome-travis/c91c9d5eef34ecb0e92029667fd5052640225fa3/scripts/node-publish.bash)"
-notifications:
-  email:
-    recipients:
-      secure: xSIpqljOwML8+zGMx+hm9pl960+rNhUV+E8XKKIrcOkRfXlCW1NC8tLfMsN34Ot/W5X09YvlMcrovb2DHmIOcUaXdkxKnjATwrZNXrb637hrrlhdM4yIWywB1ZRw3EuuRbhLuDerRMPHW0KvUgIN5TsMMYYH4PYELBXT/8ReJNxzG5IUNsF1tiGqaZ9X26puBgjDy02jxuJKT3aDq1/xn+RUDtcMEgZqcn/STHvvpi+G6HiE8RjnaOOVO2qD0VcxNqu22OrWsr3NJLIZ83xb40h1GjxtMMoAsOBKSNbVfK/TfDaEcv2BZzurABohZ4pjvrzmnkVgfPPZzYjNUTd/4xgCMI7l3blNxedEcsa4acUTvJYjGb8Tf0Lx+uvd2mgMrrrqz5oL9jkYi/NyQQr8y86IuyJti0V5A10z81B7rSjsLnpIxleYbmIi5AESCJ4K8dZMGX4ERzobLCg1U97PzAvSLx3aB1Z22wZYIOJGv5pdrOV4cd+JViIUnCTjPRpWRZlkUB8lM8648ib+ZgUTBaT8bqTrEfBK9RTVRhyW4sNm9zHAbbpV4hHU2BozXT1K3CGqmNwM4xm/Iq35bbS8swZlwidulNBMrWOWrrlKviW73i9H8ZM+6r6v/vp0DoIDKUle5j37n17cD8n/wDxkYlwx5fdKB17XLbXra6FS/5Q=
+  - >-
+    eval "$(curl -fsSL
+    https://raw.githubusercontent.com/bevry/awesome-travis/c91c9d5eef34ecb0e92029667fd5052640225fa3/scripts/node-publish.bash)"

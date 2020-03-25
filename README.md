@@ -4,6 +4,7 @@
 
 <!-- /TITLE -->
 
+
 <!-- BADGES/ -->
 
 <span class="badge-travisci"><a href="http://travis-ci.com/bevry/boundation" title="Check this project's build status on TravisCI"><img src="https://img.shields.io/travis/com/bevry/boundation/master.svg" alt="Travis CI Build Status" /></a></span>
@@ -24,11 +25,13 @@
 
 <!-- /BADGES -->
 
+
 <!-- DESCRIPTION/ -->
 
 Automatic scaffolding and upgrading of your JavaScript ecosystem projects using Bevry's best practices
 
 <!-- /DESCRIPTION -->
+
 
 ## Usage
 
@@ -80,7 +83,6 @@ secret env GITHUB_CLIENT_ID GITHUB_CLIENT_SECRET NPM_AUTHTOKEN TRAVIS_NOTIFICATI
 <h2>Install</h2>
 
 <a href="https://npmjs.com" title="npm is a package manager for javascript"><h3>npm</h3></a>
-
 <h4>Install Globally</h4>
 <ul>
 <li>Install: <code>npm install --global boundation</code></li>
@@ -103,6 +105,7 @@ secret env GITHUB_CLIENT_ID GITHUB_CLIENT_SECRET NPM_AUTHTOKEN TRAVIS_NOTIFICATI
 
 <!-- /INSTALL -->
 
+
 <!-- HISTORY/ -->
 
 <h2>History</h2>
@@ -111,6 +114,7 @@ secret env GITHUB_CLIENT_ID GITHUB_CLIENT_SECRET NPM_AUTHTOKEN TRAVIS_NOTIFICATI
 
 <!-- /HISTORY -->
 
+
 <!-- CONTRIBUTE/ -->
 
 <h2>Contribute</h2>
@@ -118,6 +122,7 @@ secret env GITHUB_CLIENT_ID GITHUB_CLIENT_SECRET NPM_AUTHTOKEN TRAVIS_NOTIFICATI
 <a href="https://github.com/bevry/boundation/blob/master/CONTRIBUTING.md#files">Discover how you can contribute by heading on over to the <code>CONTRIBUTING.md</code> file.</a>
 
 <!-- /CONTRIBUTE -->
+
 
 <!-- BACKERS/ -->
 
@@ -153,6 +158,7 @@ These amazing people have contributed code to this project:
 <a href="https://github.com/bevry/boundation/blob/master/CONTRIBUTING.md#files">Discover how you can contribute by heading on over to the <code>CONTRIBUTING.md</code> file.</a>
 
 <!-- /BACKERS -->
+
 
 <!-- LICENSE/ -->
 
