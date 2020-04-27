@@ -1,5 +1,15 @@
 # History
 
+## v1.42.0 2020 April 27
+
+-   Update with TypeScript ES targets with the latest
+-   TypeScript browser target should be what is currently implemented
+-   API documentation link should not include package scope
+-   Add update-contributors when scaffolded against packages
+-   Latest Next.js and TypeScript conventions
+-   Ensure desired Node.js version is not beyond supported Node.js version
+-   Replace `githubauthquerystring` with `githubauthreq`
+
 ## v1.41.0 2020 March 26
 
 -   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
