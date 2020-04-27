@@ -208,7 +208,7 @@ async function getQuestions(state) {
 		},
 		{
 			name: 'nowName',
-			message: 'For name should be used for the now site?',
+			message: 'What label should be used for the now site?',
 			validate: isSpecified,
 			filter: trim,
 			default: getNowName(nowData) || (await getGitProject()),
@@ -499,6 +499,8 @@ async function getQuestions(state) {
 				if (compilerNode === 'typescript') {
 					targets.push(
 						'ESNext',
+						'ES2020',
+						'ES2019',
 						'ES2018',
 						'ES2017',
 						'ES2016',
@@ -510,6 +512,12 @@ async function getQuestions(state) {
 				return targets
 			},
 			default(opts) {
+				const { compilerNode, compilerBrowser } = opts
+				if (compilerNode === 'typescript') {
+					const targets = ['ESNext', 'ES2020', 'ES2019', 'ES2018']
+					if (compilerBrowser) targets.push('browser')
+					return targets
+				}
 				return this.choices(opts)
 			},
 			when({ compilerNode, compilerBrowser }) {
