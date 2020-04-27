@@ -255,7 +255,7 @@ async function generateEditions(state) {
 						bin: addExtension(answers.binEntry, `js`),
 						tags: ['javascript', answers.sourceModule ? 'import' : 'require'],
 						targets: {
-							es: 'ESNext',
+							es: 'ES' + (new Date().getFullYear() - 1), // typescript browser target, set the previous year
 							esmodules: answers.sourceModule,
 							browsers: answers.browsers,
 						},
