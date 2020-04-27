@@ -2,7 +2,7 @@
 'use strict'
 
 // Local
-const { isBevryOrganisation } = require('./util')
+const { trimOrgName, isBevryOrganisation } = require('./util')
 const { status } = require('./log')
 const {
 	exists,
@@ -138,9 +138,10 @@ async function updateBaseFiles({ answers, packageData }) {
 	status('...downloaded files')
 
 	// write the readme file
-	const newDocumentationLink = `[Complete API Documentation.](http://master.${
+	// trim say `@bevry/update-contributors` to `update-contributors` for API doc links
+	const newDocumentationLink = `[Complete API Documentation.](http://master.${trimOrgName(
 		answers.name
-	}.${answers.organisation}.surge.sh/docs/${
+	)}.${answers.organisation}.surge.sh/docs/${
 		answers.language === 'typescript' ? 'globals.html' : ''
 	})`
 	if ((await exists('README.md')) === false) {

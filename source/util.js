@@ -2,6 +2,11 @@
 
 const { bevryOrganisationsList } = require('./data')
 
+function trimOrgName(str) {
+	if (str[0] === '@') return str.split('/').slice(1).join('/')
+	return str
+}
+
 function has(s = [], i) {
 	// @ts-ignore
 	const check = s.has || s.includes
@@ -90,6 +95,7 @@ function uniq(list) {
 }
 
 module.exports = {
+	trimOrgName,
 	add,
 	addExtension,
 	has,
