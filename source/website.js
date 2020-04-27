@@ -52,13 +52,14 @@ async function updateWebsite(state) {
 		}
 		// next.js builder
 		if (answers.website.includes('next')) {
-			if (!now.routes)
-				now.routes = [
-					{ src: '/favicon.ico', dest: '/static/favicon.ico' },
-					{ src: '/robots.txt', dest: '/static/robots.txt' },
-				]
-			if (!now.builds)
-				now.builds = [{ src: 'next.config.js', use: '@now/next' }]
+			// remove old routes as they are no longer needed due to public directory now existing
+			if (now.routes)
+				now.routes = now.routes.filter(
+					(route) =>
+						['/favicon.ico', '/robots.txt'].includes(route.src) === false
+				)
+			// new format
+			if (!now.builds) now.builds = [{ src: 'package.json', use: '@now/next' }]
 		}
 		// static builder
 		if (answers.staticWebsite) {

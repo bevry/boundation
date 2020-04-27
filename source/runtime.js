@@ -459,14 +459,23 @@ async function scaffoldEditions(state) {
 					)
 					packageData.bin = binEntry(answers, 'bin.js')
 				} else {
-					packageData.bin = binEntry(answers, nodeEdition.binPath)
+					if (nodeEdition) {
+						// check for websites
+						packageData.bin = binEntry(answers, nodeEdition.binPath)
+					}
 					await unlink('bin.js')
 				}
 			} else {
 				await unlink('bin.js')
 			}
-			packageData.main = nodeEdition.mainPath
-			state.test = nodeEdition.testPath
+			if (nodeEdition) {
+				// check for websites
+				packageData.main = nodeEdition.mainPath
+				state.test = nodeEdition.testPath
+			} else {
+				delete packageData.main
+				delete state.test
+			}
 		}
 
 		// browser path
@@ -500,6 +509,7 @@ async function updateRuntime(state) {
 	const mdx = answers.languages.includes('mdx')
 	const run = [answers.packageManager, 'run']
 	const test = [answers.packageManager, 'test']
+	const extension = answers.language === 'typescript' ? '.ts' : '.js'
 
 	// log
 	status('updating runtime...')
@@ -585,10 +595,10 @@ async function updateRuntime(state) {
 
 	// Override the versions that are installed if these dependencies are needed
 	const versions = {
-		next: 'canary',
-		now: 'canary',
-		'@zeit/next-typescript': 'canary',
-		'@zeit/next-mdx': 'canary',
+		// next: 'canary',
+		// now: 'canary',
+		// '@zeit/next-typescript': 'canary',
+		// '@zeit/next-mdx': 'canary',
 	}
 
 	// b/c compat
@@ -1162,20 +1172,27 @@ async function updateRuntime(state) {
 						jsx: 'preserve',
 						lib: ['dom', 'esnext'],
 						maxNodeModuleJsDepth: 5,
-						module: 'commonjs',
+						module: 'esnext',
 						moduleResolution: 'node',
 						sourceMap: true,
 						strict: true,
 						target: 'esnext',
+						// new props
+						skipLibCheck: true,
+						forceConsistentCasingInFileNames: true,
+						noEmit: true,
+						esModuleInterop: true,
+						resolveJsonModule: true,
+						isolatedModules: true,
 					},
 					include: uniq([
-						'client',
+						'components',
 						'pages',
-						'scripts',
-						'server',
-						'shared',
+						'public',
+						'lib',
 						answers.staticDirectory,
 					]),
+					exclude: ['node_modules'],
 			  }
 			: {
 					compilerOptions: {
@@ -1195,8 +1212,11 @@ async function updateRuntime(state) {
 
 	// next mdx website
 	if (answers.website && answers.website.includes('next')) {
+		// add directories
+		await spawn(['mkdir', '-p', 'components', 'pages/api', 'public', 'lib'])
+		// add next.config.js
 		if (!(await exists('next.config.js'))) {
-			const next =
+			const nextConfigContent =
 				[
 					mdx ? `const withMDX = require('@zeit/next-mdx')` : '',
 					`module.exports = ${mdx ? 'withMDX(' : ''}{`,
@@ -1205,7 +1225,19 @@ async function updateRuntime(state) {
 				]
 					.filter((i) => i)
 					.join('\n') + '\n'
-			await write('next.config.js', next)
+			await write('next.config.js', nextConfigContent)
+		}
+		// add index page
+		if (!(await exists(`pages/index${extension}`))) {
+			const indexPageContent =
+				[
+					`import React from 'react'`,
+					`function IndexPage() { return <article>hello</article> }`,
+					`export default IndexPage`,
+				]
+					.filter((i) => i)
+					.join('\n') + '\n'
+			await write(`pages/index${extension}`, indexPageContent)
 		}
 	}
 
