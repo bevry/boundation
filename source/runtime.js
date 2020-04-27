@@ -1006,6 +1006,26 @@ async function updateRuntime(state) {
 		}
 	}
 
+	// githubauthquerystring to githubauthreq
+	if (packageData.dependencies.githubauthquerystring) {
+		packages.githubauthquerystring = false
+		packages.githubauthreq = true
+	}
+
+	// joe to kava
+	if (
+		sourcePath !== '.' &&
+		answers.type === 'package' &&
+		packageData.devDependencies.joe &&
+		packageData.name !== 'kava'
+	) {
+		status('renaming joe to kava...')
+		await exec(
+			`bash -O nullglob -O globstar -c "sed -i '' -e 's/joe/kava/g' ${sourcePath}/**/*.*"`
+		)
+		status('...renamed joe to kava')
+	}
+
 	// remove self
 	packages[packageData.name] = false
 
@@ -1140,20 +1160,6 @@ async function updateRuntime(state) {
 			.map((file) => unlink(file))
 	)
 	status('...removed old files')
-
-	// joe to kava
-	if (
-		sourcePath !== '.' &&
-		answers.type === 'package' &&
-		packageData.devDependencies.joe &&
-		packageData.name !== 'kava'
-	) {
-		status('renaming joe to kava...')
-		await exec(
-			`bash -O nullglob -O globstar -c "sed -i '' -e 's/joe/kava/g' ${sourcePath}/**/*.*"`
-		)
-		status('...renamed joe to kava')
-	}
 
 	// tsconfig
 	if (answers.tsconfig === 'tsconfig.json') {
