@@ -954,6 +954,12 @@ async function updateRuntime(state) {
 
 	// package
 	if (answers.npm) {
+		if (answers.name !== '@bevry/update-contributors') {
+			packages['@bevry/update-contributors'] = 'dev'
+			state.scripts['our:meta:contributors'] = 'update-contributors'
+		} else {
+			state.scripts['our:meta:directory'] = 'npx .'
+		}
 		if (answers.name !== 'valid-directory') {
 			packages['valid-directory'] = 'dev'
 			state.scripts['our:verify:directory'] = 'valid-directory'
