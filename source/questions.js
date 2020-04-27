@@ -812,6 +812,17 @@ async function getAnswers(state) {
 	answers.targets = answers.targets || []
 	answers.keywords = new Set((answers.keywords || '').split(/,\s*/))
 
+	// ensure we don't have a situation where node 14 is about to be released, but we only support node 13 and up
+	if (answers.desiredNodeVersion && answers.maximumSupportNodeVersion) {
+		if (answers.desiredNodeVersion > answers.maximumSupportNodeVersion) {
+			console.log(
+				'constrained desiredNodeVersion to the maximumSupportNodeVersion of',
+				answers.maximumSupportNodeVersion
+			)
+			answers.desiredNodeVersion = answers.maximumSupportNodeVersion
+		}
+	}
+
 	// Return
 	return answers
 }
