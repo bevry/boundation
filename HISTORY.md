@@ -1,5 +1,9 @@
 # History
 
+## v1.42.1 2020 April 27
+
+-   Fix Node 14 being desired but not applied
+
 ## v1.42.0 2020 April 27
 
 -   Update with TypeScript ES targets with the latest
