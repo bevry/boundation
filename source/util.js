@@ -93,8 +93,24 @@ function without(list, blacklist) {
 function uniq(list) {
 	return Array.from(new Set(list.filter((i) => i)).values())
 }
+function hasScript(scripts, name) {
+	return (
+		scripts &&
+		scripts[name] &&
+		scripts[name] !== 'echo no need for this project'
+	)
+}
+function defaultScript(scripts, name) {
+	if (scripts) scripts[name] = 'echo no need for this project'
+}
+function ensureScript(scripts, name) {
+	if (scripts && !scripts[name]) scripts[name] = 'echo no need for this project'
+}
 
 module.exports = {
+	ensureScript,
+	defaultScript,
+	hasScript,
 	trimOrgName,
 	add,
 	addExtension,

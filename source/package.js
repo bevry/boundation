@@ -13,6 +13,7 @@ const {
 	repoToWebsite,
 	repoToOrganisation,
 	without,
+	ensureScript,
 	isBevryOrganisation,
 } = require('./util')
 const { exists, write, parse } = require('./fs')
@@ -482,7 +483,7 @@ function arrangePackage(state) {
 
 	// if the mandatory scripts didn't have anything to merge, then prefill them
 	for (const key of mandatoryScriptsList) {
-		if (!scripts[key]) scripts[key] = 'echo no need for this project'
+		ensureScript(scripts, key)
 	}
 
 	// result

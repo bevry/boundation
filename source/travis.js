@@ -14,11 +14,12 @@ const { writePackage } = require('./package')
 const { status } = require('./log')
 const { getGithubCommit } = require('./get-github-commit')
 const { spawn, readYAML, writeYAML } = require('./fs')
+const { hasScript } = require('./util')
 function noop() {}
 
 // Thing
 async function updateTravis(state) {
-	const { answers, nodeVersions, unsupportedNodeVersions } = state
+	const { answers, nodeVersions, unsupportedNodeVersions, packageData } = state
 
 	// =================================
 	// customise travis
@@ -140,7 +141,7 @@ async function updateTravis(state) {
 			`eval "$(curl ${curlFlags} https://raw.githubusercontent.com/bevry/awesome-travis/${awesomeTravisCommit}/scripts/surge.bash)"`
 		)
 	}
-	if (answers.travisWebsite) {
+	if (answers.travisWebsite || hasScript(packageData.scripts, 'my:deploy')) {
 		travis.after_success.push(
 			`eval "$(curl ${curlFlags} https://raw.githubusercontent.com/bevry/awesome-travis/${awesomeTravisCommit}/scripts/deploy-custom.bash"`
 		)
