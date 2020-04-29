@@ -14,6 +14,7 @@ const {
 	repoToOrganisation,
 	without,
 	ensureScript,
+	defaultDeploy,
 	isBevryOrganisation,
 } = require('./util')
 const { exists, write, parse } = require('./fs')
@@ -513,9 +514,18 @@ async function readPackage(state) {
 	const userScripts = {}
 	if (packageData.scripts) {
 		// deploy to my:deploy
-		if (packageData.scripts.deploy) {
+		if (
+			packageData.scripts.deploy &&
+			packageData.scripts.deploy !== defaultDeploy
+		) {
 			userScripts['my:deploy'] = packageData.scripts.deploy
 			delete packageData.scripts.deploy
+		}
+		if (packageData.scripts['my:deploy']) {
+			packageData.scripts['my:deploy'] = packageData.scripts[
+				'my:deploy'
+			].replace('npm run our:compile && ', '')
+			packageData.scripts.deploy = defaultDeploy
 		}
 
 		// keep my:* scripts, and scripts with no parts

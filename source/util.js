@@ -93,23 +93,20 @@ function without(list, blacklist) {
 function uniq(list) {
 	return Array.from(new Set(list.filter((i) => i)).values())
 }
+
+const defaultScript = 'echo no need for this project'
+const defaultDeploy =
+	'npm run our:compile && npm run our:test && npm run our:deploy'
 function hasScript(scripts, name) {
-	return (
-		scripts &&
-		scripts[name] &&
-		scripts[name] !== 'echo no need for this project'
-	)
-}
-function defaultScript(scripts, name) {
-	if (scripts) scripts[name] = 'echo no need for this project'
+	return scripts && scripts[name] && scripts[name] !== defaultScript
 }
 function ensureScript(scripts, name) {
-	if (scripts && !scripts[name]) scripts[name] = 'echo no need for this project'
+	if (scripts && !scripts[name]) scripts[name] = defaultScript
 }
 
 module.exports = {
+	defaultDeploy,
 	ensureScript,
-	defaultScript,
 	hasScript,
 	trimOrgName,
 	add,
