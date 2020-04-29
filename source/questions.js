@@ -634,11 +634,25 @@ async function getQuestions(state) {
 			},
 		},
 		{
+			name: 'desiredNodeOnly',
+			message: `Only target the desired node version?`,
+			type: 'confirm',
+			default({ website }) {
+				return website
+			},
+			skip({ website }) {
+				return website
+			},
+			when({ desiredNodeVersion }) {
+				return desiredNodeVersion
+			},
+		},
+		{
 			name: 'minimumSupportNodeVersion',
 			message: 'What is the minimum node version for support?',
 			validate: isNumber,
-			default({ ltsNodeOnly, website, desiredNodeVersion }) {
-				return website
+			default({ desiredNodeOnly, ltsNodeOnly, desiredNodeVersion }) {
+				return desiredNodeOnly
 					? desiredNodeVersion
 					: alreadyLTS
 					? minimumSupportNodeVersion
@@ -646,23 +660,23 @@ async function getQuestions(state) {
 					? nodeMinimumLTSVersion
 					: minimumSupportNodeVersion
 			},
-			skip({ ltsNodeOnly, website }) {
-				return ltsNodeOnly || website
+			skip({ desiredNodeOnly, ltsNodeOnly }) {
+				return desiredNodeOnly || ltsNodeOnly
 			},
 		},
 		{
 			name: 'maximumSupportNodeVersion',
 			message: 'What is the maximum node version for support?',
 			validate: isNumber,
-			default({ ltsNodeOnly, website, desiredNodeVersion }) {
-				return website
+			default({ desiredNodeOnly, ltsNodeOnly, desiredNodeVersion }) {
+				return desiredNodeOnly
 					? desiredNodeVersion
 					: ltsNodeOnly
 					? nodeMaximumLTSVersion
 					: maximumSupportNodeVersion
 			},
-			skip({ ltsNodeOnly, website }) {
-				return ltsNodeOnly || website
+			skip({ desiredNodeOnly, ltsNodeOnly }) {
+				return desiredNodeOnly || ltsNodeOnly
 			},
 		},
 		{
@@ -670,13 +684,13 @@ async function getQuestions(state) {
 			message: 'What is the minimum node version for testing?',
 			validate: isNumber,
 			default({
+				desiredNodeOnly,
 				ltsNodeOnly,
-				website,
 				desiredNodeVersion,
 				minimumSupportNodeVersion,
 				language,
 			}) {
-				return website || language === 'json'
+				return desiredNodeOnly || language === 'json'
 					? desiredNodeVersion
 					: alreadyLTS
 					? minimumSupportNodeVersion
@@ -684,8 +698,8 @@ async function getQuestions(state) {
 					? nodeMinimumLTSVersion
 					: minimumSupportNodeVersion
 			},
-			skip({ ltsNodeOnly, website, language }) {
-				return ltsNodeOnly || website || language === 'json'
+			skip({ desiredNodeOnly, ltsNodeOnly, language }) {
+				return desiredNodeOnly || ltsNodeOnly || language === 'json'
 			},
 		},
 		{
@@ -693,20 +707,20 @@ async function getQuestions(state) {
 			message: 'What is the maximum node version for testing?',
 			validate: isNumber,
 			default({
+				desiredNodeOnly,
 				ltsNodeOnly,
-				website,
 				desiredNodeVersion,
 				maximumSupportNodeVersion,
 				language,
 			}) {
-				return website || language === 'json'
+				return desiredNodeOnly || language === 'json'
 					? desiredNodeVersion
 					: ltsNodeOnly
 					? nodeMaximumLTSVersion
 					: maximumSupportNodeVersion
 			},
-			skip({ ltsNodeOnly, website, language }) {
-				return ltsNodeOnly || website || language === 'json'
+			skip({ desiredNodeOnly, ltsNodeOnly, language }) {
+				return desiredNodeOnly || ltsNodeOnly || language === 'json'
 			},
 		},
 		{
