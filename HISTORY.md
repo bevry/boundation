@@ -1,5 +1,13 @@
 # History
 
+## v1.43.0 2020 April 29
+
+-   Add support for web workers, determined by presence of the `worker` keyword
+-   Add `desiredNodeOnly` question
+-   If `my:deploy` exists:
+    -   Use `deploy-custom` travis script
+    -   Use `deploy` script to do the whole shebang
+
 ## v1.42.1 2020 April 27
 
 -   Fix Node 14 being desired but not applied
