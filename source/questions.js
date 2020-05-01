@@ -45,7 +45,7 @@ const {
 	isPackageDocPadPlugin,
 	isPackageJavaScript,
 	isPackageJSON,
-	isPackageModule,
+	isResultModule,
 	isPackageTypeScript,
 	isSourceModule,
 	isYARN,
@@ -73,6 +73,29 @@ async function getQuestions(state) {
 		versionComparator(nodeEngineVersion, nodeMinimumLTSVersion) >= 0
 	return [
 		{
+			name: 'preset',
+			type: 'list',
+			choices: [
+				'node (require)',
+				'node (import)',
+				'node (require) + browser (import)',
+				'node (import) + browser (import)',
+				'browser (import)',
+				'docpad plugin',
+				'cloudflare worker (import)',
+				'website: now: next (import)',
+				'website: now',
+				'static website: now: docpad',
+				'static website: now',
+				'static website: surge',
+				'website: custom',
+				'website: external',
+			],
+			message: 'What preset should we apply for this project?',
+			validate: isSpecified,
+			default: getProjectType(packageData, nowData),
+		},
+		{
 			name: 'name',
 			message: 'What will be the package name?',
 			validate: isSpecified,
@@ -91,9 +114,13 @@ async function getQuestions(state) {
 			message: 'What are some keywords to describe the project?',
 			validate: isSpecified,
 			filter: trim,
-			default: getPackageKeywords(packageData),
-			skip({ keywords }) {
-				return keywords
+			default({ preset }) {
+				const keywords = packageData.keywords || []
+				if (preset.includes('worker')) keywords.push('worker')
+				return keywords.join(', ')
+			},
+			skip() {
+				return (packageData.keywords || []).length
 			},
 		},
 		{
@@ -121,32 +148,19 @@ async function getQuestions(state) {
 				(await getGitOrganisation(cwd)) || getPackageOrganisation(packageData),
 		},
 		{
-			name: 'type',
-			type: 'list',
-			choices: ['package', 'website'],
-			message: 'What type of project will this be?',
-			validate: isSpecified,
-			default: getProjectType(packageData, nowData),
-		},
-		{
+			// auto: sets to the preset if a website
 			name: 'website',
-			type: 'list',
-			choices: [
-				'@now/next',
-				'docpad on @now/static',
-				'@now/static',
-				'now',
-				'surge',
-				'custom',
-				'external',
-			],
-			message: 'What type of website will this be?',
-			default: getWebsiteType(packageData, nowData),
-			when({ type }) {
-				return type === 'website'
+			message: 'What type of website is it?',
+			default({ preset }) {
+				return preset.includes('website') && preset
+			},
+			skip: true,
+			when({ website }) {
+				return website
 			},
 		},
 		{
+			// auto: sets to true if it is a docpad website
 			name: 'docpadWebsite',
 			type: 'confirm',
 			message: 'Will it be a DocPad website?',
@@ -159,6 +173,7 @@ async function getQuestions(state) {
 			},
 		},
 		{
+			// auto: sets to the preset if a static website
 			name: 'staticWebsite',
 			type: 'confirm',
 			message: 'Will it be a static website?',
@@ -195,9 +210,10 @@ async function getQuestions(state) {
 			},
 		},
 		{
+			// auto: sets to whether or not it is a now website
 			name: 'nowWebsite',
 			type: 'confirm',
-			message: 'Will it be a Now by Zeit website?',
+			message: "Will it be deployed to Vercel's Now?",
 			default({ website }) {
 				return Boolean(website && website.includes('now'))
 			},
@@ -230,6 +246,7 @@ async function getQuestions(state) {
 			},
 		},
 		{
+			// auto: sets to whether or not it is a now website
 			name: 'travisWebsite',
 			type: 'confirm',
 			message: 'Will it utilise a travis deploy script?',
@@ -352,10 +369,10 @@ async function getQuestions(state) {
 			},
 		},
 		{
-			name: 'packageModule',
+			name: 'resultModule',
 			type: 'confirm',
-			message: 'Will the compiled code use import for modules?',
-			default: isPackageModule(packageData),
+			message: 'Will the package and compiled code use import for modules?',
+			default: isResultModule(packageData),
 			skip({ sourceModule, website }) {
 				return sourceModule === false || website
 			},
@@ -536,8 +553,7 @@ async function getQuestions(state) {
 		},
 		{
 			name: 'mainEntry',
-			message: 'What is the main entry filename (without extension)?',
-			validate: isSpecified,
+			message: 'What is the main entry filename (without extension), if any?',
 			filter: trim,
 			default: getPackageMainEntry(packageData) || 'index',
 			skip: editioned,
@@ -547,8 +563,8 @@ async function getQuestions(state) {
 		},
 		{
 			name: 'browserEntry',
-			message: 'What is the filename of the browser entry (without extension)?',
-			validate: isSpecified,
+			message:
+				'What is the filename of the browser entry (without extension), if any?',
 			filter: trim,
 			default({ mainEntry }) {
 				return getPackageBrowserEntry(packageData) || mainEntry
@@ -560,8 +576,7 @@ async function getQuestions(state) {
 		},
 		{
 			name: 'testEntry',
-			message: 'What is the test entry filename (without extension)?',
-			validate: isSpecified,
+			message: 'What is the test entry filename (without extension), if any?',
 			filter: trim,
 			default: getPackageTestEntry(packageData) || 'test',
 			skip: editioned,
@@ -570,28 +585,16 @@ async function getQuestions(state) {
 			},
 		},
 		{
-			name: 'bin',
-			message: 'Will there be a binary/executable file?',
-			type: 'confirm',
-			default: Boolean(getPackageBinEntry(packageData)),
-			skip({ bin }) {
-				return bin
-			},
-			when({ npm }) {
-				return npm
-			},
-		},
-		{
 			name: 'binEntry',
-			message: 'What is the filename of the bin entry (without extension)?',
-			validate: isSpecified,
+			message:
+				'What is the filename of the bin entry (without extension), if any?',
 			filter: trim,
 			default: getPackageBinEntry(packageData) || 'bin',
 			skip() {
 				return getPackageBinEntry(packageData)
 			},
-			when({ bin }) {
-				return bin
+			when({ npm }) {
+				return npm
 			},
 		},
 		{
@@ -737,8 +740,8 @@ async function getQuestions(state) {
 			type: 'confirm',
 			message: "Use Bevry's testing tools?",
 			default: true,
-			ignore({ website, nowWebsite, docpadPlugin }) {
-				return docpadPlugin || (website && !nowWebsite)
+			ignore({ website, nowWebsite, docpadPlugin, testEntry }) {
+				return docpadPlugin || (website && !nowWebsite) || !testEntry
 			},
 		},
 		{

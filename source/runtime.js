@@ -1033,7 +1033,7 @@ async function updateRuntime(state) {
 	// if edition autoloader, or website, then use commonjs regardless
 	// as otherwise node scripts will fail
 	packageData.type =
-		answers.packageModule && !state.useEditionAutoloader ? 'module' : 'commonjs'
+		answers.resultModule && !state.useEditionAutoloader ? 'module' : 'commonjs'
 
 	// remove old scripts
 	delete state.scripts['our:setup:docpad']

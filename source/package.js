@@ -98,7 +98,7 @@ function isSourceModule(packageData) {
 	return hasSyntax(packageData, 'import')
 }
 
-function isPackageModule(packageData) {
+function isResultModule(packageData) {
 	return packageData.type === 'module'
 }
 
@@ -730,7 +730,7 @@ module.exports = {
 	isPackageDocPadPlugin,
 	isPackageJavaScript,
 	isPackageJSON,
-	isPackageModule,
+	isResultModule,
 	isPackageTypeScript,
 	isSourceModule,
 	isYARN,

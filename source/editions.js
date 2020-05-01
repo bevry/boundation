@@ -285,7 +285,7 @@ async function generateEditions(state) {
 						browser: addExtension(answers.browserEntry, `js`),
 						test: addExtension(answers.testEntry, `js`),
 						bin: addExtension(answers.binEntry, `js`),
-						tags: ['javascript', answers.packageModule ? 'import' : 'require'],
+						tags: ['javascript', answers.resultModule ? 'import' : 'require'],
 						targets: {
 							node: version,
 						},
@@ -310,7 +310,7 @@ async function generateEditions(state) {
 						tags: [
 							'javascript',
 							syntax,
-							answers.packageModule ? 'import' : 'require',
+							answers.resultModule ? 'import' : 'require',
 						],
 						targets: {
 							es: target,
@@ -416,9 +416,9 @@ async function generateEditions(state) {
 								targets: strip(edition.targets, 'es'),
 								modules:
 									edition.targets.esmodules ||
-									answers.sourceModule === answers.packageModule
+									answers.sourceModule === answers.resultModule
 										? false
-										: answers.packageModule
+										: answers.resultModule
 										? 'auto'
 										: 'commonjs',
 							},
