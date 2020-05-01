@@ -60,7 +60,7 @@ async function getAnswers(questions, user) {
 				}
 
 				// check user
-				if (user && !reason && user[name] != null) {
+				if (user && !reason && typeof user[name] !== 'undefined') {
 					defaults[name] = user[name]
 					reason = 'package'
 				}
