@@ -28,7 +28,9 @@ async function updateTravis(state) {
 
 	// prepare
 	/* eslint camelcase:0 */
+	status('fetching github commit...')
 	const awesomeTravisCommit = await getGithubCommit('bevry/awesome-travis')
+	status('...fetched github commit')
 	const travisOriginal = await readYAML('.travis.yml')
 	const travis = {
 		version: '~> 1.0',

@@ -3,6 +3,7 @@
 
 // Local
 const { status } = require('./log')
+const { allEsTargets, allLanguages } = require('./data')
 const { without, uniq, toggle } = require('./util')
 const {
 	contains,
@@ -895,7 +896,7 @@ async function updateRuntime(state) {
 	}
 
 	// edition deps
-	for (const edition of state.editions) {
+	for (const edition of state.activeEditions) {
 		for (const dep of edition.dependencies) {
 			packages[dep] = true
 		}
@@ -966,20 +967,20 @@ async function updateRuntime(state) {
 	if (answers.npm) {
 		if (answers.name !== '@bevry/update-contributors') {
 			packages['@bevry/update-contributors'] = 'dev'
-			state.scripts['our:meta:contributors'] = 'update-contributors'
+			state.scripts['our:meta:contributors'] = 'npx @bevry/update-contributors'
 		} else {
 			state.scripts['our:meta:directory'] = 'npx .'
 		}
 		if (answers.name !== 'valid-directory') {
 			packages['valid-directory'] = 'dev'
-			state.scripts['our:verify:directory'] = 'valid-directory'
+			state.scripts['our:verify:directory'] = 'npx valid-directory'
 		} else {
 			state.scripts['our:verify:directory'] = 'npx .'
 		}
 		if (packageData.module) {
 			if (answers.name !== 'valid-module') {
 				packages['valid-module'] = 'dev'
-				state.scripts['our:verify:module'] = 'valid-module'
+				state.scripts['our:verify:module'] = 'npx valid-module'
 			} else {
 				state.scripts['our:verify:module'] = 'npx .'
 			}
@@ -987,11 +988,31 @@ async function updateRuntime(state) {
 	}
 
 	// keywords
+	const allLanguagesLowercase = allLanguages.map((i) => i.toLowerCase())
+	const allEsTargetsLowercase = allEsTargets.map((i) => i.toLowerCase())
+	const usedTargetsLowercase = state.activeEditions
+		.map((e) =>
+			Array.from(e.tags).find((t) =>
+				allEsTargetsLowercase.includes(t.toLowerCase())
+			)
+		)
+		.filter((i) => i)
+		.map((i) => i.toLowerCase())
+	const usedLanguagesLowercase = answers.languages.map((i) => i.toLowerCase())
+	toggle(answers.keywords, allEsTargetsLowercase, false)
+	toggle(answers.keywords, usedTargetsLowercase, true)
+	toggle(answers.keywords, allLanguagesLowercase, false)
+	toggle(answers.keywords, usedLanguagesLowercase, true)
+	// console.log({ usedTargetsLowercase, usedLanguagesLowercase })
 	toggle(answers.keywords, 'website', answers.website)
+	toggle(
+		answers.keywords,
+		'node',
+		!answers.website && answers.npm && Boolean(answers.desiredNodeVersion)
+	)
+	toggle(answers.keywords, 'dom', answers.browser)
 	toggle(answers.keywords, 'browser', answers.browser)
 	toggle(answers.keywords, 'module', packageData.module)
-	toggle(answers.keywords, 'coffeescript', answers.language === 'coffeescript')
-	toggle(answers.keywords, 'typescript', answers.language === 'typescript')
 	toggle(
 		answers.keywords,
 		['types', 'typed'],
@@ -1170,13 +1191,17 @@ async function updateRuntime(state) {
 		// Only enable isolatedModules on TypeScript projects, as for JavaScript projects it will be incompatible with 'use strict'
 		// resolveJsonModule seems to cause too many issues, so is disabled unless needed
 		status('writing tsconfig file...')
+		const lib = []
+		if (answers.keywords.has('webworker')) lib.push('WebWorker')
+		if (answers.keywords.has('dom')) lib.push('DOM', 'DOM.Iterable')
+		if (answers.keywords.has('esnext')) lib.push('ESNext')
 		const tsconfig = answers.website
 			? {
 					compilerOptions: {
 						allowJs: true,
 						allowSyntheticDefaultImports: true,
 						jsx: 'preserve',
-						lib: ['DOM', 'ESNext'],
+						lib,
 						maxNodeModuleJsDepth: 5,
 						module: 'ESNext',
 						moduleResolution: 'Node',
@@ -1209,7 +1234,7 @@ async function updateRuntime(state) {
 						moduleResolution: 'Node',
 						strict: true,
 						target: 'ESNext',
-						lib: answers.keywords.has('worker') ? ['WebWorker'] : [],
+						lib,
 					},
 					include: [answers.sourceDirectory],
 			  }

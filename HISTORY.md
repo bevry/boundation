@@ -1,5 +1,15 @@
 # History
 
+## v1.44.0 2020 May 4
+
+-   Web worker support now requires the `webworker` keyword instead of the `worker` keywords
+-   Added keywords for appropriate result targets and languages
+-   Added tsconfig lib entries for appropriate keywords
+-   Fixed github commit fetching (for some reason `fetch-h2` was timing out, swapping to `node-fetch` resolved the problem)
+-   Only add deps for the active editions, rather than also the disabled editions
+-   Added missing dev deps
+-   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
+
 ## v1.43.0 2020 April 29
 
 -   Add support for web workers, determined by presence of the `worker` keyword

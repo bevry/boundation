@@ -6,7 +6,7 @@ const pathUtil = require('path')
 // Local
 const defaults = require('./data')
 const _getAnswers = require('./answers').getAnswers
-const { allNodeVersions } = require('./data')
+const { allNodeVersions, allEsTargets, allLanguages } = require('./data')
 const { isNumber, isGitUrl, isSpecified, trim } = require('./util')
 const {
 	getGitBranch,
@@ -278,18 +278,7 @@ async function getQuestions(state) {
 		{
 			name: 'languages',
 			type: 'checkbox',
-			choices: [
-				'typescript',
-				'esnext',
-				'es5',
-				'coffeescript',
-				'json',
-				'react',
-				'jsx',
-				'mdx',
-				'html',
-				'css',
-			],
+			choices: allLanguages,
 			message: 'What programming languages will the source code be written in?',
 			validate: isSpecified,
 			default({ website, nextWebsite }) {
@@ -497,17 +486,7 @@ async function getQuestions(state) {
 					targets.push('maximum', 'desired', 'minimum')
 				}
 				if (compilerNode === 'typescript') {
-					targets.push(
-						'ESNext',
-						'ES2020',
-						'ES2019',
-						'ES2018',
-						'ES2017',
-						'ES2016',
-						'ES2015',
-						'ES5',
-						'ES3'
-					)
+					targets.push(...allEsTargets)
 				}
 				return targets
 			},

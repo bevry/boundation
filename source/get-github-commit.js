@@ -7,14 +7,19 @@ const { getHeaders } = require('githubauthreq')
 const ghapi = process.env.GITHUB_API || 'https://api.github.com'
 
 // External
-const { fetch } = require('fetch-h2')
+const fetch = require('node-fetch')
 
 async function getGithubCommit(slug, fallback = 'master') {
 	const url = `${ghapi}/repos/${slug}/commits`
 	try {
-		const response = await fetch(url, {
-			headers: getHeaders(),
-		})
+		const headers = getHeaders()
+		const init = {
+			headers: {
+				...headers,
+				'User-Agent': 'bevry/boundation',
+			},
+		}
+		const response = await fetch(url, init)
 		if (response.status < 200 || response.status >= 300) {
 			throw await response.text()
 		}

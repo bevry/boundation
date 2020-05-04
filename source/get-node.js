@@ -1,7 +1,7 @@
 'use strict'
 
 // External
-const { fetch } = require('fetch-h2')
+const fetch = require('node-fetch')
 const Errlop = require('errlop').default
 
 // Local

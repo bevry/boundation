@@ -1,11 +1,13 @@
 {
   "name": "boundation",
-  "version": "1.43.0",
+  "version": "1.44.0",
   "description": "Automatic scaffolding and upgrading of your JavaScript ecosystem projects using Bevry's best practices",
   "homepage": "https://github.com/bevry/boundation",
   "license": "MIT",
   "keywords": [
     ".travis.yml",
+    "esnext",
+    "node",
     "npm",
     "package.json",
     "scaffold",
@@ -61,7 +63,7 @@
     "url": "https://github.com/bevry/boundation.git"
   },
   "engines": {
-    "node": ">=12"
+    "node": ">=14"
   },
   "editions": [
     {
@@ -74,7 +76,7 @@
         "require"
       ],
       "engines": {
-        "node": "12 || 13 || 14"
+        "node": "14"
       }
     }
   ],
@@ -86,18 +88,19 @@
     "arrangekeys": "^4.0.0",
     "chalk": "^4.0.0",
     "errlop": "^2.1.0",
-    "fetch-h2": "^2.4.5",
     "get-cli-arg": "^3.0.0",
     "githubauthreq": "^5.1.1",
     "inquirer": "^7.1.0",
     "js-yaml": "^3.13.1",
+    "node-fetch": "^2.6.0",
     "safeps": "^9.3.0",
     "semver": "^7.3.2",
-    "typechecker": "^6.3.0"
+    "typechecker": "^6.4.0"
   },
   "devDependencies": {
     "@bevry/update-contributors": "^1.0.1",
-    "assert-helpers": "^6.0.0",
+    "@types/node-fetch": "^2.5.7",
+    "assert-helpers": "^6.1.0",
     "eslint": "^6.8.0",
     "eslint-config-bevry": "^3.3.0",
     "eslint-config-prettier": "^6.11.0",
@@ -112,7 +115,7 @@
     "our:compile": "echo no need for this project",
     "our:deploy": "echo no need for this project",
     "our:meta": "npm run our:meta:contributors && npm run our:meta:projectz",
-    "our:meta:contributors": "update-contributors",
+    "our:meta:contributors": "npx @bevry/update-contributors",
     "our:meta:projectz": "projectz compile",
     "our:release": "npm run our:release:prepare && npm run our:release:check-changelog && npm run our:release:check-dirty && npm run our:release:tag && npm run our:release:push",
     "our:release:check-changelog": "cat ./HISTORY.md | grep v$npm_package_version || (echo add a changelog entry for v$npm_package_version && exit -1)",
@@ -124,7 +127,7 @@
     "our:setup:install": "npm install",
     "our:test": "npm run our:verify && npm test",
     "our:verify": "npm run our:verify:directory && npm run our:verify:eslint && npm run our:verify:prettier",
-    "our:verify:directory": "valid-directory",
+    "our:verify:directory": "npx valid-directory",
     "our:verify:eslint": "eslint --fix --ignore-pattern '**/*.d.ts' --ignore-pattern '**/vendor/' --ignore-pattern '**/node_modules/' --ext .mjs,.js,.jsx,.ts,.tsx ./source",
     "our:verify:prettier": "prettier --write .",
     "test": "node ./source/test.js"
@@ -143,6 +146,7 @@
   },
   "boundation": {
     "compileNode": false,
-    "ltsNodeOnly": true
+    "ltsNodeOnly": true,
+    "desiredNodeOnly": true
   }
 }
