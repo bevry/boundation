@@ -1,5 +1,10 @@
 # History
 
+## v1.45.0 2020 May 4
+
+-   npx all the things for greater environment compatibility and reduction of conflicts
+-   use dynamic source dir for jsdoc
+
 ## v1.44.0 2020 May 4
 
 -   Web worker support now requires the `webworker` keyword instead of the `worker` keywords

@@ -628,7 +628,9 @@ async function updateRuntime(state) {
 		'our:setup:install': commands[answers.packageManager].install.join(' '),
 		'our:clean': 'rm -Rf ./docs ./edition* ./es2015 ./es5 ./out ./.next',
 		'our:meta:projectz':
-			packageData.name === 'projectz' ? 'npx . compile' : 'projectz compile',
+			packageData.name === 'projectz'
+				? 'npx . compile'
+				: 'npx projectz compile',
 		'our:test': [[...run, 'our:verify'], test]
 			.map((i) => i.join(' '))
 			.join(' && '),
@@ -744,7 +746,7 @@ async function updateRuntime(state) {
 			singleQuote: true,
 		}
 		state.scripts['our:verify:eslint'] = [
-			'eslint',
+			'npx eslint',
 			'--fix',
 			"--ignore-pattern '**/*.d.ts'",
 			"--ignore-pattern '**/vendor/'",
@@ -829,7 +831,7 @@ async function updateRuntime(state) {
 				case 'typedoc':
 					packages.typedoc = 'dev'
 					parts.push(
-						'typedoc',
+						'npx typedoc',
 						// use includeDeclarations if we are not a typescript project
 						answers.language === 'typescript' ? '' : '--includeDeclarations',
 						'--mode file',
@@ -845,7 +847,7 @@ async function updateRuntime(state) {
 					packages.jsdoc = 'dev'
 					packages.minami = 'dev'
 					parts.push(
-						'jsdoc',
+						'npx jsdoc',
 						'--recurse',
 						'--pedantic',
 						'--access all',
@@ -853,7 +855,7 @@ async function updateRuntime(state) {
 						'--package ./package.json',
 						'--readme ./README.md',
 						'--template ./node_modules/minami',
-						'./source',
+						sourcePath,
 						'&&',
 						`mv ${out}/$npm_package_name/$npm_package_version/* ${out}/`,
 						'&&',
@@ -863,7 +865,7 @@ async function updateRuntime(state) {
 				case 'yuidoc':
 					packages.yuidocjs = 'dev'
 					parts.push(
-						'yuidoc',
+						'npx yuidoc',
 						`-o ${out}`,
 						'--syntaxtype coffee',
 						'-e .coffee',
@@ -873,7 +875,7 @@ async function updateRuntime(state) {
 				case 'biscotto':
 					packages.biscotto = 'dev'
 					parts.push(
-						'biscotto',
+						'npx biscotto',
 						'-n "$npm_package_name"',
 						'--title "$npm_package_name API Documentation"',
 						'--readme README.md',
@@ -912,7 +914,7 @@ async function updateRuntime(state) {
 			packages.surge = 'dev'
 			state.scripts[
 				'my:deploy'
-			] = `surge ./${answers.staticDirectory} ${answers.deployTarget}`
+			] = `npx surge ./${answers.staticDirectory} ${answers.deployTarget}`
 		}
 		// now
 		else if (answers.nowWebsite) {
@@ -921,10 +923,10 @@ async function updateRuntime(state) {
 			if (answers.website.includes('next')) {
 				Object.assign(state.scripts, {
 					'now-build': [...run, 'our:compile:next'].join(' '),
-					'our:compile:next': 'next build',
+					'our:compile:next': 'npx next build',
 					start: [
 						[...run, 'our:verify'],
-						['next', 'dev'],
+						['npx', 'next', 'dev'],
 					]
 						.map((i) => i.join(' '))
 						.join(' && '),
