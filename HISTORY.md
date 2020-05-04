@@ -1,5 +1,9 @@
 # History
 
+## v1.46.0 2020 May 4
+
+-   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
+
 ## v1.45.0 2020 May 4
 
 -   npx all the things for greater environment compatibility and reduction of conflicts
