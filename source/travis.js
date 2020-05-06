@@ -17,7 +17,6 @@ const { status } = require('./log')
 const { getGithubCommit } = require('./get-github-commit')
 const { spawn, readYAML, writeYAML } = require('./fs')
 const { hasScript } = require('./util')
-function noop() {}
 
 // Thing
 async function updateTravis(state) {

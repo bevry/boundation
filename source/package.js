@@ -701,6 +701,7 @@ async function updatePackageData(state) {
 }
 
 module.exports = {
+	hasPackageScriptPrefix,
 	getPackageAuthor,
 	getPackageBinEntry,
 	getPackageBinExecutable,

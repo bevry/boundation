@@ -440,7 +440,7 @@ async function getQuestions(state) {
 					? 'coffeescript'
 					: 'babel'
 			},
-			when({ compileNode, language }) {
+			when({ compileNode }) {
 				return compileNode
 			},
 		},
