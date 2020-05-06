@@ -41,6 +41,7 @@ module.exports = {
 	],
 	npmAuthToken: process.env.NPM_AUTHTOKEN,
 	travisEmail: process.env.TRAVIS_NOTIFICATION_EMAIL,
+	bevryCDNToken: process.env.BEVRY_CDN_TOKEN,
 	surgeLogin: process.env.SURGE_LOGIN,
 	surgeToken: process.env.SURGE_TOKEN,
 	nowToken: process.env.NOW_TOKEN,

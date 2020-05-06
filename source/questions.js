@@ -230,6 +230,10 @@ async function getQuestions(state) {
 			},
 		},
 		{
+			// @todo this needs to be reworked
+			// as in travis.js we also just check for my:deploy
+			// and this is set to always skip, so is manually applied
+			// yet it has a default value
 			name: 'travisWebsite',
 			type: 'confirm',
 			message: 'Will it utilise a travis deploy script?',
@@ -735,6 +739,21 @@ async function getQuestions(state) {
 			},
 		},
 		{
+			name: 'cdnDeploymentStrategy',
+			message:
+				'Which CDN deployment strategy should be used for the project and its documentation?',
+			choices: ['surge', 'bevry', 'none'],
+			validate: isSpecified,
+			default: defaults.bevryCDNToken
+				? 'bevry'
+				: defaults.surgeLogin
+				? 'surge'
+				: 'none',
+			when({ docs }) {
+				return docs
+			},
+		},
+		{
 			name: 'travisUpdateEnvironment',
 			type: 'confirm',
 			message:
@@ -752,14 +771,29 @@ async function getQuestions(state) {
 			},
 		},
 		{
+			name: 'bevryCDNToken',
+			type: 'password',
+			message: 'What is your Bevry CDN Token?',
+			validate: isSpecified,
+			filter: trim,
+			default: defaults.bevryCDNToken,
+			skip: defaults.bevryCDNToken,
+			when({ travisUpdateEnvironment, cdnDeploymentStrategy }) {
+				return travisUpdateEnvironment && cdnDeploymentStrategy === 'bevry'
+			},
+		},
+		{
 			name: 'surgeLogin',
 			message: 'What is your surge.sh username?',
 			validate: isSpecified,
 			filter: trim,
 			default: defaults.surgeLogin,
 			skip: defaults.surgeLogin,
-			when({ docs, website, travisUpdateEnvironment }) {
-				return travisUpdateEnvironment && (docs || website === 'surge')
+			when({ travisUpdateEnvironment, cdnDeploymentStrategy, website }) {
+				return (
+					travisUpdateEnvironment &&
+					(cdnDeploymentStrategy === 'surge' || website === 'surge')
+				)
 			},
 		},
 		{
@@ -782,8 +816,8 @@ async function getQuestions(state) {
 			filter: trim,
 			default: defaults.npmAuthToken,
 			skip: defaults.npmAuthToken,
-			when({ npm }) {
-				return npm
+			when({ npm, cdnDeploymentStrategy }) {
+				return npm || cdnDeploymentStrategy === 'bevry'
 			},
 		},
 		{

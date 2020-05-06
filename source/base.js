@@ -139,11 +139,23 @@ async function updateBaseFiles({ answers, packageData }) {
 
 	// write the readme file
 	// trim say `@bevry/update-contributors` to `update-contributors` for API doc links
-	const newDocumentationLink = `[Complete API Documentation.](http://master.${trimOrgName(
-		answers.name
-	)}.${answers.organisation}.surge.sh/docs/${
-		answers.language === 'typescript' ? 'globals.html' : ''
-	})`
+	let newDocumentationLink = ''
+	if (
+		answers.docs &&
+		['bevry', 'surge'].includes(answers.cdnDeploymentStrategy)
+	) {
+		const newDocumentationPrefix =
+			answers.cdnDeploymentStrategy === 'bevry'
+				? `https://cdn.bevry.me/${trimOrgName(answers.name)}/master/`
+				: `http://master.${trimOrgName(answers.name)}.${
+						answers.organisation
+				  }.surge.sh/`
+		const newDocumentationSuffix = `docs/${
+			answers.language === 'typescript' ? 'globals.html' : 'index.html'
+		}`
+		const newDocumentationURL = newDocumentationPrefix + newDocumentationSuffix
+		newDocumentationLink = `[Complete API Documentation.](${newDocumentationURL})`
+	}
 	if ((await exists('README.md')) === false) {
 		status('writing readme file...')
 		await write(
@@ -170,21 +182,22 @@ async function updateBaseFiles({ answers, packageData }) {
 		// read
 		let content = await read('README.md')
 		content = content.toString()
-		const original = content
-		// remove old documentation locations
-		content = content
-			.replace(
-				/\[(Complete )?(Technical )?(API )?Documentation\.?\]\(.+?surge[^)]+\)/,
+		// remove old documentation link, should come before the changes below
+		if (newDocumentationLink) {
+			content = content.replace(
+				/\[(Complete )?(Technical )?(API )?Documentation\.?\]\([^)]+\)/g,
 				''
 			)
-			.replace(/\[Web Demonstration\.?\]/, '[Web Browser Demonstration.]')
+		}
+		// update old documentation names
+		content = content
+			.replace(/\[Web Demonstration\.?\]/g, '[Web Browser Demonstration.]')
 			.replace(
-				/\[(Tutorials & Guides|Documentation)\.?\]/,
+				/\[(Tutorials & Guides|Documentation)\.?\]/g,
 				'[Tutorials & Guides.]'
 			)
 		// insert new documentaiton under usage
-		const foundDocumentation = original !== content || answers.docs
-		if (foundDocumentation) {
+		if (newDocumentationLink) {
 			content = content.replace('## Usage', function (found) {
 				return found + '\n\n' + newDocumentationLink
 			})
