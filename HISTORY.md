@@ -1,5 +1,11 @@
 # History
 
+## v1.47.0 2020 May 6
+
+-   add support for the bevry cdn as an alternative to cdn deployments to surge
+-   travis may still have used travis-ci.org despite travis-ci.com being active, now it is explicit which to use for all calls
+-   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
+
 ## v1.46.0 2020 May 4
 
 -   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
