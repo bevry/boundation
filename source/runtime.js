@@ -1012,7 +1012,7 @@ async function updateRuntime(state) {
 		'node',
 		!answers.website && answers.npm && Boolean(answers.desiredNodeVersion)
 	)
-	toggle(answers.keywords, 'dom', answers.browser)
+	toggle(answers.keywords, 'dom', answers.dom)
 	toggle(answers.keywords, 'browser', answers.browser)
 	toggle(answers.keywords, 'module', packageData.module)
 	toggle(

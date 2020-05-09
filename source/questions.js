@@ -407,6 +407,16 @@ async function getQuestions(state) {
 			},
 		},
 		{
+			name: 'dom',
+			type: 'confirm',
+			message: 'Will you make use of any DOM APIs?',
+			default: false,
+			// @todo check the tsconfig for it in lib, or check keywords
+			when({ browsers, tsconfig }) {
+				return browsers && tsconfig
+			},
+		},
+		{
 			name: 'compileNode',
 			type: 'confirm',
 			message: 'Would you like to compile your source code for Node.js?',
@@ -618,10 +628,10 @@ async function getQuestions(state) {
 		},
 		{
 			name: 'desiredNodeOnly',
-			message: `Only target the desired node version?`,
+			message: `Only support the desired node version?`,
 			type: 'confirm',
 			default({ website }) {
-				return website
+				return Boolean(website)
 			},
 			skip({ website }) {
 				return website
@@ -637,8 +647,6 @@ async function getQuestions(state) {
 			default({ desiredNodeOnly, ltsNodeOnly, desiredNodeVersion }) {
 				return desiredNodeOnly
 					? desiredNodeVersion
-					: alreadyLTS
-					? minimumSupportNodeVersion
 					: ltsNodeOnly
 					? nodeMinimumLTSVersion
 					: minimumSupportNodeVersion
