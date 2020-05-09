@@ -1,5 +1,7 @@
 'use strict'
 
+const { has } = require('./util')
+
 module.exports = {
 	travisTLD: null, // or "org" or "com"
 	answers: null,
@@ -27,13 +29,16 @@ module.exports = {
 			(edition) => edition.engines && edition.engines.node
 		)
 	},
+	get nodeEditionsRequire() {
+		return this.activeEditions.filter((edition) => has(edition.tags, 'require'))
+	},
 	get browserEditions() {
 		return this.activeEditions.filter(
 			(edition) => edition.engines && edition.engines.browsers
 		)
 	},
 	get useEditionAutoloader() {
-		return this.nodeEditions.length >= 2
+		return this.nodeEditionsRequire.length >= 2
 	},
 	get nodeEdition() {
 		return this.nodeEditions[0]

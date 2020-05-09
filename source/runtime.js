@@ -453,8 +453,12 @@ async function scaffoldEditions(state) {
 							'#!/usr/bin/env node',
 							"'use strict'",
 							'',
-							`/** @type {typeof import("./${sourceEdition.binPath}") } */`,
-							`module.exports = require('./${nodeEdition.binPath}')`,
+							...(answers.packageModule
+								? [`import './${nodeEdition.binPath}'`]
+								: [
+										`/** @type {typeof import("./${sourceEdition.binPath}") } */`,
+										`module.exports = require('./${nodeEdition.binPath}')`,
+								  ]),
 							'',
 						].join('\n')
 					)
@@ -1228,16 +1232,19 @@ async function updateRuntime(state) {
 					exclude: ['node_modules'],
 			  }
 			: {
-					compilerOptions: {
-						allowJs: true,
-						esModuleInterop: true,
-						isolatedModules: answers.language === 'typescript',
-						maxNodeModuleJsDepth: 5,
-						moduleResolution: 'Node',
-						strict: true,
-						target: 'ESNext',
-						lib,
-					},
+					compilerOptions: Object.assign(
+						{
+							allowJs: true,
+							esModuleInterop: true,
+							isolatedModules: answers.language === 'typescript',
+							maxNodeModuleJsDepth: 5,
+							moduleResolution: 'Node',
+							strict: true,
+							target: 'ESNext',
+							lib,
+						},
+						answers.packageModule ? { module: 'ESNext' } : {}
+					),
 					include: [answers.sourceDirectory],
 			  }
 		await write('tsconfig.json', JSON.stringify(tsconfig, null, '  ') + '\n')
