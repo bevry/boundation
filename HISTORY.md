@@ -1,5 +1,12 @@
 # History
 
+## v1.48.0 2020 May 8
+
+-   fix `packageModule` - was failing on [bevry/caterpillar-examples](https://github.com/bevry/caterpillar-examples)
+-   browser != dom usage, so now ask about dom specifically
+-   fix `desiredNodeOnly` defaulting to unexpected values
+-   fix `desiredNodeOnly` being ignored if already an LTS
+
 ## v1.47.0 2020 May 6
 
 -   add support for the bevry cdn as an alternative to cdn deployments to surge
