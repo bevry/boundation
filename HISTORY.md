@@ -1,5 +1,9 @@
 # History
 
+## v1.49.0 2020 May 11
+
+-   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
+
 ## v1.48.0 2020 May 8
 
 -   fix `packageModule` - was failing on [bevry/caterpillar-examples](https://github.com/bevry/caterpillar-examples)
