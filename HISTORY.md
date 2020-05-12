@@ -1,5 +1,9 @@
 # History
 
+## v1.50.0 2020 May 8
+
+-   use npx for all the applicable npm script binaries
+
 ## v1.49.0 2020 May 11
 
 -   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
