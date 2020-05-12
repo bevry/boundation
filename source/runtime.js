@@ -3,7 +3,7 @@
 
 // Local
 const { status } = require('./log')
-const { allEsTargets, allLanguages } = require('./data')
+const { allEsTargets, allLanguages, typesPath } = require('./data')
 const { without, uniq, toggle } = require('./util')
 const {
 	contains,
@@ -632,9 +632,7 @@ async function updateRuntime(state) {
 		'our:setup:install': commands[answers.packageManager].install.join(' '),
 		'our:clean': 'rm -Rf ./docs ./edition* ./es2015 ./es5 ./out ./.next',
 		'our:meta:projectz':
-			packageData.name === 'projectz'
-				? 'npx . compile'
-				: 'npx projectz compile',
+			packageData.name === 'projectz' ? 'npx . compile' : 'projectz compile',
 		'our:test': [[...run, 'our:verify'], test]
 			.map((i) => i.join(' '))
 			.join(' && '),
@@ -688,7 +686,7 @@ async function updateRuntime(state) {
 	// docpad website
 	else if (answers.docpadWebsite) {
 		packages.docpad = true
-		state.scripts.test = 'npx docpad generate --env static'
+		state.scripts.test = 'docpad generate --env static'
 	}
 
 	// css
@@ -702,7 +700,7 @@ async function updateRuntime(state) {
 				'stylelint-config-standard'
 			] = 'dev'
 			state.scripts['our:verify:stylelint'] = [
-				'npx stylelint',
+				'stylelint',
 				'--fix',
 				`'${sourcePath}/**/*.css'`,
 			].join(' ')
@@ -750,7 +748,7 @@ async function updateRuntime(state) {
 			singleQuote: true,
 		}
 		state.scripts['our:verify:eslint'] = [
-			'npx eslint',
+			'eslint',
 			'--fix',
 			"--ignore-pattern '**/*.d.ts'",
 			"--ignore-pattern '**/vendor/'",
@@ -762,7 +760,7 @@ async function updateRuntime(state) {
 
 	// prettier
 	if (packages.prettier) {
-		state.scripts['our:verify:prettier'] = `npx prettier --write .`
+		state.scripts['our:verify:prettier'] = `prettier --write .`
 	}
 
 	// typescript
@@ -771,22 +769,20 @@ async function updateRuntime(state) {
 			'@typescript-eslint/eslint-plugin'
 		] = packages['@typescript-eslint/parser'] = 'dev'
 		state.scripts[
-			'our:verify:typescript'
-		] = `npx -p typescript tsc --noEmit --project ${answers.tsconfig}`
+			'our:compile:types'
+		] = `tsc --project ${answers.tsconfig} --emitDeclarationOnly --declaration --declarationDir ${typesPath} --declarationMap`
 	}
 
 	// Types
 	// define the possible locations
 	const typePaths = [
+		// e.g. types/
+		state.scripts['our:compile:types'] ? typesPath : '',
 		// e.g. index.d.ts
 		pathUtil.join(answers.mainEntry + '.d.ts'),
 		// e.g. source/index.d.ts
 		sourceEdition &&
 			pathUtil.join(sourceEdition.directory, answers.mainEntry + '.d.ts'),
-		// e.g. source/index.ts
-		answers.language === 'typescript' &&
-			sourceEdition &&
-			sourceEdition.mainPath,
 	].filter((v) => v)
 	// fetch their existing status and convert back into the original location
 	const typePathsExisting = await Promise.all(
@@ -835,7 +831,7 @@ async function updateRuntime(state) {
 				case 'typedoc':
 					packages.typedoc = 'dev'
 					parts.push(
-						'npx typedoc',
+						'typedoc',
 						// use includeDeclarations if we are not a typescript project
 						answers.language === 'typescript' ? '' : '--includeDeclarations',
 						'--mode file',
@@ -851,7 +847,7 @@ async function updateRuntime(state) {
 					packages.jsdoc = 'dev'
 					packages.minami = 'dev'
 					parts.push(
-						'npx jsdoc',
+						'jsdoc',
 						'--recurse',
 						'--pedantic',
 						'--access all',
@@ -869,7 +865,7 @@ async function updateRuntime(state) {
 				case 'yuidoc':
 					packages.yuidocjs = 'dev'
 					parts.push(
-						'npx -p yuidocjs yuidoc',
+						'yuidoc',
 						`-o ${out}`,
 						'--syntaxtype coffee',
 						'-e .coffee',
@@ -879,7 +875,7 @@ async function updateRuntime(state) {
 				case 'biscotto':
 					packages.biscotto = 'dev'
 					parts.push(
-						'npx biscotto',
+						'biscotto',
 						'-n "$npm_package_name"',
 						'--title "$npm_package_name API Documentation"',
 						'--readme README.md',
@@ -898,7 +894,7 @@ async function updateRuntime(state) {
 	// flowtype
 	if (answers.flowtype) {
 		packages['eslint-plugin-flow-vars'] = packages['flow-bin'] = 'dev'
-		state.scripts['our:verify:flow'] = 'npx -p flow-bin flow check'
+		state.scripts['our:verify:flow'] = 'flow check'
 	}
 
 	// edition deps
@@ -918,7 +914,7 @@ async function updateRuntime(state) {
 			packages.surge = 'dev'
 			state.scripts[
 				'my:deploy'
-			] = `npx surge ./${answers.staticDirectory} ${answers.deployTarget}`
+			] = `surge ./${answers.staticDirectory} ${answers.deployTarget}`
 		}
 		// now
 		else if (answers.nowWebsite) {
@@ -927,10 +923,10 @@ async function updateRuntime(state) {
 			if (answers.website.includes('next')) {
 				Object.assign(state.scripts, {
 					'now-build': [...run, 'our:compile:next'].join(' '),
-					'our:compile:next': 'npx next build',
+					'our:compile:next': 'next build',
 					start: [
 						[...run, 'our:verify'],
-						['npx', 'next', 'dev'],
+						['next', 'dev'],
 					]
 						.map((i) => i.join(' '))
 						.join(' && '),
@@ -973,20 +969,20 @@ async function updateRuntime(state) {
 	if (answers.npm) {
 		if (answers.name !== '@bevry/update-contributors') {
 			packages['@bevry/update-contributors'] = 'dev'
-			state.scripts['our:meta:contributors'] = 'npx @bevry/update-contributors'
+			state.scripts['our:meta:contributors'] = 'update-contributors'
 		} else {
 			state.scripts['our:meta:directory'] = 'npx .'
 		}
 		if (answers.name !== 'valid-directory') {
 			packages['valid-directory'] = 'dev'
-			state.scripts['our:verify:directory'] = 'npx valid-directory'
+			state.scripts['our:verify:directory'] = 'valid-directory'
 		} else {
 			state.scripts['our:verify:directory'] = 'npx .'
 		}
 		if (packageData.module) {
 			if (answers.name !== 'valid-module') {
 				packages['valid-module'] = 'dev'
-				state.scripts['our:verify:module'] = 'npx valid-module'
+				state.scripts['our:verify:module'] = 'valid-module'
 			} else {
 				state.scripts['our:verify:module'] = 'npx .'
 			}

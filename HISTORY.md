@@ -1,5 +1,11 @@
 # History
 
+## v1.51.0 2020 May 8
+
+-   if typescript, compile types to `compiled:types` directory and use that
+-   revert using npx, as npx always wants to install the package and this is not able to be disabled
+    > If a full specifier is included, or if --package is used, npx will always use a freshly-installed, temporary version of the package. This can also be forced with the --ignore-existing flag.
+
 ## v1.50.0 2020 May 8
 
 -   use npx for all the applicable npm script binaries

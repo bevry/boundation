@@ -1,6 +1,6 @@
 {
   "name": "boundation",
-  "version": "1.50.0",
+  "version": "1.51.0",
   "description": "Automatic scaffolding and upgrading of your JavaScript ecosystem projects using Bevry's best practices",
   "homepage": "https://github.com/bevry/boundation",
   "license": "MIT",
@@ -119,8 +119,8 @@
     "our:compile": "echo no need for this project",
     "our:deploy": "echo no need for this project",
     "our:meta": "npm run our:meta:contributors && npm run our:meta:projectz",
-    "our:meta:contributors": "npx @bevry/update-contributors",
-    "our:meta:projectz": "npx projectz compile",
+    "our:meta:contributors": "update-contributors",
+    "our:meta:projectz": "projectz compile",
     "our:release": "npm run our:release:prepare && npm run our:release:check-changelog && npm run our:release:check-dirty && npm run our:release:tag && npm run our:release:push",
     "our:release:check-changelog": "cat ./HISTORY.md | grep v$npm_package_version || (echo add a changelog entry for v$npm_package_version && exit -1)",
     "our:release:check-dirty": "git diff --exit-code",
@@ -131,9 +131,9 @@
     "our:setup:install": "npm install",
     "our:test": "npm run our:verify && npm test",
     "our:verify": "npm run our:verify:directory && npm run our:verify:eslint && npm run our:verify:prettier",
-    "our:verify:directory": "npx valid-directory",
-    "our:verify:eslint": "npx eslint --fix --ignore-pattern '**/*.d.ts' --ignore-pattern '**/vendor/' --ignore-pattern '**/node_modules/' --ext .mjs,.js,.jsx,.ts,.tsx ./source",
-    "our:verify:prettier": "npx prettier --write .",
+    "our:verify:directory": "valid-directory",
+    "our:verify:eslint": "eslint --fix --ignore-pattern '**/*.d.ts' --ignore-pattern '**/vendor/' --ignore-pattern '**/node_modules/' --ext .mjs,.js,.jsx,.ts,.tsx ./source",
+    "our:verify:prettier": "prettier --write .",
     "test": "node ./source/test.js"
   },
   "eslintConfig": {
