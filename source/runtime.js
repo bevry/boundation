@@ -688,7 +688,7 @@ async function updateRuntime(state) {
 	// docpad website
 	else if (answers.docpadWebsite) {
 		packages.docpad = true
-		state.scripts.test = 'docpad generate --env static'
+		state.scripts.test = 'npx docpad generate --env static'
 	}
 
 	// css
@@ -702,7 +702,7 @@ async function updateRuntime(state) {
 				'stylelint-config-standard'
 			] = 'dev'
 			state.scripts['our:verify:stylelint'] = [
-				'stylelint',
+				'npx stylelint',
 				'--fix',
 				`'${sourcePath}/**/*.css'`,
 			].join(' ')
@@ -762,7 +762,7 @@ async function updateRuntime(state) {
 
 	// prettier
 	if (packages.prettier) {
-		state.scripts['our:verify:prettier'] = `prettier --write .`
+		state.scripts['our:verify:prettier'] = `npx prettier --write .`
 	}
 
 	// typescript
@@ -772,7 +772,7 @@ async function updateRuntime(state) {
 		] = packages['@typescript-eslint/parser'] = 'dev'
 		state.scripts[
 			'our:verify:typescript'
-		] = `tsc --noEmit --project ${answers.tsconfig}`
+		] = `npx -p typescript tsc --noEmit --project ${answers.tsconfig}`
 	}
 
 	// Types
@@ -869,7 +869,7 @@ async function updateRuntime(state) {
 				case 'yuidoc':
 					packages.yuidocjs = 'dev'
 					parts.push(
-						'npx yuidoc',
+						'npx -p yuidocjs yuidoc',
 						`-o ${out}`,
 						'--syntaxtype coffee',
 						'-e .coffee',
@@ -898,7 +898,7 @@ async function updateRuntime(state) {
 	// flowtype
 	if (answers.flowtype) {
 		packages['eslint-plugin-flow-vars'] = packages['flow-bin'] = 'dev'
-		state.scripts['our:verify:flow'] = 'flow check'
+		state.scripts['our:verify:flow'] = 'npx -p flow-bin flow check'
 	}
 
 	// edition deps
@@ -1299,12 +1299,7 @@ async function updateRuntime(state) {
 	// upgrade deps
 	if (answers.upgradeAllDependencies && answers.packageManager === 'npm') {
 		status('upgrading the installed dependencies...')
-		try {
-			await spawn(['ncu', '-u'])
-		} catch (err) {
-			await spawn(['npm', 'install', '-g', 'npm-check-updates'])
-			await spawn(['ncu', '-u'])
-		}
+		await spawn(['npx', '-p', 'npm-check-updates', 'ncu', '-u'])
 		status('...upgraded all the installed dependencies')
 	}
 
