@@ -268,8 +268,14 @@ async function updateEngines(state) {
 		console.log(`The project supports the extra versions: ${extra.join(', ')}`)
 	}
 
-	// make the engines the first passed version
-	packageData.engines.node = '>=' + passed[0]
+	// if we are testing all supported versions
+	// then make the engines the first passed version
+	if (answers.minimumSupportNodeVersion >= answers.minimumTestNodeVersion) {
+		packageData.engines.node = '>=' + passed[0]
+	} else {
+		// otherwise use the supported version, as all our tests passed
+		packageData.engines.node = '>=' + answers.minimumSupportNodeVersion
+	}
 
 	// =================================
 	// update the package.json file
@@ -607,25 +613,49 @@ async function updateRuntime(state) {
 	}
 
 	// b/c compat
-	const compat = {
+	const dependencyCompat = {
 		cson: 5,
-		kava: 3,
 		rimraf: 2,
 		safefs: 4,
 		safeps: 7,
 		taskgroup: 5,
-		'assert-helpers': 4,
 		'cli-spinners': 1,
 		'lazy-require': 2,
 	}
+	const devDependencyCompat = {
+		kava: 3,
+		'assert-helpers': 4,
+	}
 	if (answers.minimumSupportNodeVersion < 8) {
-		Object.keys(compat).forEach((key) => (versions[key] = compat[key]))
+		for (const [key, value] of Object.entries(dependencyCompat)) {
+			versions[key] = value
+		}
 	} else {
-		Object.keys(compat).forEach((key) => (versions[key] = 'latest'))
+		for (const key of Object.keys(dependencyCompat)) {
+			versions[key] = 'latest'
+		}
+	}
+	if (answers.minimumTestNodeVersion < 8) {
+		for (const [key, value] of Object.entries(devDependencyCompat)) {
+			versions[key] = value
+		}
+	} else {
+		for (const key of Object.keys(devDependencyCompat)) {
+			versions[key] = 'latest'
+		}
 	}
 	if (answers.name === 'taskgroup') {
 		versions.ambi = 3
 	}
+
+	// add user overrides
+	Object.assign(
+		versions,
+		(packageData &&
+			packageData.boundation &&
+			packageData.boundation.versions) ||
+			{}
+	)
 
 	// add our default scripts
 	state.scripts = {
