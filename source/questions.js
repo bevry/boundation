@@ -506,7 +506,7 @@ async function getQuestions(state) {
 			},
 			default(opts) {
 				const { compilerNode, compilerBrowser } = opts
-				if (compilerNode === 'typescript') {
+				if (compilerNode === 'typescript' && alreadyLTS) {
 					const targets = ['ESNext', 'ES2020', 'ES2019', 'ES2018']
 					if (compilerBrowser) targets.push('browser')
 					return targets
