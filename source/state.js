@@ -30,7 +30,7 @@ module.exports = {
 		)
 	},
 	get nodeEditionsRequire() {
-		return this.activeEditions.filter((edition) => has(edition.tags, 'require'))
+		return this.nodeEditions.filter((edition) => has(edition.tags, 'require'))
 	},
 	get browserEditions() {
 		return this.activeEditions.filter(
