@@ -644,9 +644,6 @@ async function updateRuntime(state) {
 			versions[key] = 'latest'
 		}
 	}
-	if (answers.name === 'taskgroup') {
-		versions.ambi = 3
-	}
 
 	// add user overrides
 	Object.assign(
