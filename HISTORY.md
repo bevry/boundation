@@ -1,5 +1,11 @@
 # History
 
+## v1.53.3 2020 May 21
+
+-   Fix balupton entries in maintainers and contributors
+-   Don't output tsconfig `lib` property if it would be empty
+-   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
+
 ## v1.53.2 2020 May 21
 
 -   Fix the editions autoloader being used for CommonJS projects that also targetted browsers
