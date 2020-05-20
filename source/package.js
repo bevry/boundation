@@ -7,6 +7,7 @@ const mandatoryScriptsList = 'our:setup our:compile our:meta our:verify our:depl
 )
 
 // Local
+const { fixBalupton } = require('./util')
 const { status } = require('./log')
 const {
 	has,
@@ -629,6 +630,10 @@ async function updatePackageData(state) {
 			]
 		}
 	}
+
+	// correct balupton
+	packageData.maintainers = packageData.maintainers.map(fixBalupton)
+	packageData.contributors = packageData.contributors.map(fixBalupton)
 
 	// remove old fields
 	delete packageData.nakeConfiguration

@@ -2,6 +2,22 @@
 
 const { bevryOrganisationsList } = require('./data')
 
+function fixBalupton(person) {
+	return person
+		.replace(
+			/^Benjamin Lupton( <b@lupton.cc>)?$/,
+			'Benjamin Lupton <b@lupton.cc> (https://github.com/balupton)'
+		)
+		.replace(
+			/^Benjamin Lupton( <b@lupton.cc>)? \(https?:\/\/github.com\/balupton\)$/,
+			'Benjamin Lupton <b@lupton.cc> (https://github.com/balupton)'
+		)
+		.replace(
+			/^Benjamin Lupton( <b@lupton.cc>)? \(https?:\/\/balupton.com\/?\)$/,
+			'Benjamin Lupton <b@lupton.cc> (https://github.com/balupton)'
+		)
+}
+
 function trimOrgName(str) {
 	if (str[0] === '@') return str.split('/').slice(1).join('/')
 	return str
@@ -105,6 +121,7 @@ function ensureScript(scripts, name) {
 }
 
 module.exports = {
+	fixBalupton,
 	defaultDeploy,
 	ensureScript,
 	hasScript,
