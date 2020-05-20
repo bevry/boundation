@@ -52,6 +52,7 @@ const {
 } = require('./package')
 const { getNowAliases, getNowName } = require('./website')
 const { versionComparator } = require('./versions')
+const { repoToSlug } = require('./util')
 
 // ====================================
 // Questions
@@ -102,6 +103,14 @@ async function getQuestions(state) {
 			validate: isGitUrl,
 			filter: trim,
 			default: (await getGitOriginUrl(cwd)) || getPackageRepoUrl(cwd),
+		},
+		{
+			name: 'githubSlug',
+			message: 'What is the github repository slug?',
+			skip: true,
+			default({ repoUrl }) {
+				return repoUrl && repoUrl.includes('github') ? repoToSlug(repoUrl) : ''
+			},
 		},
 		{
 			name: 'author',
@@ -762,11 +771,38 @@ async function getQuestions(state) {
 			},
 		},
 		{
+			name: 'travisComToken',
+			type: 'password',
+			message:
+				'If you wish to update travis, what is your token for travis-ci.com?\nYou can find it here: https://travis-ci.com/account/preferences',
+			filter: trim,
+			default: defaults.travisComToken,
+			skip: defaults.travisComToken,
+			ignore({ githubSlug }) {
+				return !githubSlug
+			},
+		},
+		{
+			name: 'travisOrgToken',
+			type: 'password',
+			message:
+				'If you wish to update travis, what is your token for travis-ci.org?\nYou can find it here: https://travis-ci.org/account/preferences',
+			filter: trim,
+			default: defaults.travisOrgToken,
+			skip: defaults.travisOrgToken,
+			ignore({ githubSlug }) {
+				return !githubSlug
+			},
+		},
+		{
 			name: 'travisUpdateEnvironment',
 			type: 'confirm',
 			message:
 				'Would you like to update the remote travis environment variables?',
-			default: true,
+			default({ travisComToken, travisOrgToken }) {
+				return Boolean(travisComToken || travisOrgToken)
+			},
+			skip: true,
 		},
 		{
 			name: 'deployBranch',
@@ -774,8 +810,8 @@ async function getQuestions(state) {
 			validate: isSpecified,
 			filter: trim,
 			default: (await getGitBranch(cwd)) || 'master',
-			when({ travisWebsite }) {
-				return travisWebsite
+			when({ travisUpdateEnvironment, travisWebsite }) {
+				return travisUpdateEnvironment && travisWebsite
 			},
 		},
 		{

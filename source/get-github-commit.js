@@ -7,7 +7,7 @@ const { getHeaders } = require('githubauthreq')
 const ghapi = process.env.GITHUB_API || 'https://api.github.com'
 
 // External
-const fetch = require('node-fetch')
+const fetch = require('node-fetch').default
 
 async function getGithubCommit(slug, fallback = 'master') {
 	const url = `${ghapi}/repos/${slug}/commits`

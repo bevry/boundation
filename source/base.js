@@ -16,7 +16,7 @@ const {
 const Errlop = require('errlop').default
 
 // External
-const fetch = require('node-fetch')
+const fetch = require('node-fetch').default
 const pathUtil = require('path')
 const urlUtil = require('url')
 

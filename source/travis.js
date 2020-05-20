@@ -2,6 +2,8 @@
 'use strict'
 
 const Errlop = require('errlop').default
+const fetch = require('node-fetch').default
+const crypto = require('crypto')
 
 // curl flags:
 // -L will follow redirects
@@ -55,8 +57,13 @@ async function updateTravis(state) {
 	}
 
 	// default to travis-ci.com
-	state.travisTLD = ''
-	const flags = ['--no-interactive']
+	state.travisTLD =
+		'' /*
+		(packageData &&
+			packageData.badges &&
+			packageData.badges.config &&
+			packageData.badges.tavisTLD) ||
+		''*/
 
 	// update the travis file
 	if (answers.cdnDeploymentStrategy === 'surge') {
@@ -93,173 +100,235 @@ async function updateTravis(state) {
 		}
 	})
 
-	// write the .travis.yml file
-	status('writing the travis file...')
-	await writeYAML('.travis.yml', travis)
-	status('...wrote the travis file')
-
 	// travis env variables
 	// these spawns must be run serially, as otherwise not all variables may be written, which is annoying
 	if (answers.travisUpdateEnvironment) {
 		// Detect which travis environments we are configured for
 		status('updating the travis environment...')
 
-		// Attempt travis-ci.com first
-		try {
-			console.log('testing travis-ci.com')
-			await spawn(['travis', 'enable', '--com', ...flags])
-			console.log('success with travis-ci.com')
+		/* eslint no-inner-declarations:0 max-params:0 */
+		async function api(tld, repo, path = '', method = 'GET', params = null) {
+			const url = `https://api.travis-ci.${tld}/repo/${encodeURIComponent(
+				repo
+			)}${path ? `/${path}` : ''}`
+			const opts = {
+				method,
+				headers: {
+					'Content-Type': 'application/json',
+					'User-Agent': 'bevry/boundation',
+					'Travis-API-Version': '3',
+					Authorization: `token ${
+						tld === 'org' ? answers.travisOrgToken : answers.travisComToken
+					}`,
+				},
+			}
+			if (params) opts.body = JSON.stringify(params)
+			const res = await fetch(url, opts)
+			const text = await res.text()
 			try {
-				console.log('clearing travis-ci.org')
-				await spawn(['travis', 'env', 'clear', '--force', '--org', ...flags], {
-					stdio: false,
-					output: false,
-				})
-			} catch (err) {}
-			try {
-				console.log('disabling travis-ci.org')
-				await spawn(['travis', 'disable', '--org', ...flags], {
-					stdio: false,
-					output: false,
-				})
-			} catch (err) {}
-			console.log('using travis-ci.com')
-			state.travisTLD = 'com'
-			flags.push('--com')
-		} catch (err) {
-			console.log('travis-ci.com failed:', err)
-			try {
-				console.log('testing travis-ci.org')
-				await spawn(['travis', 'enable', '--org', ...flags])
-				console.log('using travis-ci.org')
-				state.travisTLD = 'org'
-				flags.push('--org')
+				const data = JSON.parse(text)
+				let error = null
+				if (!data) {
+					error = new Errlop('no data was returned', error)
+				} else if (data.error_message) {
+					error = new Errlop(`${data.error_type}: ${data.error_message}`, error)
+				} else if (data.errors) {
+					for (const [key, value] of Object.entries(data.errors)) {
+						error = new Errlop(`${key}: ${value.default_message}`, error)
+					}
+				}
+				if (error) {
+					return Promise.reject(error)
+				}
+				return data
 			} catch (err) {
-				state.travisTLD = ''
-				throw new Errlop(
-					'Was unnsuccessful in enabling travis-ci for this repository',
-					err
+				console.dir({ url, opts, text })
+				return Promise.reject(
+					new Errlop(`couldn't parse the data: ${text}`, err)
 				)
 			}
 		}
-
-		// add the notifications
-		if (answers.travisEmail) {
-			await spawn([
-				'travis',
-				'encrypt',
-				answers.travisEmail,
-				'--add',
-				'notifications.email.recipients',
-				...flags,
-			])
+		function encrypt(key, value) {
+			return crypto
+				.publicEncrypt(
+					{
+						key,
+						padding: crypto.constants.RSA_PKCS1_PADDING,
+					},
+					Buffer.from(value)
+				)
+				.toString('base64')
 		}
 
-		// set the env vars
-		await spawn([
-			'travis',
-			'env',
-			'set',
-			'DESIRED_NODE_VERSION',
-			answers.desiredNodeVersion,
-			'--public',
-			...flags,
-		])
-		if (answers.deployBranch) {
-			await spawn([
-				'travis',
-				'env',
-				'set',
-				'DEPLOY_BRANCH',
-				answers.deployBranch,
-				...flags,
-			])
+		// disable travis-ci.org
+		if (answers.travisOrgToken && answers.travisComToken) {
+			state.travisTLD = 'com'
+			console.log('disabling travis-ci.org')
+			try {
+				const data = await api('org', answers.githubSlug)
+				if (data.migration_status === 'migrated') {
+					console.log('travis-ci.org has already migrated')
+				} else {
+					try {
+						console.log('migrating travis-ci.org')
+						await api('org', answers.githubSlug, 'migrate', 'POST')
+					} catch (err) {
+						console.warn(new Errlop('failed to migrate', err))
+					}
+				}
+			} catch (err) {
+				console.warn(new Errlop('failed to query', err))
+			}
+			// fails as travis cannot modify migrated repositories
+			// console.log('clearing travis.ci.org env vars')
+			// try {
+			// 	const vars = await apivars('org', answers.githubSlug)
+			// 	for (const value of vars) {
+			// 		console.log(`deleteing env var [${value.name}]:[${value.id}]`)
+			// 		try {
+			// 			await api(
+			// 				'org',
+			// 				answers.githubSlug,
+			// 				`env_var/${value.id}`,
+			// 				'DELETE'
+			// 			)
+			// 		} catch (err) {
+			// 			console.warn(new Errlop('failed to delete env var', err))
+			// 		}
+			// 	}
+			// } catch (err) {
+			// 	console.warn(new Errlop('failed to fetch the env vars', err))
+			// }
+		} else if (answers.travisOrgToken) {
+			state.travisTLD = 'org'
 		} else {
-			await spawn(['travis', 'env', 'unset', 'DEPLOY_BRANCH', ...flags])
+			state.travisTLD = 'com'
 		}
-		if (answers.surgeLogin) {
-			await spawn([
-				'travis',
-				'env',
-				'set',
+
+		// enable travis-ci
+		console.log(`enabling travis-ci.${state.travisTLD}`)
+		let active = (await api(state.travisTLD, answers.githubSlug)).active
+		if (!active) {
+			try {
+				console.log('already active')
+				await api(state.travisTLD, answers.githubSlug, 'activate', 'POST')
+				active = true
+			} catch (err) {
+				console.warn(new Errlop('failed to activate', err))
+			}
+		}
+
+		// check if activated
+		if (!active) {
+			// status update
+			status('...FAILED to update the travis environment')
+		} else {
+			// add the notifications to the travis.yml file
+			const key = (
+				await api(state.travisTLD, answers.githubSlug, 'key_pair/generated')
+			).public_key
+			if (answers.travisEmail) {
+				const value = [answers.travisEmail]
+				if (!travis.notifications) travis.notifications = {}
+				if (!travis.notifications.email) travis.notifications.email = {}
+				console.log('setting the email recipients to', value)
+				travis.notifications.email.recipients = encrypt(key, value)
+			}
+
+			// fetch the current vars
+			const vars = {}
+			const data = await api(state.travisTLD, answers.githubSlug, 'env_vars')
+			for (const value of data.env_vars || []) {
+				vars[value.name] = value
+			}
+
+			// do the deleta
+			const isPublic = new Set([
+				'DESIRED_NODE_VERSION',
 				'SURGE_LOGIN',
-				answers.surgeLogin,
-				'--public',
-				...flags,
-			])
-		} else {
-			await spawn(['travis', 'env', 'unset', 'SURGE_LOGIN', ...flags])
-		}
-		if (answers.surgeToken) {
-			await spawn([
-				'travis',
-				'env',
-				'set',
-				'SURGE_TOKEN',
-				answers.surgeToken,
-				...flags,
-			])
-		} else {
-			await spawn(['travis', 'env', 'unset', 'SURGE_TOKEN', ...flags])
-		}
-		if (answers.bevryCDNToken) {
-			await spawn([
-				'travis',
-				'env',
-				'set',
-				'BEVRY_CDN_TOKEN',
-				answers.bevryCDNToken,
-				...flags,
-			])
-		} else {
-			await spawn(['travis', 'env', 'unset', 'BEVRY_CDN_TOKEN', ...flags])
-		}
-		if (answers.npmAuthToken) {
-			await spawn([
-				'travis',
-				'env',
-				'set',
-				'NPM_AUTHTOKEN',
-				answers.npmAuthToken,
-				...flags,
-			])
-			await spawn([
-				'travis',
-				'env',
-				'unset',
-				'NPM_USERNAME',
-				'NPM_PASSWORD',
-				'NPM_EMAIL',
-				...flags,
-			])
-		}
-		if (answers.npm) {
-			// publish all commits to the master branch to the npm tag next
-			await spawn([
-				'travis',
-				'env',
-				'set',
 				'NPM_BRANCH_TAG',
-				'master:next',
-				'--public',
-				...flags,
-			])
-			// proxy github api requests to the bevry server to work around rate limiting
-			await spawn([
-				'travis',
-				'env',
-				'set',
 				'GITHUB_API',
-				'https://bevry.me/api/github',
-				'--public',
-				...flags,
 			])
+			const delta = {
+				NPM_USERNAME: null,
+				NPM_PASSWORD: null,
+				NPM_EMAIL: null,
+				DESIRED_NODE_VERSION: answers.desiredNodeVersion || null,
+				DEPLOY_BRANCH: answers.deployBranch || null,
+				SURGE_LOGIN: answers.surgeLogin || null,
+				SURGE_TOKEN: answers.surgeToken || null,
+				BEVRY_CDN_TOKEN: answers.bevryCDNToken || null,
+				NPM_AUTHTOKEN: answers.npmAuthToken || null,
+				// publish all commits to the master branch to the npm tag next
+				NPM_BRANCH_TAG: answers.npm ? 'master:next' : null,
+				// proxy github api requests to the bevry server to work around rate limiting
+				GITHUB_API: answers.npm ? 'https://bevry.me/api/github' : null,
+			}
+
+			// output the result env vars
+			for (const [name, value] of Object.entries(delta)) {
+				const details = vars[name]
+				if (details) {
+					const makePublic = isPublic.has(name)
+					// item exists
+					if (value == null) {
+						// delete it
+						await api(
+							state.travisTLD,
+							answers.githubSlug,
+							`env_var/${encodeURIComponent(details.id)}`,
+							'DELETE'
+						)
+						console.log(`${name} = [deleted]`)
+					} else if (details.value !== value || details.public !== makePublic) {
+						// apply change
+						await api(
+							state.travisTLD,
+							answers.githubSlug,
+							`env_var/${encodeURIComponent(details.id)}`,
+							'PATCH',
+							{
+								'env_var.name': name,
+								'env_var.value': value,
+								'env_var.public': makePublic,
+							}
+						)
+						console.log(`${name} = ${makePublic ? value : '[hidden]'}`)
+					} else {
+						// already applied
+						console.log(
+							`${name} == ${details.public ? details.value : '[hidden]'}`
+						)
+					}
+				} else if (value) {
+					// add it
+					await api(state.travisTLD, answers.githubSlug, 'env_vars', 'POST', {
+						'env_var.name': name,
+						'env_var.value': value,
+						'env_var.public': isPublic.has(name),
+					})
+					console.log(`${name} = ${isPublic.has(name) ? value : '[hidden]'}`)
+				} else {
+					// already missing, so no need to delete
+					console.log(`${name} = [already deleted]`)
+				}
+			}
+
+			// output remaining
+			for (const [name, details] of Object.entries(vars)) {
+				if (delta[name]) continue
+				console.log(`${name} == ${details.public ? details.value : '[hidden]'}`)
+			}
+
+			// status update
+			status('...updated the travis environment')
 		}
-		// output the result env vars
-		await spawn(['travis', 'env', 'list', ...flags])
-		// status update
-		status('...updated the travis environment')
 	}
+
+	// write the .travis.yml file
+	status('writing the travis file...')
+	await writeYAML('.travis.yml', travis)
+	status('...wrote the travis file')
 
 	// write the package.json file
 	await writePackage(state)
