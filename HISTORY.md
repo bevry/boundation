@@ -1,5 +1,13 @@
 # History
 
+## v1.53.0 2020 May 20
+
+-   Use the Travis HTTP API instead of the buggy travis CLI
+    -   To automate it:
+        -   Set `TRAVIS_COM_TOKEN` to the token from https://travis-ci.com/account/preferences
+        -   Set `TRAVIS_ORG_TOKEN` to the token from https://travis-ci.org/account/preferences
+-   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
+
 ## v1.52.0 2020 May 12
 
 -   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
