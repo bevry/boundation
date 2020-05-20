@@ -1,5 +1,9 @@
 # History
 
+## v1.53.2 2020 May 21
+
+-   Fix the editions autoloader being used for CommonJS projects that also targetted browsers
+
 ## v1.53.1 2020 May 20
 
 -   Fix travis email encoding on some repositories
