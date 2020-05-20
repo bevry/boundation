@@ -1,5 +1,10 @@
 # History
 
+## v1.53.1 2020 May 20
+
+-   Fix travis email encoding on some repositories
+-   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
+
 ## v1.53.0 2020 May 20
 
 -   Use the Travis HTTP API instead of the buggy travis CLI

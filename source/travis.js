@@ -148,16 +148,26 @@ async function updateTravis(state) {
 				)
 			}
 		}
-		function encrypt(key, value) {
-			return crypto
-				.publicEncrypt(
-					{
-						key,
-						padding: crypto.constants.RSA_PKCS1_PADDING,
-					},
-					Buffer.from(value)
-				)
-				.toString('base64')
+		function encrypt(data, value) {
+			// console.dir(data)
+			/*
+				Sometimes travis varies its output, the replace solves the problem, otherwise this occurs:
+				Error: error:0D0680A8:asn1 encoding routines:asn1_check_tlen:wrong tag
+					opensslErrorStack: [
+						'error:0D09B00D:asn1 encoding routines:d2i_PublicKey:ASN1 lib',
+						'error:0D07803A:asn1 encoding routines:asn1_item_embed_d2i:nested asn1 error'
+					],
+					library: 'asn1 encoding routines',
+					function: 'asn1_check_tlen',
+					reason: 'wrong tag',
+					code: 'ERR_OSSL_ASN1_WRONG_TAG'
+		  	*/
+			const opts = {
+				key: data.public_key.replace(/RSA PUBLIC KEY/g, 'PUBLIC KEY'),
+				padding: crypto.constants.RSA_PKCS1_PADDING,
+			}
+			// console.dir(opts)
+			return crypto.publicEncrypt(opts, Buffer.from(value)).toString('base64')
 		}
 
 		// disable travis-ci.org
@@ -223,16 +233,18 @@ async function updateTravis(state) {
 			// status update
 			status('...FAILED to update the travis environment')
 		} else {
-			// add the notifications to the travis.yml file
-			const key = (
-				await api(state.travisTLD, answers.githubSlug, 'key_pair/generated')
-			).public_key
 			if (answers.travisEmail) {
+				// add the notifications to the travis.yml file
 				const value = [answers.travisEmail]
 				if (!travis.notifications) travis.notifications = {}
 				if (!travis.notifications.email) travis.notifications.email = {}
 				console.log('setting the email recipients to', value)
-				travis.notifications.email.recipients = encrypt(key, value)
+				const keyData = await api(
+					state.travisTLD,
+					answers.githubSlug,
+					'key_pair/generated'
+				)
+				travis.notifications.email.recipients = encrypt(keyData, value)
 			}
 
 			// fetch the current vars
@@ -297,7 +309,7 @@ async function updateTravis(state) {
 					} else {
 						// already applied
 						console.log(
-							`${name} == ${details.public ? details.value : '[hidden]'}`
+							`${name} === ${details.public ? details.value : '[hidden]'}`
 						)
 					}
 				} else if (value) {
@@ -310,14 +322,16 @@ async function updateTravis(state) {
 					console.log(`${name} = ${isPublic.has(name) ? value : '[hidden]'}`)
 				} else {
 					// already missing, so no need to delete
-					console.log(`${name} = [already deleted]`)
+					console.log(`${name} === [deleted]`)
 				}
 			}
 
 			// output remaining
 			for (const [name, details] of Object.entries(vars)) {
 				if (delta[name]) continue
-				console.log(`${name} == ${details.public ? details.value : '[hidden]'}`)
+				console.log(
+					`${name} === ${details.public ? details.value : '[hidden]'}`
+				)
 			}
 
 			// status update
