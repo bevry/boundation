@@ -1270,6 +1270,7 @@ async function updateRuntime(state) {
 					),
 					include: [answers.sourceDirectory],
 			  }
+		if (lib.length === 0) delete tsconfig.compilerOptions.lib
 		await write('tsconfig.json', JSON.stringify(tsconfig, null, '  ') + '\n')
 		status('...wrote tsconfig file')
 	}
