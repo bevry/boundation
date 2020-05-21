@@ -435,7 +435,7 @@ async function getQuestions(state) {
 			},
 			when({ website, language }) {
 				return (
-					!website ||
+					!website &&
 					['esnext', 'typescript', 'coffeescript'].includes(language)
 				)
 			},
