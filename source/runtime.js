@@ -804,30 +804,32 @@ async function updateRuntime(state) {
 			'--declarationDir ./compiled-types',
 			...fixTsc('compiled-types', answers.sourceDirectory),
 		].join(' ')
-	}
-
-	// Types
-	// define the possible locations
-	const typePaths = [
-		// e.g. types/
-		state.scripts['our:compile:types'] ? './compiled-types/' : '',
-		// e.g. index.d.ts
-		pathUtil.join(answers.mainEntry + '.d.ts'),
-		// e.g. source/index.d.ts
-		sourceEdition &&
-			pathUtil.join(sourceEdition.directory, answers.mainEntry + '.d.ts'),
-	].filter((v) => v)
-	// fetch their existing status and convert back into the original location
-	const typePathsExisting = await Promise.all(
-		typePaths.map((v) => exists(v).then((e) => e && v))
-	)
-	// find the first location that exists
-	const typePath = typePathsExisting.find((v) => v)
-	// and if exists, apply to types
-	if (typePath) {
-		packageData.types = typePath
+		packageData.types = './compiled-types/'
 	} else {
-		delete packageData.types
+		// Types
+		// define the possible locations
+		// do note that they must exist throughout boundation, which if it is a compiled dir, is sporadic
+		const typePaths = [
+			// existing types directory
+			packageData.types,
+			// e.g. index.d.ts
+			pathUtil.join(answers.mainEntry + '.d.ts'),
+			// e.g. source/index.d.ts
+			sourceEdition &&
+				pathUtil.join(sourceEdition.directory, answers.mainEntry + '.d.ts'),
+		].filter((v) => v)
+		// fetch their existing status and convert back into the original location
+		const typePathsExisting = await Promise.all(
+			typePaths.map((v) => exists(v).then((e) => e && v))
+		)
+		// find the first location that exists
+		const typePath = typePathsExisting.find((v) => v)
+		// and if exists, apply to types
+		if (typePath) {
+			packageData.types = typePath
+		} else {
+			delete packageData.types
+		}
 	}
 
 	// documentation
