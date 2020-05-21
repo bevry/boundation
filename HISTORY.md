@@ -1,5 +1,9 @@
 # History
 
+## v1.54.3 2020 May 21
+
+-   fixed `types` property sometimes not being included, at times it should be, inside `package.json`
+
 ## v1.54.2 2020 May 21
 
 -   fixed json projects being compiled with babel
