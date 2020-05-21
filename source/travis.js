@@ -125,6 +125,16 @@ async function updateTravis(state) {
 			if (params) opts.body = JSON.stringify(params)
 			const res = await fetch(url, opts)
 			const text = await res.text()
+			if (!text) {
+				if (res.ok) {
+					return null // support DELETE and other times it passes but returns nothing
+				} else {
+					console.dir({ url, opts, text })
+					return Promise.reject(
+						new Error(`request failed with ${res.status}: ${res.statusText}`)
+					)
+				}
+			}
 			try {
 				const data = JSON.parse(text)
 				let error = null
