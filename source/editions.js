@@ -6,7 +6,7 @@ const pathUtil = require('path')
 
 // Local
 const { status } = require('./log')
-const { add, has, strip, addExtension } = require('./util.js')
+const { add, has, strip, addExtension, fixTsc } = require('./util.js')
 const languageNames = {
 	typescript: 'TypeScript',
 	esnext: 'ESNext',
@@ -372,13 +372,7 @@ async function generateEditions(state) {
 					`--target ${edition.targets.es}`,
 					`--outDir ./${edition.directory}`,
 					`--project ${answers.tsconfig}`,
-					// fix typescript embedding the source directory inside the output
-					`&& test -d ${edition.directory}/${answers.sourceDirectory}`,
-					`&& (`,
-					`mv ${edition.directory}/${answers.sourceDirectory} edition-temp`,
-					`&& rm -Rf ${edition.directory}`,
-					`&& mv edition-temp ${edition.directory}`,
-					`) || true`,
+					...fixTsc(edition.directory, answers.sourceDirectory),
 				]
 					.filter((part) => part)
 					.join(' ')

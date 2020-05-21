@@ -1,5 +1,10 @@
 # History
 
+## v1.53.4 2020 May 21
+
+-   Fix compiled-types being generated for things other than the source directory, which causes compiled types to fail to be included
+-   Fix typescript compilation always passing, due to previous lack of wrapping the tsc fix in parenthesis
+
 ## v1.53.3 2020 May 21
 
 -   Fix balupton entries in maintainers and contributors

@@ -2,6 +2,22 @@
 
 const { bevryOrganisationsList } = require('./data')
 
+// fix typescript embedding the source directory inside the output
+function fixTsc(editionDirectory, sourceDirectory) {
+	return [
+		'&&',
+		'(', // begin fix
+		`test ! -d ${editionDirectory}/${sourceDirectory}`,
+		'||',
+		'(', // begin move
+		`mv ${editionDirectory}/${sourceDirectory} edition-temp`,
+		`&& rm -Rf ${editionDirectory}`,
+		`&& mv edition-temp ${editionDirectory}`,
+		`)`, // end move
+		')', // end fix
+	]
+}
+
 function fixBalupton(person) {
 	return person
 		.replace(
@@ -121,6 +137,7 @@ function ensureScript(scripts, name) {
 }
 
 module.exports = {
+	fixTsc,
 	fixBalupton,
 	defaultDeploy,
 	ensureScript,

@@ -3,8 +3,8 @@
 
 // Local
 const { status } = require('./log')
-const { allEsTargets, allLanguages, typesPath } = require('./data')
-const { without, uniq, toggle } = require('./util')
+const { allEsTargets, allLanguages } = require('./data')
+const { without, uniq, toggle, fixTsc } = require('./util')
 const {
 	contains,
 	exec,
@@ -795,16 +795,22 @@ async function updateRuntime(state) {
 		packages.typescript = packages[
 			'@typescript-eslint/eslint-plugin'
 		] = packages['@typescript-eslint/parser'] = 'dev'
-		state.scripts[
-			'our:compile:types'
-		] = `tsc --project ${answers.tsconfig} --emitDeclarationOnly --declaration --declarationDir ${typesPath} --declarationMap`
+		state.scripts['our:compile:types'] = [
+			'tsc',
+			`--project ${answers.tsconfig}`,
+			'--emitDeclarationOnly',
+			'--declaration',
+			'--declarationMap',
+			'--declarationDir ./compiled-types',
+			...fixTsc('compiled-types', answers.sourceDirectory),
+		].join(' ')
 	}
 
 	// Types
 	// define the possible locations
 	const typePaths = [
 		// e.g. types/
-		state.scripts['our:compile:types'] ? typesPath : '',
+		state.scripts['our:compile:types'] ? './compiled-types/' : '',
 		// e.g. index.d.ts
 		pathUtil.join(answers.mainEntry + '.d.ts'),
 		// e.g. source/index.d.ts
@@ -1004,7 +1010,10 @@ async function updateRuntime(state) {
 			packages['valid-directory'] = 'dev'
 			state.scripts['our:verify:directory'] = 'valid-directory'
 		} else {
-			state.scripts['our:verify:directory'] = 'npx .'
+			// do not valid-directory, the valid-directory package
+			// as it deliberately has invalid files in it
+			// such that it tests can detect that it works
+			// state.scripts['our:verify:directory'] = 'npx .'
 		}
 		if (packageData.module) {
 			if (answers.name !== 'valid-module') {

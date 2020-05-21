@@ -1,7 +1,6 @@
 'use strict'
 
 module.exports = {
-	typesPath: './compiled-types/',
 	bevryOrganisationsList: 'balupton bevry bevry-trading docpad browserstate webwrite chainyjs interconnectapp'.split(
 		' '
 	),
