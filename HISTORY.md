@@ -1,5 +1,9 @@
 # History
 
+## v1.54.0 2020 May 21
+
+-   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
+
 ## v1.53.3 2020 May 21
 
 -   Fix balupton entries in maintainers and contributors
