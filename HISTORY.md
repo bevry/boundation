@@ -1,5 +1,9 @@
 # History
 
+## v1.54.1 2020 May 21
+
+-   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
+
 ## v1.53.4 2020 May 21
 
 -   Fix compiled-types being generated for things other than the source directory, which causes compiled types to fail to be included

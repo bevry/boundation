@@ -1,6 +1,6 @@
 {
   "name": "boundation",
-  "version": "1.53.4",
+  "version": "1.54.1",
   "description": "Automatic scaffolding and upgrading of your JavaScript ecosystem projects using Bevry's best practices",
   "homepage": "https://github.com/bevry/boundation",
   "license": "MIT",
@@ -89,7 +89,7 @@
   "main": "source/index.js",
   "dependencies": {
     "@bevry/testen": "^3.7.0",
-    "arrangekeys": "^4.3.0",
+    "arrangekeys": "^4.4.0",
     "chalk": "^4.0.0",
     "errlop": "^3.0.0",
     "get-cli-arg": "^5.1.0",
@@ -97,22 +97,22 @@
     "inquirer": "^7.1.0",
     "js-yaml": "^3.13.1",
     "node-fetch": "^2.6.0",
-    "safeps": "^10.0.0",
+    "safeps": "^10.1.0",
     "semver": "^7.3.2",
-    "typechecker": "^7.0.0"
+    "typechecker": "^7.2.0"
   },
   "devDependencies": {
-    "@bevry/update-contributors": "^1.5.0",
+    "@bevry/update-contributors": "^1.6.0",
     "@types/node-fetch": "^2.5.7",
-    "assert-helpers": "^6.4.0",
+    "assert-helpers": "^6.5.0",
     "eslint": "^7.0.0",
     "eslint-config-bevry": "^3.5.0",
     "eslint-config-prettier": "^6.11.0",
     "eslint-plugin-prettier": "^3.1.3",
     "kava": "^5.1.0",
     "prettier": "^2.0.5",
-    "projectz": "^2.1.0",
-    "valid-directory": "^1.6.0"
+    "projectz": "^2.2.0",
+    "valid-directory": "^2.0.0"
   },
   "scripts": {
     "our:clean": "rm -Rf ./docs ./edition* ./es2015 ./es5 ./out ./.next",
