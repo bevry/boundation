@@ -302,19 +302,33 @@ async function updateTravis(state) {
 							'DELETE'
 						)
 						console.log(`${name} = [deleted]`)
-					} else if (details.value !== value || details.public !== makePublic) {
+					} else if (
+						String(details.value) !== String(value) ||
+						details.public !== makePublic
+					) {
 						// apply change
-						await api(
-							state.travisTLD,
-							answers.githubSlug,
-							`env_var/${encodeURIComponent(details.id)}`,
-							'PATCH',
-							{
-								'env_var.name': name,
-								'env_var.value': value,
-								'env_var.public': makePublic,
-							}
-						)
+						const body = {
+							'env_var.name': name,
+							'env_var.value': String(value),
+							'env_var.public': makePublic,
+						}
+						try {
+							await api(
+								state.travisTLD,
+								answers.githubSlug,
+								`env_var/${encodeURIComponent(details.id)}`,
+								'PATCH',
+								body
+							)
+						} catch (err) {
+							console.error(
+								`failed to update ${name} from`,
+								details,
+								'to',
+								body
+							)
+							throw err
+						}
 						console.log(`${name} = ${makePublic ? value : '[hidden]'}`)
 					} else {
 						// already applied
@@ -326,7 +340,7 @@ async function updateTravis(state) {
 					// add it
 					await api(state.travisTLD, answers.githubSlug, 'env_vars', 'POST', {
 						'env_var.name': name,
-						'env_var.value': value,
+						'env_var.value': String(value),
 						'env_var.public': isPublic.has(name),
 					})
 					console.log(`${name} = ${isPublic.has(name) ? value : '[hidden]'}`)
