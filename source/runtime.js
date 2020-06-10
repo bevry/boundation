@@ -1254,7 +1254,8 @@ async function updateRuntime(state) {
 		const lib = new Set()
 		try {
 			const data = await parse(answers.tsconfig)
-			const list = data?.compilerOptions?.lib || []
+			const list =
+				(data && data.compilerOptions && data.compilerOptions.lib) || []
 			// add any lib that has a dot back to lib
 			list.filter((i) => i.includes('.')).forEach((i) => lib.add(i))
 		} catch (e) {

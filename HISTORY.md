@@ -1,5 +1,11 @@
 # History
 
+## v1.56.0 2020 June 10
+
+-   For compatible TypeScript npm packages, automatically attempt to generate a deno edition
+-   Fixed a bug when applying numeric travis CI env vars
+-   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
+
 ## v1.55.1 2020 May 23
 
 -   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
