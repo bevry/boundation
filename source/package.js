@@ -388,7 +388,7 @@ function arrangePackage(state) {
 	// package keys
 	packageData = arrangekeys(
 		packageData,
-		'title name version private description homepage license keywords badges funding author sponsors maintainers contributors bugs repository engines editions bin types type main browser module jspm dependencies optionalDependencies devDependencies peerDependencies scripts now eslintConfig prettier babel'
+		'title name version private description homepage license keywords badges funding author sponsors maintainers contributors bugs repository engines editions bin types type main browser module deno jspm dependencies optionalDependencies devDependencies peerDependencies scripts now eslintConfig prettier babel'
 	)
 
 	// ---------------------------------

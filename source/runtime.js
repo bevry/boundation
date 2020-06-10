@@ -4,6 +4,7 @@
 // Local
 const { status } = require('./log')
 const { allEsTargets, allLanguages } = require('./data')
+const { parse } = require('./fs')
 const { without, uniq, toggle, fixTsc } = require('./util')
 const {
 	contains,
@@ -564,6 +565,7 @@ async function updateRuntime(state) {
 		'@babel/plugin-proposal-optional-chaining': false,
 		'babel-plugin-add-module-exports': false,
 		typescript: false,
+		'make-deno-edition': false,
 		'typescript-eslint-parser': false,
 		'@typescript-eslint/parser': false,
 		prettier: false,
@@ -791,10 +793,22 @@ async function updateRuntime(state) {
 	}
 
 	// typescript
-	if (answers.languages.includes('typescript')) {
-		packages.typescript = packages[
-			'@typescript-eslint/eslint-plugin'
-		] = packages['@typescript-eslint/parser'] = 'dev'
+	// primarily typescript
+	if (answers.language === 'typescript') {
+		// @todo import make-deno-edition and use the api instead of the bin
+		// deno compat layer
+		if (answers.sourceModule && answers.npm) {
+			if (packageData.name === 'make-deno-edition') {
+				// @todo, once make-deno-edition API is used, this can be fixzed
+				// it is currently disabled because it cannot call itself during the compile step
+				// as it has not finished compiling
+				// state.scripts['our:compile:deno'] = 'npx . --attempt'
+			} else {
+				state.scripts['our:compile:deno'] = 'make-deno-edition --attempt'
+				packages['make-deno-edition'] = 'dev'
+			}
+		}
+		// types
 		state.scripts['our:compile:types'] = [
 			'tsc',
 			`--project ${answers.tsconfig}`,
@@ -805,7 +819,15 @@ async function updateRuntime(state) {
 			...fixTsc('compiled-types', answers.sourceDirectory),
 		].join(' ')
 		packageData.types = './compiled-types/'
-	} else {
+	}
+	// partially typescript
+	if (answers.languages.includes('typescript')) {
+		packages.typescript = packages[
+			'@typescript-eslint/eslint-plugin'
+		] = packages['@typescript-eslint/parser'] = 'dev'
+	}
+	// not typescript
+	else {
 		// Types
 		// define the possible locations
 		// do note that they must exist throughout boundation, which if it is a compiled dir, is sporadic
@@ -1214,7 +1236,6 @@ async function updateRuntime(state) {
 			'nakefile.js',
 			'next.config.js',
 			'npm-debug.log',
-			'tsconfig.json',
 			'yarn-error.log',
 		]
 			.filter((i) => i)
@@ -1230,18 +1251,26 @@ async function updateRuntime(state) {
 		// https://github.com/Microsoft/TypeScript/issues/29056#issuecomment-448386794
 		// Only enable isolatedModules on TypeScript projects, as for JavaScript projects it will be incompatible with 'use strict'
 		// resolveJsonModule seems to cause too many issues, so is disabled unless needed
+		const lib = new Set()
+		try {
+			const data = await parse(answers.tsconfig)
+			const list = data?.compilerOptions?.lib || []
+			// add any lib that has a dot back to lib
+			list.filter((i) => i.includes('.')).forEach((i) => lib.add(i))
+		} catch (e) {
+			// ignore
+		}
 		status('writing tsconfig file...')
-		const lib = []
-		if (answers.keywords.has('webworker')) lib.push('WebWorker')
-		if (answers.keywords.has('dom')) lib.push('DOM', 'DOM.Iterable')
-		if (answers.keywords.has('esnext')) lib.push('ESNext')
+		if (answers.keywords.has('webworker')) lib.add('WebWorker')
+		if (answers.keywords.has('dom')) lib.add('DOM').add('DOM.Iterable')
+		if (answers.keywords.has('esnext')) lib.add('ESNext')
 		const tsconfig = answers.website
 			? {
 					compilerOptions: {
 						allowJs: true,
 						allowSyntheticDefaultImports: true,
 						jsx: 'preserve',
-						lib,
+						lib: Array.from(lib),
 						maxNodeModuleJsDepth: 5,
 						module: 'ESNext',
 						moduleResolution: 'Node',
@@ -1275,15 +1304,18 @@ async function updateRuntime(state) {
 							moduleResolution: 'Node',
 							strict: true,
 							target: 'ESNext',
-							lib,
+							lib: Array.from(lib),
 						},
 						answers.packageModule ? { module: 'ESNext' } : {}
 					),
 					include: [answers.sourceDirectory],
 			  }
-		if (lib.length === 0) delete tsconfig.compilerOptions.lib
+		if (lib.size === 0) delete tsconfig.compilerOptions.lib
 		await write('tsconfig.json', JSON.stringify(tsconfig, null, '  ') + '\n')
 		status('...wrote tsconfig file')
+	} else {
+		// remove tsconfig.json
+		unlink('tsconfig.json')
 	}
 
 	// next mdx website

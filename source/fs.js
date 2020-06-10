@@ -15,22 +15,22 @@ const { status } = require('./log')
 
 function exists(file) {
 	try {
-		file = pathUtil.resolve(cwd, file)
+		const path = pathUtil.resolve(cwd, file)
+		return new Promise(function (resolve) {
+			fsUtil.exists(path, function (exists) {
+				resolve(exists)
+			})
+		})
 	} catch (err) {
 		console.error({ err, cwd, file })
 		return Promise.resolve(false)
 	}
-	return new Promise(function (resolve) {
-		fsUtil.exists(file, function (exists) {
-			resolve(exists)
-		})
-	})
 }
 
 function unlink(file) {
-	file = pathUtil.resolve(cwd, file)
+	const path = pathUtil.resolve(cwd, file)
 	return new Promise(function (resolve, reject) {
-		fsUtil.unlink(file, function (error) {
+		fsUtil.unlink(path, function (error) {
 			if (error) {
 				if (error.message && error.message.includes('ENOENT')) return resolve()
 				return reject(error)
@@ -41,9 +41,9 @@ function unlink(file) {
 }
 
 function rmdir(file) {
-	file = pathUtil.resolve(cwd, file)
+	const path = pathUtil.resolve(cwd, file)
 	return new Promise(function (resolve, reject) {
-		fsUtil.rmdir(file, { recursive: true }, function (error) {
+		fsUtil.rmdir(path, { recursive: true }, function (error) {
 			if (error) {
 				if (error.message && error.message.includes('ENOENT')) return resolve()
 				return reject(error)
@@ -54,9 +54,9 @@ function rmdir(file) {
 }
 
 function read(file) {
-	file = pathUtil.resolve(cwd, file)
+	const path = pathUtil.resolve(cwd, file)
 	return new Promise(function (resolve, reject) {
-		fsUtil.readFile(file, function (error, data) {
+		fsUtil.readFile(path, function (error, data) {
 			if (error) return reject(error)
 			return resolve(data)
 		})
@@ -79,9 +79,9 @@ function rename(source, target) {
 }
 
 function write(file, data) {
-	file = pathUtil.resolve(cwd, file)
+	const path = pathUtil.resolve(cwd, file)
 	return new Promise(function (resolve, reject) {
-		fsUtil.writeFile(file, data, function (error) {
+		fsUtil.writeFile(path, data, function (error) {
 			if (error) return reject(error)
 			return resolve()
 		})
@@ -121,7 +121,8 @@ function exec(command, opts = {}) {
 	})
 }
 
-async function parse(path) {
+async function parse(file) {
+	const path = pathUtil.resolve(cwd, file)
 	const basename = pathUtil.basename(path)
 	status(`reading the ${basename} file...`)
 	try {
@@ -129,6 +130,8 @@ async function parse(path) {
 			const data = JSON.parse(await read(path))
 			status(`...read the ${basename} file...`)
 			return data
+		} else {
+			status(`...missing the ${path} file...`)
 		}
 	} catch (err) {
 		status(`...skipped the ${basename} file`)
