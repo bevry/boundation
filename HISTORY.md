@@ -1,5 +1,9 @@
 # History
 
+## v1.61.0 2020 June 20
+
+-   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
+
 ## v1.60.0 2020 June 20
 
 -   Add support for [Dependabot v2](https://help.github.com/en/github/administering-a-repository/configuration-options-for-dependency-updates)
