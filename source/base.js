@@ -252,33 +252,19 @@ async function updateBaseFiles({ answers, packageData }) {
 	}
 
 	// dependabot
-	/* eslint camelcase:0 */
-	// update_schedule should be 'weekly' as 'daily' and 'live' cause bottlenecks with CI
-	// allowed_updates set to 'security' as running boundation on everything is the recommended way of updating everything
 	// CI will fail if any dep caused failure in any supported version
-	await spawn(['mkdir', '-p', '.dependabot'])
-	await writeYAML('.dependabot/config.yml', {
-		version: 1,
-		update_configs: [
+	// Security Updates are now standard and controlled by github repository settings
+	// remove v1 file
+	await unlink('.dependabot/config.yml')
+	// add v2 file
+	await spawn(['mkdir', '-p', '.github'])
+	await writeYAML('.github/dependabot.yml', {
+		version: 2,
+		updates: [
 			{
-				package_manager: 'javascript',
+				'package-ecosystem': 'npm',
 				directory: '/',
-				update_schedule: 'weekly',
-				allowed_updates: [
-					{
-						match: {
-							update_type: 'security',
-						},
-					},
-				],
-				automerged_updates: [
-					{
-						match: {
-							dependency_type: 'all',
-							update_type: 'all',
-						},
-					},
-				],
+				schedule: { interval: 'weekly' },
 			},
 		],
 	})
