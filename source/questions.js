@@ -24,11 +24,12 @@ const {
 	getPackageAuthor,
 	getPackageBinEntry,
 	getPackageBinExecutable,
+	getPackageNodeEntry,
 	getPackageBrowserEntry,
 	getPackageDescription,
 	getPackageFlowtypeDependency,
 	getPackageKeywords,
-	getPackageMainEntry,
+	getPackageIndexEntry,
 	getPackageName,
 	getPackageNodeEngineVersion,
 	getPackageOrganisation,
@@ -537,32 +538,48 @@ async function getQuestions(state) {
 			},
 		},
 		{
-			name: 'mainEntry',
-			message: 'What is the main entry filename (without extension)?',
-			validate: isSpecified,
+			name: 'indexEntry',
+			message: 'What is the default entry filename (without extension)?',
+			validate: isSpecified, // @todo attempt to remove this
 			filter: trim,
-			default: getPackageMainEntry(packageData) || 'index',
+			default: getPackageIndexEntry(packageData) || 'index',
 			skip: editioned,
 			ignore({ website }) {
 				return website
 			},
 		},
 		{
-			name: 'browserEntry',
-			message: 'What is the filename of the browser entry (without extension)?',
+			name: 'nodeEntry',
+			message:
+				'What is the entry filename (without extension) to use for Node.js?',
 			validate: isSpecified,
 			filter: trim,
-			default({ mainEntry }) {
-				return getPackageBrowserEntry(packageData) || mainEntry
+			async default({ indexEntry }) {
+				return (await getPackageNodeEntry(packageData)) || indexEntry
 			},
 			skip: editioned,
-			when({ browser, mainEntry }) {
-				return browser && mainEntry
+			ignore({ website, indexEntry }) {
+				return website && indexEntry
+			},
+		},
+		{
+			name: 'browserEntry',
+			message:
+				'What is the entry filename (without extension) to use for Web Browsers?',
+			validate: isSpecified,
+			filter: trim,
+			async default({ indexEntry }) {
+				return (await getPackageBrowserEntry(packageData)) || indexEntry
+			},
+			skip: editioned,
+			when({ browser, indexEntry }) {
+				return browser && indexEntry
 			},
 		},
 		{
 			name: 'testEntry',
-			message: 'What is the test entry filename (without extension)?',
+			message:
+				'What is the entry filename (without extension) to use for tests?',
 			validate: isSpecified,
 			filter: trim,
 			default: getPackageTestEntry(packageData) || 'test',

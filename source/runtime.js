@@ -40,7 +40,23 @@ const commands = {
 }
 
 // Helpers
-function updateBrowser({ answers, browserEdition, packageData }) {
+function updateEditionEntries({
+	answers,
+	nodeEdition,
+	browserEdition,
+	packageData,
+}) {
+	// node
+	if (answers.node) {
+		if (nodeEdition) {
+			packageData.node = browserEdition.nodePath
+		} else {
+			packageData.node = answers.nodeEntry + '.js'
+		}
+	} else {
+		delete packageData.node
+	}
+	// browser
 	if (answers.browser) {
 		if (browserEdition) {
 			packageData.browser = browserEdition.browserPath
@@ -307,16 +323,16 @@ async function scaffoldEditions(state) {
 		)
 
 		// move or scaffold edition main path if needed
-		if (sourceEdition.mainPath) {
-			if ((await exists(sourceEdition.mainPath)) === false) {
+		if (sourceEdition.indexPath) {
+			if ((await exists(sourceEdition.indexPath)) === false) {
 				// edition entry doesn't exist, but the root entry does
 				if (await exists(sourceEdition.main)) {
-					await rename(sourceEdition.main, sourceEdition.mainPath)
+					await rename(sourceEdition.main, sourceEdition.indexPath)
 				}
 				// edition entry doesn't exist, but it is a docpad plugin
 				else if (answers.docpadPlugin) {
 					await write(
-						sourceEdition.mainPath,
+						sourceEdition.indexPath,
 						[
 							useStrict(answers.sourceModule),
 							exportOrExports(
@@ -333,7 +349,7 @@ async function scaffoldEditions(state) {
 				// edition entry doesn't exist, so create an empty file
 				else
 					await write(
-						sourceEdition.mainPath,
+						sourceEdition.indexPath,
 						[
 							useStrict(answers.sourceModule),
 							exportOrExports("'@todo'", answers.sourceModule),
@@ -394,7 +410,7 @@ async function scaffoldEditions(state) {
 				[
 					"'use strict'",
 					'',
-					`/** @type {typeof import("./${sourceEdition.mainPath}") } */`,
+					`/** @type {typeof import("./${sourceEdition.indexPath}") } */`,
 					"module.exports = require('editions').requirePackage(__dirname, require)",
 					'',
 				].join('\n')
@@ -482,7 +498,7 @@ async function scaffoldEditions(state) {
 			}
 			if (nodeEdition) {
 				// check for websites
-				packageData.main = nodeEdition.mainPath
+				packageData.main = nodeEdition.entryPath
 				state.test = nodeEdition.testPath
 			} else {
 				delete packageData.main
@@ -491,17 +507,17 @@ async function scaffoldEditions(state) {
 		}
 
 		// browser path
-		updateBrowser(state)
+		updateEditionEntries(state)
 
 		// log
 		status('...scaffolded edition files')
 	}
 	// no editions
 	else {
-		if (answers.mainEntry) {
-			packageData.main = answers.mainEntry + '.js'
+		if (answers.indexEntry) {
+			packageData.main = answers.indexEntry + '.js'
 		}
-		updateBrowser(state)
+		updateEditionEntries(state)
 		if (answers.testEntry) {
 			state.test = answers.testEntry + '.js'
 		}
@@ -835,10 +851,10 @@ async function updateRuntime(state) {
 			// existing types directory
 			packageData.types,
 			// e.g. index.d.ts
-			pathUtil.join(answers.mainEntry + '.d.ts'),
+			pathUtil.join(answers.indexEntry + '.d.ts'),
 			// e.g. source/index.d.ts
 			sourceEdition &&
-				pathUtil.join(sourceEdition.directory, answers.mainEntry + '.d.ts'),
+				pathUtil.join(sourceEdition.directory, answers.indexEntry + '.d.ts'),
 		].filter((v) => v)
 		// fetch their existing status and convert back into the original location
 		const typePathsExisting = await Promise.all(
@@ -1020,7 +1036,7 @@ async function updateRuntime(state) {
 	}
 
 	// browser path
-	updateBrowser(state)
+	updateEditionEntries(state)
 
 	// package
 	if (answers.npm) {
@@ -1082,7 +1098,7 @@ async function updateRuntime(state) {
 	)
 	if (answers.npm && answers.language === 'typescript') {
 		try {
-			await exec(`cat ${sourceEdition.mainPath} | grep "export default"`)
+			await exec(`cat ${sourceEdition.indexPath} | grep "export default"`)
 			answers.keywords.add('export-default')
 		} catch (err) {
 			answers.keywords.delete('export-default')

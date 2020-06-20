@@ -1,5 +1,12 @@
 # History
 
+## v1.62.0 2020 June 20
+
+-   If a file exists within the source edition of the name `node`, `deno`, or `browser` it will be selected as the entry for the appropriate edition
+-   If there is only one valid node edition, then `package.json:main` will point to the node entry
+-   Renamed `mainEntry` to `indexEntry` to serve more like a default in case there is conflicts
+-   This allows greater support for cross-runtime packages, as custom entries can be provided for the different runtimes
+
 ## v1.61.0 2020 June 20
 
 -   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)

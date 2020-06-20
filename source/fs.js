@@ -27,6 +27,11 @@ function exists(file) {
 	}
 }
 
+async function echoExists(file) {
+	const e = await exists(file)
+	return e ? file : ''
+}
+
 function unlink(file) {
 	const path = pathUtil.resolve(cwd, file)
 	return new Promise(function (resolve, reject) {
@@ -142,6 +147,7 @@ async function parse(file) {
 module.exports = {
 	contains,
 	exec,
+	echoExists,
 	exists,
 	parse,
 	read,

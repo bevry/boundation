@@ -57,14 +57,27 @@ class Edition {
 			writable: true,
 		})
 
-		Object.defineProperty(this, 'main', {
+		Object.defineProperty(this, 'entry', {
 			enumerable: false,
 			get() {
-				return this.entry
+				const engines = []
+				for (const [name, supported] of Object.entries(this.engines)) {
+					if (supported) engines.push(name)
+				}
+				const entry =
+					engines.length !== 1 ? this.index : this[engines[0]] || this.index
+				return entry
 			},
-			set(value) {
-				this.entry = value
-			},
+		})
+
+		Object.defineProperty(this, 'index', {
+			enumerable: false,
+			writable: true,
+		})
+
+		Object.defineProperty(this, 'node', {
+			enumerable: false,
+			writable: true,
 		})
 
 		Object.defineProperty(this, 'browser', {
@@ -82,10 +95,24 @@ class Edition {
 			writable: true,
 		})
 
-		Object.defineProperty(this, 'mainPath', {
+		Object.defineProperty(this, 'indexPath', {
 			enumerable: false,
 			get() {
-				return this.main && pathUtil.join(this.directory || '.', this.main)
+				return this.index && pathUtil.join(this.directory || '.', this.index)
+			},
+		})
+
+		Object.defineProperty(this, 'entryPath', {
+			enumerable: false,
+			get() {
+				return this.entry && pathUtil.join(this.directory || '.', this.entry)
+			},
+		})
+
+		Object.defineProperty(this, 'nodePath', {
+			enumerable: false,
+			get() {
+				return this.node && pathUtil.join(this.directory || '.', this.node)
 			},
 		})
 
@@ -148,7 +175,8 @@ async function generateEditions(state) {
 		if (answers.language === 'es5') {
 			const edition = new Edition({
 				directory: answers.sourceDirectory,
-				main: addExtension(answers.mainEntry, `js`),
+				index: addExtension(answers.indexEntry, `js`),
+				node: addExtension(answers.nodeEntry, `js`),
 				browser: addExtension(answers.browserEntry, `js`),
 				test: addExtension(answers.testEntry, `js`),
 				bin: addExtension(answers.binEntry, `js`),
@@ -171,7 +199,8 @@ async function generateEditions(state) {
 		} else if (answers.language === 'esnext') {
 			const edition = new Edition({
 				directory: answers.sourceDirectory,
-				main: addExtension(answers.mainEntry, `js`),
+				index: addExtension(answers.indexEntry, `js`),
+				node: addExtension(answers.nodeEntry, `js`),
 				browser: addExtension(answers.browserEntry, `js`),
 				test: addExtension(answers.testEntry, `js`),
 				bin: addExtension(answers.binEntry, `js`),
@@ -197,7 +226,8 @@ async function generateEditions(state) {
 				'source',
 				new Edition({
 					directory: answers.sourceDirectory,
-					main: addExtension(answers.mainEntry, `ts`),
+					index: addExtension(answers.indexEntry, `ts`),
+					node: addExtension(answers.nodeEntry, `ts`),
 					browser: addExtension(answers.browserEntry, `ts`),
 					test: addExtension(answers.testEntry, `ts`),
 					bin: addExtension(answers.binEntry, `js`),
@@ -210,7 +240,8 @@ async function generateEditions(state) {
 				'source',
 				new Edition({
 					directory: answers.sourceDirectory,
-					main: addExtension(answers.mainEntry, `coffee`),
+					index: addExtension(answers.indexEntry, `coffee`),
+					node: addExtension(answers.nodeEntry, `coffee`),
 					browser: addExtension(answers.browserEntry, `coffee`),
 					test: addExtension(answers.testEntry, `coffee`),
 					bin: addExtension(answers.binEntry, `coffee`),
@@ -224,7 +255,8 @@ async function generateEditions(state) {
 				new Edition({
 					description: 'JSON',
 					directory: answers.sourceDirectory,
-					main: addExtension(answers.mainEntry, `json`),
+					index: addExtension(answers.indexEntry, `json`),
+					node: addExtension(answers.nodeEntry, `json`),
 					browser: addExtension(answers.browserEntry, `json`),
 					test: addExtension(answers.testEntry, `js`),
 					bin: addExtension(answers.binEntry, `js`),
@@ -249,7 +281,7 @@ async function generateEditions(state) {
 						compiler: answers.compilerBrowser,
 						// for legacy b/c reasons this is not "edition-browser"
 						directory: 'edition-browsers',
-						main: addExtension(answers.browserEntry, `js`),
+						index: addExtension(answers.browserEntry, `js`),
 						browser: addExtension(answers.browserEntry, `js`),
 						test: addExtension(answers.testEntry, `js`),
 						bin: addExtension(answers.binEntry, `js`),
@@ -281,7 +313,8 @@ async function generateEditions(state) {
 					new Edition({
 						compiler: 'babel',
 						directory: `edition-node-${version}`,
-						main: addExtension(answers.mainEntry, `js`),
+						index: addExtension(answers.indexEntry, `js`),
+						node: addExtension(answers.nodeEntry, `js`),
 						browser: addExtension(answers.browserEntry, `js`),
 						test: addExtension(answers.testEntry, `js`),
 						bin: addExtension(answers.binEntry, `js`),
@@ -303,7 +336,8 @@ async function generateEditions(state) {
 					new Edition({
 						compiler: 'typescript',
 						directory,
-						main: addExtension(answers.mainEntry, `js`),
+						index: addExtension(answers.indexEntry, `js`),
+						node: addExtension(answers.nodeEntry, `js`),
 						browser: addExtension(answers.browserEntry, `js`),
 						test: addExtension(answers.testEntry, `js`),
 						bin: addExtension(answers.binEntry, `js`),
@@ -331,7 +365,8 @@ async function generateEditions(state) {
 					new Edition({
 						compiler: 'coffeescript',
 						directory,
-						main: addExtension(answers.mainEntry, `js`),
+						index: addExtension(answers.indexEntry, `js`),
+						node: addExtension(answers.nodeEntry, `js`),
 						browser: addExtension(answers.browserEntry, `js`),
 						test: addExtension(answers.testEntry, `js`),
 						bin: addExtension(answers.binEntry, `js`),

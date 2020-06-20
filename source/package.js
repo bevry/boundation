@@ -18,7 +18,7 @@ const {
 	defaultDeploy,
 	isBevryOrganisation,
 } = require('./util')
-const { exists, write, parse } = require('./fs')
+const { echoExists, exists, write, parse } = require('./fs')
 const { getNowName } = require('./website')
 
 // External
@@ -231,17 +231,6 @@ function getBasename(path) {
 	)
 }
 
-function getPackageMainEntry(packageData) {
-	if (packageData) {
-		if (isPackageDocPadPlugin(packageData)) {
-			return 'index'
-		} else {
-			return getBasename(packageData.main)
-		}
-	}
-	return null
-}
-
 function getPackageTestEntry(packageData) {
 	if (packageData) {
 		if (isPackageDocPadPlugin(packageData)) {
@@ -274,8 +263,40 @@ function getPackageBinExecutable(packageData) {
 	return null
 }
 
-function getPackageBrowserEntry(packageData) {
-	return getBasename(packageData.module) || null
+async function getPackageIndexEntry(packageData) {
+	if (packageData && isPackageDocPadPlugin(packageData)) {
+		return 'index'
+	}
+	return getBasename(packageData && packageData.main)
+}
+
+async function getPackageNodeEntry(packageData) {
+	if (packageData && isPackageDocPadPlugin(packageData)) {
+		return 'index'
+	}
+	return getBasename(
+		(await echoExists('source/node.ts')) ||
+			(await echoExists('source/node.coffee')) ||
+			(await echoExists('source/node.mjs')) ||
+			(await echoExists('source/node.js')) ||
+			(packageData && packageData.node)
+	)
+}
+
+async function getPackageDenoEntry(packageData) {
+	return getBasename(
+		(await echoExists('source/deno.ts')) || (packageData && packageData.deno)
+	)
+}
+
+async function getPackageBrowserEntry(packageData) {
+	return getBasename(
+		(await echoExists('source/browser.ts')) ||
+			(await echoExists('source/browser.coffee')) ||
+			(await echoExists('source/browser.mjs')) ||
+			(await echoExists('source/browser.js')) ||
+			(packageData && packageData.browser)
+	)
 }
 
 function getWebsiteType(packageData, nowData) {
@@ -388,7 +409,7 @@ function arrangePackage(state) {
 	// package keys
 	packageData = arrangekeys(
 		packageData,
-		'title name version private description homepage license keywords badges funding author sponsors maintainers contributors bugs repository engines editions bin types type main browser module deno jspm dependencies optionalDependencies devDependencies peerDependencies scripts now eslintConfig prettier babel'
+		'title name version private description homepage license keywords badges funding author sponsors maintainers contributors bugs repository engines editions bin types type main node deno browser module jspm dependencies optionalDependencies devDependencies peerDependencies scripts now eslintConfig prettier babel'
 	)
 
 	// ---------------------------------
@@ -710,12 +731,14 @@ module.exports = {
 	getPackageAuthor,
 	getPackageBinEntry,
 	getPackageBinExecutable,
+	getPackageIndexEntry,
+	getPackageNodeEntry,
+	getPackageDenoEntry,
 	getPackageBrowserEntry,
 	getPackageDescription,
 	getPackageDocumentationDependency,
 	getPackageFlowtypeDependency,
 	getPackageKeywords,
-	getPackageMainEntry,
 	getPackageName,
 	getPackageNodeEngineVersion,
 	getPackageOrganisation,
