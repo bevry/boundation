@@ -1,5 +1,9 @@
 # History
 
+## v1.62.1 2020 June 20
+
+-   Don't use `package.json[entry]` fields to prefill entries, as it doesn't allow auto-detection when entries change - if you wish for a fixed entry, use `package.json:boundation[whateverEntry]`
+
 ## v1.62.0 2020 June 20
 
 -   If a file exists within the source edition of the name `node`, `deno`, or `browser` it will be selected as the entry for the appropriate edition

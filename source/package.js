@@ -278,25 +278,32 @@ async function getPackageNodeEntry(packageData) {
 		(await echoExists('source/node.ts')) ||
 			(await echoExists('source/node.coffee')) ||
 			(await echoExists('source/node.mjs')) ||
-			(await echoExists('source/node.js')) ||
-			(packageData && packageData.node)
+			(await echoExists('source/node.js'))
 	)
+	// don't use packageData.node
+	// have them set it via package.json:boundation:nodeEntry
+	// as otherwise when you delete the node entry file, to say use index entry file instead, the change won't be automatically detected
 }
 
 async function getPackageDenoEntry(packageData) {
 	return getBasename(
 		(await echoExists('source/deno.ts')) || (packageData && packageData.deno)
 	)
+	// don't use packageData.deno
+	// have them set it via package.json:boundation:denoEntry
+	// as otherwise when you delete the deno entry file, to say use index entry file instead, the change won't be automatically detected
 }
 
-async function getPackageBrowserEntry(packageData) {
+async function getPackageBrowserEntry() {
 	return getBasename(
 		(await echoExists('source/browser.ts')) ||
 			(await echoExists('source/browser.coffee')) ||
 			(await echoExists('source/browser.mjs')) ||
-			(await echoExists('source/browser.js')) ||
-			(packageData && packageData.browser)
+			(await echoExists('source/browser.js'))
 	)
+	// don't use packageData.browser
+	// have them set it via package.json:boundation:browserEntry
+	// as otherwise when you delete the browser entry file, to say use index entry file instead, the change won't be automatically detected
 }
 
 function getWebsiteType(packageData, nowData) {
