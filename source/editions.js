@@ -5,7 +5,7 @@
 const pathUtil = require('path')
 
 // Local
-const { status } = require('./log')
+const { status } = require('./log.js')
 const { add, has, strip, addExtension, fixTsc } = require('./util.js')
 const languageNames = {
 	typescript: 'TypeScript',

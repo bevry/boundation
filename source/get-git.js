@@ -4,8 +4,8 @@
 const details = {}
 
 // Local
-const { exec } = require('./fs')
-const { repoToOrganisation, repoToProject } = require('./util')
+const { exec } = require('./fs.js')
+const { repoToOrganisation, repoToProject } = require('./util.js')
 
 async function getGitOriginUrl(cwd = process.cwd()) {
 	const detail = (details[cwd] = details[cwd] || {})

@@ -11,7 +11,7 @@ const yaml = require('js-yaml')
 const Errlop = require('errlop').default
 
 // Local
-const { status } = require('./log')
+const { status } = require('./log.js')
 
 function exists(file) {
 	try {

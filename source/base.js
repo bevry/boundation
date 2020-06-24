@@ -2,8 +2,8 @@
 'use strict'
 
 // Local
-const { trimOrgName, isBevryOrganisation } = require('./util')
-const { status } = require('./log')
+const { trimOrgName, isBevryOrganisation } = require('./util.js')
+const { status } = require('./log.js')
 const {
 	exists,
 	write,
@@ -13,7 +13,7 @@ const {
 	spawn,
 	writeYAML,
 	exec,
-} = require('./fs')
+} = require('./fs.js')
 const Errlop = require('errlop').default
 
 // External

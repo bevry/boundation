@@ -1,14 +1,14 @@
 /* eslint no-console:0 */
 'use strict'
 
-// Prepare
-const mandatoryScriptsList = 'our:setup our:compile our:meta our:verify our:deploy our:release test'.split(
-	' '
-)
+// External
+const arrangekeys = require('arrangekeys').default
+const pathUtil = require('path')
+const typeChecker = require('typechecker')
 
 // Local
-const { fixBalupton } = require('./util')
-const { status } = require('./log')
+const { fixBalupton } = require('./util.js')
+const { status } = require('./log.js')
 const {
 	has,
 	repoToWebsite,
@@ -17,14 +17,14 @@ const {
 	ensureScript,
 	defaultDeploy,
 	isBevryOrganisation,
-} = require('./util')
-const { echoExists, exists, write, parse } = require('./fs')
-const { getNowName } = require('./website')
+} = require('./util.js')
+const { echoExists, exists, write, parse } = require('./fs.js')
+const { getNowName } = require('./website.js')
 
-// External
-const arrangekeys = require('arrangekeys').default
-const pathUtil = require('path')
-const typeChecker = require('typechecker')
+// Prepare
+const mandatoryScriptsList = 'our:setup our:compile our:meta our:verify our:deploy our:release test'.split(
+	' '
+)
 
 // ====================================
 // Fetchers

@@ -14,11 +14,11 @@ const crypto = require('crypto')
 const curlFlags = '-fsSL'
 
 // Local
-const { writePackage } = require('./package')
-const { status } = require('./log')
-const { getGithubCommit } = require('./get-github-commit')
-const { spawn, readYAML, writeYAML } = require('./fs')
-const { hasScript } = require('./util')
+const { writePackage } = require('./package.js')
+const { status } = require('./log.js')
+const { getGithubCommit } = require('./get-github-commit.js')
+const { readYAML, writeYAML } = require('./fs.js')
+const { hasScript } = require('./util.js')
 
 // Thing
 async function updateTravis(state) {

@@ -1,6 +1,6 @@
 'use strict'
 
-const { allNodeVersions } = require('./data')
+const { allNodeVersions } = require('./data.js')
 
 // Compare to versions simplify
 // Works for 1, 1.1, or 1.1.1, or 1.1.1 - sadasd

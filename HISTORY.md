@@ -1,5 +1,11 @@
 # History
 
+## v1.63.4 2020 June 25
+
+-   prepare and use global install of `npm-check-updates` as it is much faster than going via npx
+-   ensure that the bin path has executable permissions, which is required for yarn environments
+-   dev change: ensure all local imports have file extension to make lookups quicker
+
 ## v1.63.3 2020 June 25
 
 -   yarn still needs ncu to update `package.json`

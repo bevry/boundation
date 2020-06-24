@@ -1,10 +1,14 @@
 /* eslint no-console:0 no-use-before-define:0 */
 'use strict'
 
+// External
+const pathUtil = require('path')
+const { Versions } = require('@bevry/testen')
+
 // Local
-const { status } = require('./log')
-const { allEsTargets, allLanguages, bustedVersions } = require('./data')
-const { parse } = require('./fs')
+const { status } = require('./log.js')
+const { allEsTargets, allLanguages, bustedVersions } = require('./data.js')
+const { parse } = require('./fs.js')
 const {
 	without,
 	uniq,
@@ -12,24 +16,18 @@ const {
 	fixTsc,
 	getPreviousVersion,
 	getDuplicateDeps,
-	getAllDepNames,
-} = require('./util')
+} = require('./util.js')
 const {
 	contains,
 	exec,
 	exists,
 	rename,
-	rmdir,
 	spawn,
 	unlink,
 	write,
-} = require('./fs')
-const { readPackage, writePackage } = require('./package')
-const { versionComparator } = require('./versions')
-
-// External
-const pathUtil = require('path')
-const { Versions } = require('@bevry/testen')
+} = require('./fs.js')
+const { readPackage, writePackage } = require('./package.js')
+const { versionComparator } = require('./versions.js')
 
 // Consts
 const commands = {
@@ -46,6 +44,19 @@ const commands = {
 		install: ['npm', 'install'],
 		uninstall: ['npm', 'uninstall'],
 	},
+}
+
+async function upgradePackageDependencies(install) {
+	try {
+		return await spawn(['ncu', '-u'])
+	} catch (err) {
+		if (install) {
+			return Promise.reject(err)
+		} else {
+			await spawn(['npm', 'i', '-g', 'npm-check-updates'])
+			upgradePackageDependencies(true)
+		}
+	}
 }
 
 // Helpers
@@ -531,6 +542,13 @@ async function scaffoldEditions(state) {
 			state.test = answers.testEntry + '.js'
 		}
 		packageData.bin = binEntry(answers, answers.binEntry + '.js')
+	}
+
+	// ensure it has permission, necessary for yarn publishing
+	if (packageData.bin) {
+		status('ensuring correct bin permission...')
+		await spawn(['chmod', '+x', './' + packageData.bin])
+		status('...ensured correct bin permission')
 	}
 }
 
@@ -1419,7 +1437,8 @@ async function updateRuntime(state) {
 
 	// upgrade deps
 	status('upgrading the installed dependencies...')
-	await spawn(['npx', '-p', 'npm-check-updates', 'ncu', '-u'])
+	// npx -p npm-check-updates takes 14 seconds each time, so install globally instead
+	await upgradePackageDependencies()
 	// yarn still needs ncu to update package.json
 	if (answers.packageManager === 'yarn') {
 		await spawn(commands.yarn.install) // necessary to proceed

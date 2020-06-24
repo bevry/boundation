@@ -1,6 +1,6 @@
 'use strict'
 
-const { has } = require('./util')
+const { has } = require('./util.js')
 
 module.exports = {
 	travisTLD: null, // or "org" or "com"

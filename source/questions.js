@@ -4,10 +4,10 @@
 const pathUtil = require('path')
 
 // Local
-const defaults = require('./data')
-const _getAnswers = require('./answers').getAnswers
-const { allNodeVersions, allEsTargets, allLanguages } = require('./data')
-const { isNumber, isGitUrl, isSpecified, trim } = require('./util')
+const defaults = require('./data.js')
+const _getAnswers = require('./answers.js').getAnswers
+const { allNodeVersions, allEsTargets, allLanguages } = require('./data.js')
+const { isNumber, isGitUrl, isSpecified, trim } = require('./util.js')
 const {
 	getGitBranch,
 	getGitEmail,
@@ -15,11 +15,11 @@ const {
 	getGitOriginUrl,
 	getGitProject,
 	getGitUsername,
-} = require('./get-git')
+} = require('./get-git.js')
 const {
 	getMaximumNodeLTSVersion,
 	getMinimumNodeLTSVersion,
-} = require('./get-node')
+} = require('./get-node.js')
 const {
 	getPackageAuthor,
 	getPackageBinEntry,
@@ -52,10 +52,10 @@ const {
 	isYARN,
 	isPNPM,
 	isNPM,
-} = require('./package')
-const { getNowAliases, getNowName } = require('./website')
-const { versionComparator } = require('./versions')
-const { repoToSlug } = require('./util')
+} = require('./package.js')
+const { getNowAliases, getNowName } = require('./website.js')
+const { versionComparator } = require('./versions.js')
+const { repoToSlug } = require('./util.js')
 
 // ====================================
 // Questions

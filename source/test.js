@@ -1,5 +1,5 @@
 'use strict'
 
 console.log('requiring boundation...')
-require('./')
+require('./index.js')
 console.log('...required boundation')

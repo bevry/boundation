@@ -1,7 +1,7 @@
 'use strict'
 
 const pathUtil = require('path')
-const { exists, parse } = require('./fs')
+const { exists, parse } = require('./fs.js')
 
 function getNowName(nowData) {
 	return nowData.name || null

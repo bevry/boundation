@@ -1,6 +1,6 @@
 'use strict'
 
-const { bevryOrganisationsList } = require('./data')
+const { bevryOrganisationsList } = require('./data.js')
 
 function getAllDepNames(packageData) {
 	if (!packageData.dependencies) packageData.dependencies = {}
