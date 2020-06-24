@@ -57,9 +57,17 @@ async function download(opts) {
 async function updateBaseFiles({ answers, packageData }) {
 	// clean
 	status('cleaning package manager files...')
-	await exec(
-		`rm -Rf ./node_modules ./package-lock.json ./pnpm-lock.yaml ./.pnp ./.pnp.js ./yarn.lock`
-	)
+	const pmFileList = [
+		'./node_modules/',
+		'./package-lock.json',
+		'./pnpm-lock.yaml',
+		'./.pnp',
+		'./.pnp.js',
+		'./yarn.lock',
+	]
+	if (answers.packageManager !== 'yarn')
+		pmFileList.push('./.yarnrc', './.yarnrc.yml', './.yarn/')
+	await exec(`rm -Rf ${pmFileList.join(' ')}`)
 	status('...cleaned package manager files')
 
 	// rename old files

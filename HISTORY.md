@@ -1,5 +1,11 @@
 # History
 
+## v1.63.1 2020 June 25
+
+-   remove yarn configuration files if we use npm
+-   if using yarn, run `yarn upgrade`
+-   run `our:setup` after all deps are sorted
+
 ## v1.63.0 2020 June 25
 
 -   purge package manager files at start

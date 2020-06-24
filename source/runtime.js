@@ -36,6 +36,7 @@ const commands = {
 	yarn: {
 		add: ['yarn', 'add', '--ignore-engines'],
 		install: ['yarn', 'install', '--ignore-engines'],
+		upgrade: ['yarn', 'upgrade', '--ignore-engines'],
 		uninstall: ['yarn', 'remove', '--ignore-engines'],
 		pnp: ['yarn', '--pnp', '--ignore-engines'],
 		disablepnp: ['yarn', '--disable-pnp', '--ignore-engines'],
@@ -1429,16 +1430,6 @@ async function updateRuntime(state) {
 		}
 	}
 
-	// yarn
-	if (answers.packageManager === 'yarn') {
-		status('prepare yarn...')
-		await spawn(commands.yarn.install)
-		status('...yarn prepared')
-		// status('yarn enabling plug and play...')
-		// await spawn(commands.yarn.pnp)
-		// status('...yarn enabled plug and play')
-	}
-
 	// remove deps
 	if (removeDependencies.length) {
 		status('remove old dependencies...')
@@ -1447,11 +1438,20 @@ async function updateRuntime(state) {
 	}
 
 	// upgrade deps
-	if (answers.packageManager === 'npm') {
-		status('upgrading the installed dependencies...')
-		await spawn(['npx', '-p', 'npm-check-updates', 'ncu', '-u'])
-		status('...upgraded all the installed dependencies')
+	status('upgrading the installed dependencies...')
+	// yarn
+	if (answers.packageManager === 'yarn') {
+		await spawn(commands.yarn.install)
+		await spawn(commands.yarn.upgrade)
+		// status('yarn enabling plug and play...')
+		// await spawn(commands.yarn.pnp)
+		// status('...yarn enabled plug and play')
 	}
+	// npm
+	else if (answers.packageManager === 'npm') {
+		await spawn(['npx', '-p', 'npm-check-updates', 'ncu', '-u'])
+	}
+	status('...upgraded the installed dependencies')
 
 	// add deps
 	if (addDependencies.length) {
@@ -1467,17 +1467,17 @@ async function updateRuntime(state) {
 		status('...added the development dependencies')
 	}
 
-	// run setup
-	status('running setup...')
-	await spawn([...run, 'our:setup'])
-	status('...ran setup')
-
 	// disable yarn pnp for zeit
 	if (answers.packageManager === 'yarn' && answers.nowWebsite) {
 		status('yarn disabling plug and play...')
 		await spawn(commands.yarn.disablepnp)
 		status('...yarn disabled plug and play')
 	}
+
+	// run any extra setup steps
+	status('running setup...')
+	await spawn([...run, 'our:setup'])
+	status('...ran setup')
 
 	// run clean
 	status('running clean...')
