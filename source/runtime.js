@@ -1299,29 +1299,6 @@ async function updateRuntime(state) {
 		await installRaw(exactDependencies(dependencies), mode, true)
 	}
 
-	// remove old files
-	status('removing old files...')
-	await Promise.all(
-		[
-			'.babelrc',
-			'.eslintrc.js',
-			'.jscrc',
-			'.jshintrc',
-			'.stylelintrc.js',
-			'Cakefile',
-			'cyclic.js',
-			'docpad-setup.sh',
-			'esnextguardian.js',
-			'nakefile.js',
-			'next.config.js',
-			'npm-debug.log',
-			'yarn-error.log',
-		]
-			.filter((i) => i)
-			.map((file) => unlink(file))
-	)
-	status('...removed old files')
-
 	// tsconfig
 	if (answers.tsconfig === 'tsconfig.json') {
 		// based from
@@ -1436,19 +1413,17 @@ async function updateRuntime(state) {
 		status('...removed old dependencies')
 	}
 
+	// status('yarn enabling plug and play...')
+	// await spawn(commands.yarn.pnp)
+	// status('...yarn enabled plug and play')
+
 	// upgrade deps
 	status('upgrading the installed dependencies...')
-	// yarn
+	await spawn(['npx', '-p', 'npm-check-updates', 'ncu', '-u'])
+	// yarn still needs ncu to update package.json
 	if (answers.packageManager === 'yarn') {
-		await spawn(commands.yarn.install)
-		await spawn(commands.yarn.upgrade)
-		// status('yarn enabling plug and play...')
-		// await spawn(commands.yarn.pnp)
-		// status('...yarn enabled plug and play')
-	}
-	// npm
-	else if (answers.packageManager === 'npm') {
-		await spawn(['npx', '-p', 'npm-check-updates', 'ncu', '-u'])
+		await spawn(commands.yarn.install) // necessary to proceed
+		await spawn(commands.yarn.upgrade) // updates the lock file
 	}
 	status('...upgraded the installed dependencies')
 

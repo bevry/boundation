@@ -1,5 +1,9 @@
 # History
 
+## v1.63.3 2020 June 25
+
+-   yarn still needs ncu to update `package.json`
+
 ## v1.63.2 2020 June 25
 
 -   don't do `prefer-offline` as it causes inconsistent dependency versions (at least with yarn)
