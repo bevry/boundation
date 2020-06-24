@@ -1257,7 +1257,6 @@ async function updateRuntime(state) {
 			args.push('--silent')
 			command.push(...commands.yarn.uninstall)
 		} else if (answers.packageManager === 'npm') {
-			// args.push('--prefer-offline', '--no-fund', '--no-audit')
 			command.push(...commands.npm.uninstall)
 		} else {
 			throw new Error('unsupported package manager')
@@ -1274,13 +1273,13 @@ async function updateRuntime(state) {
 		const command = []
 		const args = []
 		if (answers.packageManager === 'yarn') {
-			args.push('--silent', '--prefer-offline')
+			args.push('--silent')
 			// yarn add --help
 			if (exact) args.push('--exact')
 			if (mode === 'development') args.push('--dev')
 			command.push(...commands.yarn.add)
 		} else if (answers.packageManager === 'npm') {
-			// args.push('--prefer-offline', '--no-fund', '--no-audit')
+			args.push('--no-fund', '--no-audit')
 			if (exact) args.push('--save-exact')
 			if (mode === 'development') args.push('--save-dev')
 			else args.push('--save-prod')

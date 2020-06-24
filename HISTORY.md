@@ -1,5 +1,10 @@
 # History
 
+## v1.63.2 2020 June 25
+
+-   don't do `prefer-offline` as it causes inconsistent dependency versions (at least with yarn)
+-   move removing old files from runtime to base, to increase performance
+
 ## v1.63.1 2020 June 25
 
 -   remove yarn configuration files if we use npm

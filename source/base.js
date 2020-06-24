@@ -56,19 +56,38 @@ async function download(opts) {
 
 async function updateBaseFiles({ answers, packageData }) {
 	// clean
-	status('cleaning package manager files...')
-	const pmFileList = [
-		'./node_modules/',
-		'./package-lock.json',
-		'./pnpm-lock.yaml',
-		'./.pnp',
-		'./.pnp.js',
-		'./yarn.lock',
+	status('reming old files...')
+	const purgeList = [
+		// old ecosystem files
+		'.babelrc',
+		'.eslintrc.js',
+		'.jscrc',
+		'.jshintrc',
+		'.stylelintrc.js',
+		'Cakefile',
+		'cyclic.js',
+		'docpad-setup.sh',
+		'esnextguardian.js',
+		'nakefile.js',
+		'next.config.js',
+		// package manager logs
+		'npm-debug.log',
+		'yarn-error.log',
+		// package manager caches
+		// npm
+		'node_modules/',
+		'package-lock.json',
+		// pnpn
+		'pnpm-lock.yaml',
+		// yarn
+		'.pnp',
+		'.pnp.js',
+		'yarn.lock',
 	]
 	if (answers.packageManager !== 'yarn')
-		pmFileList.push('./.yarnrc', './.yarnrc.yml', './.yarn/')
-	await exec(`rm -Rf ${pmFileList.join(' ')}`)
-	status('...cleaned package manager files')
+		purgeList.push('./.yarnrc', './.yarnrc.yml', './.yarn/')
+	await exec(`rm -Rf ${purgeList.filter((i) => `./${i}`).join(' ')}`)
+	status('...removed old files')
 
 	// rename old files
 	status('renaming old files...')
