@@ -1,6 +1,9 @@
 'use strict'
 
 module.exports = {
+	// fill this with a map of dependency package names to versions that are busted
+	// so that if they are necessary, a previous verison is used instead
+	bustedVersions: {},
 	bevryOrganisationsList: 'balupton bevry bevry-trading docpad browserstate webwrite chainyjs interconnectapp'.split(
 		' '
 	),

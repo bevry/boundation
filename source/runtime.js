@@ -3,9 +3,17 @@
 
 // Local
 const { status } = require('./log')
-const { allEsTargets, allLanguages } = require('./data')
+const { allEsTargets, allLanguages, bustedVersions } = require('./data')
 const { parse } = require('./fs')
-const { without, uniq, toggle, fixTsc } = require('./util')
+const {
+	without,
+	uniq,
+	toggle,
+	fixTsc,
+	getPreviousVersion,
+	getDuplicateDeps,
+	getAllDepNames,
+} = require('./util')
 const {
 	contains,
 	exec,
@@ -548,6 +556,75 @@ async function updateRuntime(state) {
 	await scaffoldEditions(state)
 
 	// =================================
+	// dependencies fixes
+
+	// Override the versions that are installed if these dependencies are needed
+	const versions = {
+		// next: 'canary',
+		// now: 'canary',
+		// '@zeit/next-typescript': 'canary',
+		// '@zeit/next-mdx': 'canary',
+	}
+
+	// apply busted version fixes
+	for (const [key, version] of Object.entries(bustedVersions)) {
+		versions[key] = getPreviousVersion(version, 0, 2)
+	}
+
+	// fix currupted states
+	let duplicateDepNames = getDuplicateDeps(packageData)
+	for (const key of duplicateDepNames) {
+		delete packageData.dependencies[key]
+		delete packageData.devDependencies[key]
+	}
+
+	// fix deps that are in deps and devDeps
+	if (duplicateDepNames.length) {
+		console.log(
+			`the following dependencies existed in both deps and devDeps:`,
+			duplicateDepNames
+		)
+		// continue backtracking until we find a version that doesn't have the issue
+		let cmd,
+			out,
+			version = packageData.version
+		while (true) {
+			// prepare
+			const nextVersion = getPreviousVersion(version, 0, 1)
+			if (version === nextVersion) {
+				throw new Error(
+					`unable to rever to a previous version that did not have duplicate packages, please fix the duplication of the following packages manually: ${duplicateDepNames.join(
+						', '
+					)}`
+				)
+			}
+			version = nextVersion
+			// dev deps
+			cmd = `npm view --json --no-color ${packageData.name}@${version} devDependencies`
+			out = (await exec(cmd)).trim()
+			if (!out) {
+				// continue backwards, as there should definitely be dev deps, so this version failed
+				continue
+			}
+			const devDeps = JSON.parse(out)
+			packageData.devDependencies = devDeps
+			console.log(`used [${cmd}] to restore devDeps to`, devDeps)
+			// deps
+			cmd = `npm view --json --no-color ${packageData.name}@${version} dependencies`
+			out = (await exec(cmd)).trim()
+			const deps = JSON.parse(out || '{}')
+			packageData.dependencies = deps
+			console.log(`used [${cmd}] to restore deps to`, deps)
+			// if we solved the problem, then break
+			duplicateDepNames = getDuplicateDeps(packageData)
+			if (duplicateDepNames.length === 0) break
+		}
+	}
+
+	// write the package.json file
+	await writePackage(state)
+
+	// =================================
 	// scripts and dependencies
 
 	/** @type {Object.<string, boolean | string>} */
@@ -622,14 +699,6 @@ async function updateRuntime(state) {
 				: false,
 	}
 
-	// Override the versions that are installed if these dependencies are needed
-	const versions = {
-		// next: 'canary',
-		// now: 'canary',
-		// '@zeit/next-typescript': 'canary',
-		// '@zeit/next-mdx': 'canary',
-	}
-
 	// b/c compat
 	const dependencyCompat = {
 		cson: 5,
@@ -648,18 +717,10 @@ async function updateRuntime(state) {
 		for (const [key, value] of Object.entries(dependencyCompat)) {
 			versions[key] = value
 		}
-	} else {
-		for (const key of Object.keys(dependencyCompat)) {
-			versions[key] = 'latest'
-		}
 	}
 	if (answers.minimumTestNodeVersion < 8) {
 		for (const [key, value] of Object.entries(devDependencyCompat)) {
 			versions[key] = value
-		}
-	} else {
-		for (const key of Object.keys(devDependencyCompat)) {
-			versions[key] = 'latest'
 		}
 	}
 
@@ -833,7 +894,10 @@ async function updateRuntime(state) {
 			'--declarationMap',
 			'--declarationDir ./compiled-types',
 			...fixTsc('compiled-types', answers.sourceDirectory),
-		].join(' ')
+			// doesn't work: '|| true', // fixes failures where types may be temporarily missing
+		]
+			.filter((part) => part)
+			.join(' ')
 		packageData.types = './compiled-types/'
 	}
 	// partially typescript
@@ -918,7 +982,6 @@ async function updateRuntime(state) {
 					break
 				case 'jsdoc':
 					packages.jsdoc = 'dev'
-					packages.minami = 'dev'
 					parts.push(
 						'jsdoc',
 						'--recurse',
@@ -927,7 +990,6 @@ async function updateRuntime(state) {
 						`--destination ${out}`,
 						'--package ./package.json',
 						'--readme ./README.md',
-						'--template ./node_modules/minami',
 						sourcePath,
 						'&&',
 						`mv ${out}/$npm_package_name/$npm_package_version/* ${out}/`,
@@ -1178,28 +1240,28 @@ async function updateRuntime(state) {
 			.map((item) => `${item}@${versions[item]}`)
 	}
 	function uninstallRaw(dependencies) {
+		// only uninstall installed deps
+		// for yarn this is necessary: https://github.com/yarnpkg/yarn/issues/6919
+		// for npm this is useful
+		dependencies = dependencies.filter(
+			(dependency) =>
+				packageData.dependencies[dependency] ||
+				packageData.devDependencies[dependency]
+		)
 		if (!dependencies.length) return
+		// continue
 		const command = []
-		const flags = []
+		const args = []
 		if (answers.packageManager === 'yarn') {
-			// yarn can only uninstall installed deps
-			// https://github.com/yarnpkg/yarn/issues/6919
-			dependencies = dependencies.filter(
-				(dependency) =>
-					packageData.dependencies[dependency] ||
-					packageData.devDependencies[dependency]
-			)
-			if (!dependencies.length) return
-			// s = silent
-			flags.push('s')
+			args.push('--silent')
 			command.push(...commands.yarn.uninstall)
 		} else if (answers.packageManager === 'npm') {
-			// S = save
-			flags.push('S')
+			// args.push('--prefer-offline', '--no-fund', '--no-audit')
 			command.push(...commands.npm.uninstall)
+		} else {
+			throw new Error('unsupported package manager')
 		}
-		command.push(...dependencies)
-		if (flags.length) command.push('-' + flags.join(''))
+		command.push(...args, ...dependencies)
 		console.log(command.join(' '))
 		return spawn(command)
 	}
@@ -1209,22 +1271,23 @@ async function updateRuntime(state) {
 	function installRaw(dependencies, mode, exact = false) {
 		if (!dependencies.length) return
 		const command = []
-		const flags = []
-		if (mode === 'development') flags.push('D')
-		if (exact) flags.push('E')
+		const args = []
 		if (answers.packageManager === 'yarn') {
-			// s = silent
-			flags.push('s')
+			args.push('--silent', '--prefer-offline')
+			// yarn add --help
+			if (exact) args.push('--exact')
+			if (mode === 'development') args.push('--dev')
 			command.push(...commands.yarn.add)
 		} else if (answers.packageManager === 'npm') {
-			// S = save
-			// P = production
-			flags.push('S')
-			if (mode !== 'development') flags.push('P')
+			// args.push('--prefer-offline', '--no-fund', '--no-audit')
+			if (exact) args.push('--save-exact')
+			if (mode === 'development') args.push('--save-dev')
+			else args.push('--save-prod')
 			command.push(...commands.npm.add)
+		} else {
+			throw new Error('unsupported package manager')
 		}
-		command.push(...dependencies)
-		if (flags.length) command.push('-' + flags.join(''))
+		command.push(...args, ...dependencies)
 		console.log(command.join(' '))
 		return spawn(command)
 	}
@@ -1366,11 +1429,14 @@ async function updateRuntime(state) {
 		}
 	}
 
-	// yarn pnp
+	// yarn
 	if (answers.packageManager === 'yarn') {
-		status('yarn enabling plug and play...')
-		await spawn(commands.yarn.pnp)
-		status('...yarn enabled plug and play')
+		status('prepare yarn...')
+		await spawn(commands.yarn.install)
+		status('...yarn prepared')
+		// status('yarn enabling plug and play...')
+		// await spawn(commands.yarn.pnp)
+		// status('...yarn enabled plug and play')
 	}
 
 	// remove deps
@@ -1381,7 +1447,7 @@ async function updateRuntime(state) {
 	}
 
 	// upgrade deps
-	if (answers.upgradeAllDependencies && answers.packageManager === 'npm') {
+	if (answers.packageManager === 'npm') {
 		status('upgrading the installed dependencies...')
 		await spawn(['npx', '-p', 'npm-check-updates', 'ncu', '-u'])
 		status('...upgraded all the installed dependencies')
@@ -1406,24 +1472,12 @@ async function updateRuntime(state) {
 	await spawn([...run, 'our:setup'])
 	status('...ran setup')
 
-	// run package manager clean
-	status(`running ${answers.packageManager} cleaning...`)
-	if (answers.packageManager === 'yarn') {
-		// disable pnp for now
-		if (answers.nowWebsite) {
-			status('yarn disabling plug and play...')
-			await spawn(commands.yarn.disablepnp)
-			status('...yarn disabled plug and play')
-		}
-		// clean npm files
-		await unlink(`./package-lock.json`)
-	} else {
-		// clean yarn files
-		await rmdir(`./.pnp`)
-		await unlink(`./.pnp.js`)
-		await unlink(`./yarn.lock`)
+	// disable yarn pnp for zeit
+	if (answers.packageManager === 'yarn' && answers.nowWebsite) {
+		status('yarn disabling plug and play...')
+		await spawn(commands.yarn.disablepnp)
+		status('...yarn disabled plug and play')
 	}
-	status(`...ran ${answers.packageManager} cleaning`)
 
 	// run clean
 	status('running clean...')

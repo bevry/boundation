@@ -12,6 +12,7 @@ const {
 	unlink,
 	spawn,
 	writeYAML,
+	exec,
 } = require('./fs')
 const Errlop = require('errlop').default
 
@@ -54,6 +55,13 @@ async function download(opts) {
 }
 
 async function updateBaseFiles({ answers, packageData }) {
+	// clean
+	status('cleaning package manager files...')
+	await exec(
+		`rm -Rf ./node_modules ./package-lock.json ./pnpm-lock.yaml ./.pnp ./.pnp.js ./yarn.lock`
+	)
+	status('...cleaned package manager files')
+
 	// rename old files
 	status('renaming old files...')
 

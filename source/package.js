@@ -31,8 +31,12 @@ const typeChecker = require('typechecker')
 
 async function isNPM() {
 	const npmlock = await exists(`./package-lock.json`)
-	const npm = npmlock
-	return npm
+	return npmlock
+}
+
+async function isPNPM() {
+	const pnpm = await exists(`./pnpm-lock.yaml`)
+	return pnpm
 }
 
 async function isYARN() {
@@ -40,8 +44,7 @@ async function isYARN() {
 	const pnp = await exists(`./.pnp`)
 	const yarnlock = await exists(`./yarn.lock`)
 	const yarn = yarnlock || pnp || pnpjs
-	const npm = await isNPM()
-	return yarn && !npm
+	return yarn
 }
 
 function getPackageName(packageData) {
@@ -769,6 +772,7 @@ module.exports = {
 	isPackageModule,
 	isPackageTypeScript,
 	isSourceModule,
+	isPNPM,
 	isYARN,
 	readPackage,
 	updatePackageData,

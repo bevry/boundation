@@ -1,5 +1,23 @@
 # History
 
+## v1.63.0 2020 June 25
+
+-   purge package manager files at start
+-   better support for yarn and npm switching
+-   auto default to yarn, as it is more stable
+    -   this can be overwritten using boundation config
+-   remove `upgradeAllDependencies`
+    -   you can enforce particular dependency verisons using boundation config
+-   check for dependencies that exist in both deps and devDeps, and trigger repair for this corrupted state
+    -   repair will restore deps from a previous version
+-   remove minami on jsdoc projects, no longer preferred
+-   for yarn and npm, only uninstall installed deps to save time
+    -   before this was done only for npm
+-   prefer quick installs (prfer-offline, no-fund, no-audit)
+-   remove support for yarn pnp, as support has changed
+-   add support for preventing use of busted package versions
+    -   currently required code updates, maybe one day this can be configurable
+
 ## v1.62.1 2020 June 20
 
 -   Don't use `package.json[entry]` fields to prefill entries, as it doesn't allow auto-detection when entries change - if you wish for a fixed entry, use `package.json:boundation[whateverEntry]`

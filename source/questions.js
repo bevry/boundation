@@ -50,6 +50,8 @@ const {
 	isPackageTypeScript,
 	isSourceModule,
 	isYARN,
+	isPNPM,
+	isNPM,
 } = require('./package')
 const { getNowAliases, getNowName } = require('./website')
 const { versionComparator } = require('./versions')
@@ -282,12 +284,17 @@ async function getQuestions(state) {
 		{
 			name: 'packageManager',
 			type: 'list',
-			message: 'NPM or Yarn?',
+			message: 'Which package manager to use?',
 			choices: ['npm', 'yarn'],
-			async default() {
-				const yarn = await isYARN()
-				return yarn ? 'yarn' : 'npm'
-			},
+			default: 'yarn',
+			// async default() {
+			// 	// having a dirrect package manager for dev and production is not feasible
+			// 	// as npm scripts and dev commands are constantly overriding each other
+			// 	const yarn = await isYARN()
+			// 	const npm = await isNPM()
+			// 	if (yarn && !npm) return 'yarn'
+			// 	return 'npm'
+			// },
 		},
 		{
 			name: 'languages',
@@ -738,15 +745,6 @@ async function getQuestions(state) {
 			},
 			skip({ desiredNodeOnly, ltsNodeOnly, language }) {
 				return desiredNodeOnly || ltsNodeOnly || language === 'json'
-			},
-		},
-		{
-			name: 'upgradeAllDependencies',
-			type: 'confirm',
-			message: 'Should all dependencies be upgraded to their latest versions?',
-			default: true,
-			ignore({ nowWebsite }) {
-				return nowWebsite
 			},
 		},
 		{

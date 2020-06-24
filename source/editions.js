@@ -408,6 +408,7 @@ async function generateEditions(state) {
 					`--outDir ./${edition.directory}`,
 					`--project ${answers.tsconfig}`,
 					...fixTsc(edition.directory, answers.sourceDirectory),
+					// doesn't work: '|| true', // fixes failures where types may be temporarily missing
 				]
 					.filter((part) => part)
 					.join(' ')

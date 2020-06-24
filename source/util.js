@@ -2,6 +2,40 @@
 
 const { bevryOrganisationsList } = require('./data')
 
+function getAllDepNames(packageData) {
+	if (!packageData.dependencies) packageData.dependencies = {}
+	if (!packageData.devDependencies) packageData.devDependencies = {}
+	const depNames = Object.keys(packageData.dependencies)
+	const devDepNames = Object.keys(packageData.devDependencies)
+	return depNames.concat(devDepNames)
+}
+
+function getDuplicateDeps(packageData) {
+	const allDepNames = new Set(getAllDepNames(packageData))
+	const duplicateDepNames = []
+	for (const key of allDepNames) {
+		if (packageData.devDependencies[key] && packageData.dependencies[key]) {
+			duplicateDepNames.push(key)
+		}
+	}
+	return duplicateDepNames
+}
+
+function getPreviousVersion(version, major = 0, minor = 1) {
+	const parts = String(version)
+		.split('.')
+		.map((i) => Number(i))
+	if (major) {
+		parts[0] -= major
+		if (parts[0] < 0) parts[0] = 0
+	}
+	if (minor) {
+		parts[1] -= minor
+		if (parts[1] < 0) parts[1] = 0
+	}
+	return parts.join('.')
+}
+
 // fix typescript embedding the source directory inside the output
 function fixTsc(editionDirectory, sourceDirectory) {
 	return [
@@ -137,6 +171,9 @@ function ensureScript(scripts, name) {
 }
 
 module.exports = {
+	getAllDepNames,
+	getDuplicateDeps,
+	getPreviousVersion,
 	fixTsc,
 	fixBalupton,
 	defaultDeploy,
