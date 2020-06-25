@@ -546,8 +546,12 @@ async function scaffoldEditions(state) {
 
 	// ensure it has permission, necessary for yarn publishing
 	if (packageData.bin) {
-		status('ensuring correct bin permission...')
-		await spawn(['chmod', '+x', './' + packageData.bin])
+		status('ensure correct bin permission...')
+		const bins = (typeof packageData.bin === 'string'
+			? packageData.bin
+			: Object.values(packageData.bin)
+		).map((i) => `./${i}`)
+		await spawn(['chmod', '+x', ...bins])
 		status('...ensured correct bin permission')
 	}
 }

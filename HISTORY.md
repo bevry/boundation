@@ -1,5 +1,9 @@
 # History
 
+## v1.63.5 2020 June 25
+
+-   set correct bin permissions for bin objects too
+
 ## v1.63.4 2020 June 25
 
 -   prepare and use global install of `npm-check-updates` as it is much faster than going via npx
