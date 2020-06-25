@@ -1,5 +1,9 @@
 # History
 
+## v1.63.6 2020 June 25
+
+-   actually set correct bin permissions for bin objects too
+
 ## v1.63.5 2020 June 25
 
 -   set correct bin permissions for bin objects too

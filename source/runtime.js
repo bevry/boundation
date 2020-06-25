@@ -548,7 +548,7 @@ async function scaffoldEditions(state) {
 	if (packageData.bin) {
 		status('ensure correct bin permission...')
 		const bins = (typeof packageData.bin === 'string'
-			? packageData.bin
+			? [packageData.bin]
 			: Object.values(packageData.bin)
 		).map((i) => `./${i}`)
 		await spawn(['chmod', '+x', ...bins])
