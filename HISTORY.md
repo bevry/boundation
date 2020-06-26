@@ -1,5 +1,11 @@
 # History
 
+## v1.64.0 2020 June 26
+
+-   converted boundation to ESM
+-   now we generate ESM editions for node.js, and do the `cjs` and `mjs` magic
+    -   this is because cjs modules imported into Node.js directly do not do `export default` but `export { default }`, so a compatibility layer (such as a precompiler, or this edition solution) is necessary
+
 ## v1.63.6 2020 June 25
 
 -   actually set correct bin permissions for bin objects too

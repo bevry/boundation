@@ -92,8 +92,8 @@ secret env GITHUB_CLIENT_ID GITHUB_CLIENT_SECRET NPM_AUTHTOKEN TRAVIS_NOTIFICATI
 <ul>
 <li>Install: <code>npm install --save boundation</code></li>
 <li>Executable: <code>npx boundation</code></li>
-<li>Import: <code>import * as pkg from ('boundation')</code></li>
-<li>Require: <code>const pkg = require('boundation')</code></li>
+<li>Import: <code>import pkg from ('boundation')</code></li>
+<li>Require: <code>const pkg = require('boundation').default</code></li>
 </ul>
 
 <h3><a href="https://editions.bevry.me" title="Editions are the best way to produce and consume packages you care about.">Editions</a></h3>
@@ -101,7 +101,7 @@ secret env GITHUB_CLIENT_ID GITHUB_CLIENT_SECRET NPM_AUTHTOKEN TRAVIS_NOTIFICATI
 <p>This package is published with the following editions:</p>
 
 <ul><li><code>boundation</code> aliases <code>boundation/source/index.js</code></li>
-<li><code>boundation/source/index.js</code> is <a href="https://en.wikipedia.org/wiki/ECMAScript#ES.Next" title="ECMAScript Next">ESNext</a> source code for <a href="https://nodejs.org" title="Node.js is a JavaScript runtime built on Chrome's V8 JavaScript engine">Node.js</a> with <a href="https://nodejs.org/dist/latest-v5.x/docs/api/modules.html" title="Node/CJS Modules">Require</a> for modules</li></ul>
+<li><code>boundation/source/index.js</code> is <a href="https://en.wikipedia.org/wiki/ECMAScript#ES.Next" title="ECMAScript Next">ESNext</a> source code for <a href="https://nodejs.org" title="Node.js is a JavaScript runtime built on Chrome's V8 JavaScript engine">Node.js</a> with <a href="https://babeljs.io/docs/learn-es2015/#modules" title="ECMAScript Modules">Import</a> for modules</li></ul>
 
 <!-- /INSTALL -->
 

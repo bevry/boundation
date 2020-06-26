@@ -1,12 +1,13 @@
 {
   "name": "boundation",
-  "version": "1.63.6",
+  "version": "1.64.0",
   "description": "Automatic scaffolding and upgrading of your JavaScript ecosystem projects using Bevry's best practices",
   "homepage": "https://github.com/bevry/boundation",
   "license": "MIT",
   "keywords": [
     ".travis.yml",
     "esnext",
+    "export-default",
     "node",
     "npm",
     "package.json",
@@ -71,7 +72,7 @@
   },
   "editions": [
     {
-      "description": "ESNext source code for Node.js with Require for modules",
+      "description": "ESNext source code for Node.js with Import for modules",
       "directory": "source",
       "entry": "index.js",
       "tags": [
@@ -80,40 +81,39 @@
         "import"
       ],
       "engines": {
-        "node": "14"
+        "node": true
       }
     }
   ],
   "bin": "source/bin.js",
   "type": "module",
   "main": "source/index.js",
-  "module": "source/index.js",
   "dependencies": {
     "@bevry/testen": "^3.7.0",
     "arrangekeys": "^4.11.0",
     "chalk": "^4.1.0",
-    "errlop": "^3.9.0",
-    "get-cli-arg": "^5.8.0",
-    "githubauthreq": "^5.11.0",
+    "errlop": "^3.10.0",
+    "get-cli-arg": "^6.1.0",
+    "githubauthreq": "^5.12.0",
     "inquirer": "^7.2.0",
     "js-yaml": "^3.14.0",
     "node-fetch": "^2.6.0",
-    "safeps": "^10.9.0",
+    "safeps": "^10.10.0",
     "semver": "^7.3.2",
-    "typechecker": "^7.9.0"
+    "typechecker": "^7.11.0"
   },
   "devDependencies": {
-    "@bevry/update-contributors": "^1.12.0",
+    "@bevry/update-contributors": "^1.13.0",
     "@types/node-fetch": "^2.5.7",
-    "assert-helpers": "^6.12.0",
+    "assert-helpers": "^6.13.0",
     "eslint": "^7.3.1",
-    "eslint-config-bevry": "^3.12.0",
+    "eslint-config-bevry": "^3.13.0",
     "eslint-config-prettier": "^6.11.0",
     "eslint-plugin-prettier": "^3.1.4",
-    "kava": "^5.7.0",
+    "kava": "^5.8.0",
     "prettier": "^2.0.5",
-    "projectz": "^2.10.0",
-    "valid-directory": "^2.5.0"
+    "projectz": "^2.11.0",
+    "valid-directory": "^2.6.0"
   },
   "scripts": {
     "our:clean": "rm -Rf ./docs ./edition* ./es2015 ./es5 ./out ./.next",
