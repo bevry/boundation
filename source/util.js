@@ -1,4 +1,32 @@
 import { bevryOrganisationsList } from './data.js'
+import typeChecker from 'typechecker'
+
+export function unjoin(a, b) {
+	if (!b) return null
+	const A = a.endsWith('/') ? a : a + '/'
+	const B = b.startsWith(A) ? b.substr(A.length) : A
+	return B
+}
+
+export function cojoin(a, b) {
+	if (!b) return null
+	const A = a.endsWith('/') ? a : a + '/'
+	const B = b.startsWith(A) ? b : A + b
+	return B
+}
+
+export function isEmpty(value) {
+	if (value == null) return true
+	if (value === '') return true
+	if (typeChecker.isPlainObject(value) && typeChecker.isEmptyPlainObject(value))
+		return true
+	return false
+}
+
+export function set(obj, key, value) {
+	if (isEmpty(value)) delete obj[key]
+	else obj[key] = value
+}
 
 // return the bin entry as a string (if single bin entry), or as an object of strings that point to the same bin entry (if multiple bin names)
 export function binEntry(answers, binEntry) {

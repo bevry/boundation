@@ -3,6 +3,8 @@ import { cwd } from 'process'
 
 export const pwd = cwd()
 
+export const typesDir = 'compiled-types'
+
 // fill this with a map of dependency package names to versions that are busted
 // so that if they are necessary, a previous verison is used instead
 export const bustedVersions = {}

@@ -13,16 +13,19 @@ import {
 	exportOrExports,
 	importOrRequire,
 	binEntry,
+	cojoin,
+	set,
+	unjoin,
 } from './util.js'
 import { languageNames } from './data.js'
-import { spawn, exists, rename, write, contains, unlink, exec } from './fs.js'
+import { spawn, exists, write, unlink, exec } from './fs.js'
 
 async function writeLoader({
 	entry = 'index',
 	autoloader = false,
 	mjs = false,
 	exportDefault = false,
-	sourcePath = '',
+	typesPath = '',
 	targetEntry = '',
 	targetPath = '',
 }) {
@@ -33,7 +36,7 @@ async function writeLoader({
 		if (mjs) {
 			throw new Error('autoloader does not yet support mjs')
 		}
-		lines.push(`/** @type {typeof import("./${sourcePath}") } */`)
+		lines.push(`/** @type {typeof import("${cojoin('.', typesPath)}") } */`)
 		if (targetEntry) {
 			lines.push(
 				`module.exports = require('editions').requirePackage(__dirname, require, '${targetEntry}')`
@@ -60,36 +63,36 @@ async function writeEntry({
 	entry = 'index',
 	autoloader = false,
 	exportDefault = false,
+	typesDirectoryPath,
 	sourceEdition,
 	nodeEditionRequire,
 	nodeEditionImport,
 }) {
-	// only need to write, if we are doing the autoloader, or we have multiple module types
-	const write = autoloader || (nodeEditionRequire && nodeEditionImport)
-	const resolved = (nodeEditionRequire || nodeEditionImport)[entry + 'Path']
-	if (!write) return resolved
-	// we need to write, so continue
+	let resolved
 	if (nodeEditionRequire) {
-		const entryWithExtension = entry + '.cjs'
-		await writeLoader({
-			entry: entryWithExtension,
-			autoloader,
-			sourcePath: sourceEdition[entry + 'Path'],
-			targetEntry: nodeEditionRequire[entry],
-			targetPath: nodeEditionRequire[entry + 'Path'],
-		})
-	}
-	if (nodeEditionImport) {
-		const entryWithExtension = entry + '.mjs'
-		await writeLoader({
-			entry: entryWithExtension,
-			autoloader: false,
-			mjs: true,
-			exportDefault,
-			sourcePath: sourceEdition[entry + 'Path'],
-			targetEntry: nodeEditionImport[entry],
-			targetPath: nodeEditionImport[entry + 'Path'],
-		})
+		if (autoloader) {
+			const entryWithExtension = entry + '.cjs'
+			await writeLoader({
+				entry: entryWithExtension,
+				autoloader,
+				typesPath: typesDirectoryPath
+					? typesDirectoryPath +
+					  sourceEdition[entry].replace(/.[a-z]+$/, '.d.ts')
+					: sourceEdition[entry + 'Path'],
+				targetEntry: nodeEditionRequire[entry],
+				targetPath: nodeEditionRequire[entry + 'Path'],
+			})
+			resolved = entryWithExtension
+		} else {
+			resolved = nodeEditionRequire[entry + 'Path']
+		}
+	} else if (nodeEditionImport) {
+		if (autoloader) {
+			throw new Error('autoloader does not yet support only mjs')
+		} else {
+			// package.json:exports.import dismisses the need for a .mjs loader file
+			resolved = nodeEditionImport[entry + 'Path']
+		}
 	}
 	// always resolve, as node doesn't support extensionless entries inside package.json
 	return resolved
@@ -183,6 +186,7 @@ class Edition {
 			},
 		})
 
+		// entry path is an indexPath that actually has engines
 		Object.defineProperty(this, 'entryPath', {
 			enumerable: false,
 			get() {
@@ -641,41 +645,74 @@ export function updateEditionFields(state) {
 }
 
 // Helpers
-export function updateEditionEntries({
-	answers,
-	nodeEdition,
-	nodeEditionRequire,
-	nodeEditionImport,
-	browserEdition,
-	packageData,
-}) {
-	// node
+export function updateEditionEntries(state) {
+	const {
+		answers,
+		activeEdition,
+		activeEditions,
+		sourceEdition,
+		nodeEdition,
+		nodeEditionRequire,
+		nodeEditionImport,
+		browserEdition,
+		packageData,
+	} = state
+
+	// reset
 	delete packageData.node
 	delete packageData.mjs
 	delete packageData.cjs
+
 	// https://nodejs.org/api/esm.html#esm_conditional_exports
 	packageData.exports = {}
-	if (nodeEditionRequire) {
-		packageData.exports.require = nodeEditionRequire.indexPath
-	} else {
-		delete packageData.exports.require
-	}
-	// import
-	if (nodeEditionImport) {
-		packageData.exports.import = nodeEditionImport.indexPath
-	} else {
-		delete packageData.exports.import
-	}
-	// browser
-	if (browserEdition) {
-		packageData.browser = browserEdition.browserPath
-		if (has(browserEdition.tags, 'import')) {
-			packageData.module = packageData.browser
-		}
-	} else {
-		delete packageData.browser
-		delete packageData.module
-	}
+
+	// prepare
+	const autoloaderPath = cojoin(
+		'.',
+		state.useEditionAutoloader && packageData.main
+	)
+	const nodeImportPath = cojoin(
+		'.',
+		nodeEditionImport && nodeEditionImport.indexPath
+	)
+	const nodeRequirePath = cojoin(
+		'.',
+		nodeEditionRequire && nodeEditionRequire.indexPath
+	)
+	const browserPath = cojoin('.', browserEdition && browserEdition.indexPath)
+	const browserImportPath =
+		has(browserEdition && browserEdition.tags, 'import') && browserPath
+	const browserRequirePath =
+		has(browserEdition && browserEdition.tags, 'require') && browserPath
+	const activePath = cojoin('.', activeEdition && activeEdition.indexPath)
+	const activeImportPath =
+		has(activeEdition && activeEdition.tags, 'import') && activePath
+	const activeRequirePath =
+		has(activeEdition && activeEdition.tags, 'require') && activePath
+
+	// node exports
+	const nodeExports = {}
+	set(nodeExports, 'import', nodeImportPath || null)
+	set(nodeExports, 'default', autoloaderPath || null)
+	set(nodeExports, 'require', nodeRequirePath || null)
+	set(packageData.exports, 'node', nodeExports)
+
+	// browser exports
+	const browserExports = {}
+	set(browserExports, 'import', browserImportPath || null)
+	set(browserExports, 'require', browserRequirePath || null)
+	set(packageData.exports, 'browser', browserExports)
+	set(packageData, 'browser', unjoin('.', browserPath) || null)
+	set(packageData, 'module', unjoin('.', browserImportPath) || null)
+
+	// default exports
+	const activeExports = {}
+	set(activeExports, 'import', activeImportPath || null)
+	set(activeExports, 'require', activeRequirePath || null)
+	set(packageData.exports, 'default', activeExports)
+
+	// delete the exports if we don't need it, due to its breaking package file imports
+	// if (!nodeImportPath) delete packageData.exports
 }
 
 export async function scaffoldEditions(state) {
@@ -802,6 +839,7 @@ export async function scaffoldEditions(state) {
 		if (nodeEdition) {
 			packageData.main = await writeEntry({
 				entry: 'index',
+				typesDirectoryPath: state.typesDirectoryPath,
 				autoloader: state.useEditionAutoloader,
 				exportDefault,
 				sourceEdition,
@@ -815,6 +853,7 @@ export async function scaffoldEditions(state) {
 					answers,
 					await writeEntry({
 						entry: 'bin',
+						typesDirectoryPath: state.typesDirectoryPath,
 						autoloader: state.useEditionAutoloader,
 						exportDefault,
 						sourceEdition,
@@ -829,6 +868,7 @@ export async function scaffoldEditions(state) {
 			if (answers.docpadPlugin === false) {
 				state.test = await writeEntry({
 					entry: 'test',
+					typesDirectoryPath: state.typesDirectoryPath,
 					autoloader: state.useEditionAutoloader,
 					exportDefault,
 					sourceEdition,

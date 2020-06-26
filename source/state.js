@@ -2,6 +2,7 @@ import { has } from './util.js'
 
 export const state = {
 	travisTLD: null, // or "org" or "com"
+	typesDirectoryPath: null, // types directory with trailing slash and ./ prefix
 	answers: null,
 	packageData: {},
 	nowData: {},

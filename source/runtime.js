@@ -3,7 +3,7 @@ import * as pathUtil from 'path'
 
 // Local
 import { status } from './log.js'
-import { allEsTargets, allLanguages, bustedVersions } from './data.js'
+import { allEsTargets, allLanguages, bustedVersions, typesDir } from './data.js'
 import { parse, exec, exists, spawn, unlink, write } from './fs.js'
 import {
 	uniq,
@@ -524,13 +524,15 @@ export async function updateRuntime(state) {
 			'--emitDeclarationOnly',
 			'--declaration',
 			'--declarationMap',
-			'--declarationDir ./compiled-types',
-			...fixTsc('compiled-types', answers.sourceDirectory),
+			`--declarationDir ./${typesDir}`,
+			...fixTsc(typesDir, answers.sourceDirectory),
 			// doesn't work: '|| true', // fixes failures where types may be temporarily missing
 		]
 			.filter((part) => part)
 			.join(' ')
-		packageData.types = './compiled-types/'
+		state.typesDirectoryPath = packageData.types = `./${typesDir}/`
+	} else {
+		state.typesDirectoryPath = null
 	}
 	// partially typescript
 	if (answers.languages.includes('typescript')) {
