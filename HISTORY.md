@@ -2,9 +2,12 @@
 
 ## v1.64.0 2020 June 26
 
+-   convert fixed dependency versions to `^` range
+    -   this can overidden by specifying any exact versions inside `package.json:boundation.versions`
 -   converted boundation to ESM
 -   now we generate ESM editions for node.js, and do the `cjs` and `mjs` magic
-    -   this is because cjs modules imported into Node.js directly do not do `export default` but `export { default }`, so a compatibility layer (such as a precompiler, or this edition solution) is necessary
+    -   this is because esm modules compiled to cjs do not do `export default` but `export { default }` so a compatibility layer is necessary, such as precompiler magic, or generating an esm edition
+        -   See [typescript](https://github.com/Microsoft/TypeScript/issues/5565#issuecomment-155216760) and [babel](https://github.com/babel/babel/issues/2212) for their lack of support for `export default`
 
 ## v1.63.6 2020 June 25
 
