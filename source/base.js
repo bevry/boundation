@@ -1,10 +1,14 @@
-/* eslint no-console:0 */
-'use strict'
+// External
+import e from 'errlop'
+const Errlop = e.default
+import fetch from 'node-fetch'
+import * as pathUtil from 'path'
+import * as urlUtil from 'url'
 
 // Local
-const { trimOrgName, isBevryOrganisation } = require('./util.js')
-const { status } = require('./log.js')
-const {
+import { trimOrgName, isBevryOrganisation } from './util.js'
+import { status } from './log.js'
+import {
 	exists,
 	write,
 	read,
@@ -13,15 +17,10 @@ const {
 	spawn,
 	writeYAML,
 	exec,
-} = require('./fs.js')
-const Errlop = require('errlop').default
+	rmrf,
+} from './fs.js'
 
-// External
-const fetch = require('node-fetch').default
-const pathUtil = require('path')
-const urlUtil = require('url')
-
-async function download(opts) {
+export async function download(opts) {
 	try {
 		if (typeof opts === 'string') opts = { url: opts }
 		const response = await fetch(opts.url, {})
@@ -54,7 +53,7 @@ async function download(opts) {
 	}
 }
 
-async function updateBaseFiles({ answers, packageData }) {
+export async function updateBaseFiles({ answers, packageData }) {
 	// clean
 	status('reming old files...')
 	const purgeList = [
@@ -86,7 +85,7 @@ async function updateBaseFiles({ answers, packageData }) {
 	]
 	if (answers.packageManager !== 'yarn')
 		purgeList.push('./.yarnrc', './.yarnrc.yml', './.yarn/')
-	await exec(`rm -Rf ${purgeList.filter((i) => `./${i}`).join(' ')}`)
+	await rmrf(purgeList.filter((i) => `./${i}`))
 	status('...removed old files')
 
 	// rename old files
@@ -304,5 +303,3 @@ async function updateBaseFiles({ answers, packageData }) {
 		],
 	})
 }
-
-module.exports = { download, updateBaseFiles }

@@ -1,13 +1,12 @@
-'use strict'
+// Local
+import { pwd } from './data.js'
+import { exec } from './fs.js'
+import { repoToOrganisation, repoToProject } from './util.js'
 
 // Cache the results for different repositories
 const details = {}
 
-// Local
-const { exec } = require('./fs.js')
-const { repoToOrganisation, repoToProject } = require('./util.js')
-
-async function getGitOriginUrl(cwd = process.cwd()) {
+export async function getGitOriginUrl(cwd = pwd) {
 	const detail = (details[cwd] = details[cwd] || {})
 	if (detail.origin) return detail.origin
 	try {
@@ -23,15 +22,15 @@ async function getGitOriginUrl(cwd = process.cwd()) {
 	}
 }
 
-async function getGitOrganisation(cwd) {
+export async function getGitOrganisation(cwd = pwd) {
 	return repoToOrganisation(await getGitOriginUrl(cwd)) || null
 }
 
-async function getGitProject(cwd) {
+export async function getGitProject(cwd = pwd) {
 	return repoToProject(await getGitOriginUrl(cwd)) || null
 }
 
-async function getGitUsername(cwd = process.cwd()) {
+export async function getGitUsername(cwd = pwd) {
 	const detail = (details[cwd] = details[cwd] || {})
 	if (detail.username) return detail.username
 	try {
@@ -47,7 +46,7 @@ async function getGitUsername(cwd = process.cwd()) {
 	}
 }
 
-async function getGitBranch(cwd = process.cwd()) {
+export async function getGitBranch(cwd = pwd) {
 	const detail = (details[cwd] = details[cwd] || {})
 	if (detail.branch) return detail.branch
 	try {
@@ -63,7 +62,7 @@ async function getGitBranch(cwd = process.cwd()) {
 	}
 }
 
-async function getGitEmail(cwd = process.cwd()) {
+export async function getGitEmail(cwd = pwd) {
 	const detail = (details[cwd] = details[cwd] || {})
 	if (detail.email) return detail.email
 	try {
@@ -77,13 +76,4 @@ async function getGitEmail(cwd = process.cwd()) {
 	} catch (error) {
 		return null
 	}
-}
-
-module.exports = {
-	getGitOriginUrl,
-	getGitOrganisation,
-	getGitProject,
-	getGitUsername,
-	getGitBranch,
-	getGitEmail,
 }

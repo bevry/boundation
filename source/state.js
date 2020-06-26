@@ -1,11 +1,8 @@
-'use strict'
+import { has } from './util.js'
 
-const { has } = require('./util.js')
-
-module.exports = {
+export const state = {
 	travisTLD: null, // or "org" or "com"
 	answers: null,
-	cwd: process.cwd(),
 	packageData: {},
 	nowData: {},
 	nodeVersions: null,
@@ -31,6 +28,14 @@ module.exports = {
 	},
 	get nodeEditionsRequire() {
 		return this.nodeEditions.filter((edition) => has(edition.tags, 'require'))
+	},
+	get nodeEditionsImport() {
+		return this.nodeEditions.filter((edition) => has(edition.tags, 'import'))
+	},
+	get nodeEditionImport() {
+		return this.nodeEditionsImport.length === 1
+			? this.nodeEditionsImport[0]
+			: null
 	},
 	get browserEditions() {
 		return this.activeEditions.filter(
@@ -66,3 +71,5 @@ module.exports = {
 	userScripts: {},
 	scripts: {},
 }
+
+export default state

@@ -1,13 +1,12 @@
-'use strict'
-
 // External
-const fetch = require('node-fetch').default
-const Errlop = require('errlop').default
+import fetch from 'node-fetch'
+import e from 'errlop'
+const Errlop = e.default
 
 // Local
 const now = new Date().getTime()
 
-function isLTS([version, meta]) {
+export function isLTS([version, meta]) {
 	if (meta.lts) {
 		const start = new Date(meta.start).getTime()
 		const end = new Date(meta.end).getTime()
@@ -16,7 +15,7 @@ function isLTS([version, meta]) {
 	return false
 }
 
-async function getNodeLTSVersions() {
+export async function getNodeLTSVersions() {
 	const url =
 		'https://raw.githubusercontent.com/nodejs/Release/master/schedule.json'
 	try {
@@ -28,14 +27,12 @@ async function getNodeLTSVersions() {
 		throw new Errlop(`failed to fetch node.js LTS releases from ${url}`, err)
 	}
 }
-async function getMinimumNodeLTSVersion() {
+export async function getMinimumNodeLTSVersion() {
 	const lts = await getNodeLTSVersions()
 	return lts.find(isLTS)[0].replace('v', '')
 }
 
-async function getMaximumNodeLTSVersion() {
+export async function getMaximumNodeLTSVersion() {
 	const lts = await getNodeLTSVersions()
 	return lts.reverse().find(isLTS)[0].replace('v', '')
 }
-
-module.exports = { getMinimumNodeLTSVersion, getMaximumNodeLTSVersion }

@@ -1,26 +1,24 @@
-'use strict'
-
 // External
-const pathUtil = require('path')
+import * as pathUtil from 'path'
 
 // Local
-const defaults = require('./data.js')
-const _getAnswers = require('./answers.js').getAnswers
-const { allNodeVersions, allEsTargets, allLanguages } = require('./data.js')
-const { isNumber, isGitUrl, isSpecified, trim } = require('./util.js')
-const {
+import _getAnswers from './answers.js'
+import * as defaults from './defaults.js'
+import { pwd, allNodeVersions, allEsTargets, allLanguages } from './data.js'
+import { isNumber, isGitUrl, isSpecified, trim, repoToSlug } from './util.js'
+import {
 	getGitBranch,
 	getGitEmail,
 	getGitOrganisation,
 	getGitOriginUrl,
 	getGitProject,
 	getGitUsername,
-} = require('./get-git.js')
-const {
+} from './get-git.js'
+import {
 	getMaximumNodeLTSVersion,
 	getMinimumNodeLTSVersion,
-} = require('./get-node.js')
-const {
+} from './get-node.js'
+import {
 	getPackageAuthor,
 	getPackageBinEntry,
 	getPackageBinExecutable,
@@ -52,16 +50,15 @@ const {
 	isYARN,
 	isPNPM,
 	isNPM,
-} = require('./package.js')
-const { getNowAliases, getNowName } = require('./website.js')
-const { versionComparator } = require('./versions.js')
-const { repoToSlug } = require('./util.js')
+} from './package.js'
+import { getNowAliases, getNowName } from './website.js'
+import { versionComparator } from './versions.js'
 
 // ====================================
 // Questions
 
-async function getQuestions(state) {
-	const { packageData, nowData, cwd } = state
+export async function getQuestions(state) {
+	const { packageData, nowData } = state
 	const browsers = getPackageProperty(packageData, 'browsers')
 	const browser = Boolean(
 		browsers || getPackageProperty(packageData, 'browser')
@@ -81,7 +78,7 @@ async function getQuestions(state) {
 			message: 'What will be the package name?',
 			validate: isSpecified,
 			filter: trim,
-			default: getPackageName(packageData) || pathUtil.basename(cwd),
+			default: getPackageName(packageData) || pathUtil.basename(pwd),
 		},
 		{
 			name: 'description',
@@ -105,7 +102,7 @@ async function getQuestions(state) {
 			message: 'What will the git URL be?',
 			validate: isGitUrl,
 			filter: trim,
-			default: (await getGitOriginUrl(cwd)) || getPackageRepoUrl(cwd),
+			default: (await getGitOriginUrl()) || getPackageRepoUrl(packageData),
 		},
 		{
 			name: 'githubSlug',
@@ -122,15 +119,15 @@ async function getQuestions(state) {
 			filter: trim,
 			default:
 				getPackageAuthor(packageData) ||
-				`${new Date().getFullYear()}+ ${
-					(await getGitUsername(cwd)) || 'name'
-				} <${(await getGitEmail(cwd)) || 'email'}>`,
+				`${new Date().getFullYear()}+ ${(await getGitUsername()) || 'name'} <${
+					(await getGitEmail()) || 'email'
+				}>`,
 		},
 		{
 			name: 'organisation',
 			message: 'What is the organisation username for the package?',
 			default:
-				(await getGitOrganisation(cwd)) || getPackageOrganisation(packageData),
+				(await getGitOrganisation()) || getPackageOrganisation(packageData),
 		},
 		{
 			name: 'type',
@@ -824,7 +821,7 @@ async function getQuestions(state) {
 			message: 'For deploying the website, which branch should be deployed?',
 			validate: isSpecified,
 			filter: trim,
-			default: (await getGitBranch(cwd)) || 'master',
+			default: (await getGitBranch()) || 'master',
 			when({ travisUpdateEnvironment, travisWebsite }) {
 				return travisUpdateEnvironment && travisWebsite
 			},
@@ -883,7 +880,7 @@ async function getQuestions(state) {
 			name: 'travisEmail',
 			message: 'What email to use for travis notifications?',
 			filter: trim,
-			default: defaults.travisEmail || (await getGitEmail(cwd)),
+			default: defaults.travisEmail || (await getGitEmail()),
 			skip() {
 				return defaults.travisEmail
 			},
@@ -894,7 +891,7 @@ async function getQuestions(state) {
 	]
 }
 
-async function getAnswers(state) {
+export async function getAnswers(state) {
 	// Fetch
 	const answers = await _getAnswers(
 		await getQuestions(state),
@@ -920,5 +917,3 @@ async function getAnswers(state) {
 	// Return
 	return answers
 }
-
-module.exports = { getQuestions, getAnswers }

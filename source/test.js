@@ -1,5 +1,3 @@
-'use strict'
-
 console.log('requiring boundation...')
-require('./index.js')
+import boundation from './index.js'
 console.log('...required boundation')

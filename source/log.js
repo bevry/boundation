@@ -1,22 +1,18 @@
-'use strict'
+import chalk from 'chalk'
 
-const chalk = require('chalk')
-
-function status(...m) {
+export function status(...m) {
 	process.stdout.write(chalk.bold.underline(...m) + '\n')
 }
-function warn(...m) {
+export function warn(...m) {
 	process.stderr.write(chalk.bold.underline.magenta(...m) + '\n')
 }
-function error(...m) {
+export function error(...m) {
 	process.stderr.write(chalk.bold.underline.red(...m) + '\n')
 }
-function success(...m) {
+export function success(...m) {
 	process.stderr.write(chalk.bold.underline.green(...m) + '\n')
 }
-function fatal(...m) {
+export function fatal(...m) {
 	error(...m)
 	process.exit(1)
 }
-
-module.exports = { status, warn, error, success, fatal }

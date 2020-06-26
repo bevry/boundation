@@ -1,39 +1,41 @@
-'use strict'
-
-// Prepare
-const cwd = process.cwd()
-
 // External
-const pathUtil = require('path')
-const fsUtil = require('fs')
-const safeps = require('safeps')
-const yaml = require('js-yaml')
-const Errlop = require('errlop').default
+import * as pathUtil from 'path'
+import * as fsUtil from 'fs'
+import yaml from 'js-yaml'
+import safeps from 'safeps'
+
+// esm workarounds
+import e from 'errlop'
+const Errlop = e.default
 
 // Local
-const { status } = require('./log.js')
+import { status } from './log.js'
+import { pwd } from './data.js'
 
-function exists(file) {
+export function exists(file) {
 	try {
-		const path = pathUtil.resolve(cwd, file)
+		const path = pathUtil.resolve(pwd, file)
 		return new Promise(function (resolve) {
 			fsUtil.exists(path, function (exists) {
 				resolve(exists)
 			})
 		})
 	} catch (err) {
-		console.error({ err, cwd, file })
+		console.error({ err, pwd, file })
 		return Promise.resolve(false)
 	}
 }
 
-async function echoExists(file) {
+export async function echoExists(file) {
 	const e = await exists(file)
 	return e ? file : ''
 }
 
-function unlink(file) {
-	const path = pathUtil.resolve(cwd, file)
+export function unlink(file) {
+	if (Array.isArray(file)) {
+		return Promise.all(file.map((i) => unlink(i)))
+	}
+	const path = pathUtil.resolve(pwd, file)
 	return new Promise(function (resolve, reject) {
 		fsUtil.unlink(path, function (error) {
 			if (error) {
@@ -45,8 +47,12 @@ function unlink(file) {
 	})
 }
 
-function rmdir(file) {
-	const path = pathUtil.resolve(cwd, file)
+export function rmrf(files) {
+	return exec(`rm -Rf ${files.join(' ')}`)
+}
+
+export function rmdir(file) {
+	const path = pathUtil.resolve(pwd, file)
 	return new Promise(function (resolve, reject) {
 		fsUtil.rmdir(path, { recursive: true }, function (error) {
 			if (error) {
@@ -58,8 +64,8 @@ function rmdir(file) {
 	})
 }
 
-function read(file) {
-	const path = pathUtil.resolve(cwd, file)
+export function read(file) {
+	const path = pathUtil.resolve(pwd, file)
 	return new Promise(function (resolve, reject) {
 		fsUtil.readFile(path, function (error, data) {
 			if (error) return reject(error)
@@ -68,13 +74,13 @@ function read(file) {
 	})
 }
 
-async function contains(file, data) {
+export async function contains(file, data) {
 	return (await read(file)).toString().includes(data)
 }
 
-function rename(source, target) {
-	source = pathUtil.resolve(cwd, source)
-	target = pathUtil.resolve(cwd, target)
+export function rename(source, target) {
+	source = pathUtil.resolve(pwd, source)
+	target = pathUtil.resolve(pwd, target)
 	return new Promise(function (resolve, reject) {
 		fsUtil.rename(source, target, function (error) {
 			if (error) return reject(error)
@@ -83,8 +89,8 @@ function rename(source, target) {
 	})
 }
 
-function write(file, data) {
-	const path = pathUtil.resolve(cwd, file)
+export function write(file, data) {
+	const path = pathUtil.resolve(pwd, file)
 	return new Promise(function (resolve, reject) {
 		fsUtil.writeFile(path, data, function (error) {
 			if (error) return reject(error)
@@ -93,19 +99,26 @@ function write(file, data) {
 	})
 }
 
-async function readYAML(file) {
+export async function readJSON(file) {
+	const exist = await exists(file)
+	if (!exist) return {}
+	const data = await read(file)
+	return JSON.parse(data)
+}
+
+export async function readYAML(file) {
 	const exist = await exists(file)
 	if (!exist) return {}
 	const data = await read(file)
 	return yaml.load(data)
 }
 
-function writeYAML(file, data) {
+export function writeYAML(file, data) {
 	return write(file, yaml.dump(data))
 }
 
-function spawn(command, opts = {}) {
-	opts.cwd = opts.cwd || cwd
+export function spawn(command, opts = {}) {
+	opts.cwd = opts.cwd || pwd
 	opts.stdio = opts.stdio == null ? 'inherit' : opts.stdio
 	return new Promise(function (resolve, reject) {
 		safeps.spawn(command, opts, function (err, stdout) {
@@ -116,8 +129,8 @@ function spawn(command, opts = {}) {
 	})
 }
 
-function exec(command, opts = {}) {
-	opts.cwd = opts.cwd || cwd
+export function exec(command, opts = {}) {
+	opts.cwd = opts.cwd || pwd
 	return new Promise(function (resolve, reject) {
 		safeps.exec(command, opts, function (err, stdout) {
 			if (err) return reject(new Errlop(`exec failed: ${command}`, err))
@@ -126,8 +139,8 @@ function exec(command, opts = {}) {
 	})
 }
 
-async function parse(file) {
-	const path = pathUtil.resolve(cwd, file)
+export async function parse(file) {
+	const path = pathUtil.resolve(pwd, file)
 	const basename = pathUtil.basename(path)
 	status(`reading the ${basename} file...`)
 	try {
@@ -142,20 +155,4 @@ async function parse(file) {
 		status(`...skipped the ${basename} file`)
 		return null
 	}
-}
-
-module.exports = {
-	contains,
-	exec,
-	echoExists,
-	exists,
-	parse,
-	read,
-	readYAML,
-	rename,
-	rmdir,
-	spawn,
-	unlink,
-	write,
-	writeYAML,
 }

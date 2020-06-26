@@ -1,18 +1,21 @@
-/* eslint no-console:0 */
-'use strict'
-
 // External
-const pathUtil = require('path')
+import * as pathUtil from 'path'
 
 // Local
-const { status } = require('./log.js')
-const { add, has, strip, addExtension, fixTsc } = require('./util.js')
-const languageNames = {
-	typescript: 'TypeScript',
-	esnext: 'ESNext',
-	es5: 'ES5',
-	coffeescript: 'CoffeeScript',
-}
+import { status } from './log.js'
+import {
+	add,
+	has,
+	strip,
+	addExtension,
+	fixTsc,
+	useStrict,
+	exportOrExports,
+	importOrRequire,
+	binEntry,
+} from './util.js'
+import { languageNames } from './data.js'
+import { spawn, exists, rename, write, contains, unlink } from './fs.js'
 
 // Helpers
 class Edition {
@@ -148,7 +151,7 @@ class Edition {
 }
 
 // Actions
-async function generateEditions(state) {
+export async function generateEditions(state) {
 	const { answers, packageData } = state
 
 	// log
@@ -392,14 +395,15 @@ async function generateEditions(state) {
 			const nodeVersion =
 				(edition.targets && edition.targets.node) ||
 				(edition.engines && edition.engines.node)
+			const compileScriptName = `our:compile:${edition.directory}`
 
 			// add compilation details
 			if (edition.compiler === 'coffeescript') {
 				edition.scripts[
-					`our:compile:${edition.directory}`
+					compileScriptName
 				] = `coffee -bco ./${edition.directory} ./${answers.sourceDirectory}`
 			} else if (edition.compiler === 'typescript') {
-				edition.scripts[`our:compile:${edition.directory}`] = [
+				edition.scripts[compileScriptName] = [
 					'tsc',
 					has(edition.tags, 'require')
 						? '--module commonjs'
@@ -415,7 +419,7 @@ async function generateEditions(state) {
 			} else if (edition.compiler === 'babel') {
 				if (answers.language === 'coffeescript') {
 					// add coffee compile script
-					edition.scripts[`our:compile:${edition.directory}`] = [
+					edition.scripts[compileScriptName] = [
 						`env BABEL_ENV=${edition.directory}`,
 						'coffee -bcto',
 						`./${edition.directory}/`,
@@ -425,7 +429,7 @@ async function generateEditions(state) {
 						.join(' ')
 				} else {
 					// add babel compile script
-					edition.scripts[`our:compile:${edition.directory}`] = [
+					edition.scripts[compileScriptName] = [
 						`env BABEL_ENV=${edition.directory}`,
 						'babel',
 						answers.language === 'typescript' ? '--extensions ".ts,.tsx"' : '',
@@ -483,6 +487,14 @@ async function generateEditions(state) {
 				}
 			}
 
+			// add the package.json type information to the edition
+			if (edition.engines.node && edition.scripts[compileScriptName]) {
+				const packageType = has(edition.tags, 'require') ? 'commonjs' : 'module'
+				edition.scripts[
+					compileScriptName
+				] += ` && echo '{"type": "${packageType}"} > ${edition.directory}/package.json`
+			}
+
 			// ensure description exists
 			if (!edition.description) {
 				const description = [
@@ -532,4 +544,287 @@ async function generateEditions(state) {
 	status('...updated editions')
 }
 
-module.exports = { generateEditions }
+// Helpers
+export function updateEditionEntries({
+	answers,
+	nodeEdition,
+	browserEdition,
+	packageData,
+}) {
+	// node
+	if (answers.node) {
+		if (nodeEdition) {
+			packageData.node = nodeEdition.nodePath
+		} else {
+			packageData.node = answers.nodeEntry + '.js'
+		}
+	} else {
+		delete packageData.node
+	}
+	// browser
+	if (answers.browser) {
+		if (browserEdition) {
+			packageData.browser = browserEdition.browserPath
+			if (answers.sourceModule) {
+				packageData.module = packageData.browser
+			}
+		} else {
+			packageData.browser = answers.browserEntry + '.js'
+			if (answers.sourceModule) {
+				packageData.module = packageData.browser
+			}
+		}
+	} else {
+		delete packageData.browser
+		delete packageData.module
+	}
+}
+
+export async function scaffoldEditions(state) {
+	// fetch
+	const {
+		sourceEdition,
+		nodeEdition,
+		nodeEditionImport,
+		activeEditions,
+		packageData,
+		answers,
+	} = state
+
+	// clean old edition files
+	await unlink([
+		'bin.js',
+		'bin.cjs',
+		'bin.mjs',
+		'index.js',
+		'index.cjs',
+		'index.mjs',
+		'test.js',
+		'test.cjs',
+		'test.mjs',
+	])
+
+	// handle
+	if (activeEditions.length) {
+		// log
+		status('scaffolding edition files...')
+
+		// scaffold edition directories
+		await spawn(
+			['mkdir', '-p'].concat(
+				activeEditions.map((edition) => edition.directory || '.')
+			)
+		)
+
+		// move or scaffold edition main path if needed
+		if (sourceEdition.indexPath) {
+			if ((await exists(sourceEdition.indexPath)) === false) {
+				// edition index entry doesn't exist, but it is a docpad plugin
+				if (answers.docpadPlugin) {
+					await write(
+						sourceEdition.indexPath,
+						[
+							useStrict(answers.sourceModule),
+							exportOrExports(
+								"class MyPlugin extends require('docpad-baseplugin') {",
+								answers.sourceModule
+							),
+							"\tget name () { return 'myplugin' }",
+							'\tget initialConfig () { return {} }',
+							'}',
+							'',
+						].join('\n')
+					)
+				}
+				// edition index entry doesn't exist, so create an empty file
+				else
+					await write(
+						sourceEdition.indexPath,
+						[
+							useStrict(answers.sourceModule),
+							exportOrExports("'@todo'", answers.sourceModule),
+							'',
+						].join('\n')
+					)
+			}
+		}
+
+		// move or scaffold edition test path if needed
+		if (sourceEdition.testPath) {
+			if (answers.docpadPlugin === false) {
+				if ((await exists(sourceEdition.testPath)) === false) {
+					// edition test entry doesn't exist, so create a basic test file
+					if (answers.kava) {
+						await write(
+							sourceEdition.testPath,
+							[
+								useStrict(answers.sourceModule),
+								importOrRequire(
+									'{equal}',
+									'assert-helpers',
+									answers.sourceModule
+								),
+								importOrRequire('kava', 'kava', answers.sourceModule),
+								'',
+								`kava.suite('${packageData.name}', function (suite, test) {`,
+								"\ttest('no tests yet', function () {",
+								"\t\tconsole.log('no tests yet')",
+								'\t})',
+								'})',
+								'',
+							].join('\n')
+						)
+					} else {
+						await write(
+							sourceEdition.testPath,
+							[
+								useStrict(answers.sourceModule),
+								exportOrExports("'@todo'", answers.sourceModule),
+								'',
+							].join('\n')
+						)
+					}
+				}
+			}
+		}
+
+		// setup main and test paths
+		if (state.useEditionAutoloader) {
+			// this is the case for any language that requires compilation
+			await write(
+				'index.cjs',
+				[
+					"'use strict'",
+					'',
+					`/** @type {typeof import("./${sourceEdition.indexPath}") } */`,
+					"module.exports = require('editions').requirePackage(__dirname, require)",
+					'',
+				].join('\n')
+			)
+			packageData.main = 'index.cjs'
+			if (nodeEditionImport) {
+				await write(
+					'index.mjs',
+					`export * from './${nodeEditionImport.indexPath}')`
+				)
+				packageData.main = 'index'
+			}
+
+			// don't bother with docpad plugins
+			if (answers.docpadPlugin === false) {
+				await write(
+					'test.cjs',
+					[
+						"'use strict'",
+						'',
+						`/** @type {typeof import("./${sourceEdition.testPath}") } */`,
+						`module.exports = require('editions').requirePackage(__dirname, require, '${nodeEdition.test}')`,
+						'',
+					].join('\n')
+				)
+				state.test = 'test.cjs'
+				if (nodeEditionImport) {
+					await write(
+						'test.mjs',
+						`export * from './${nodeEditionImport.testPath}')`
+					)
+					packageData.main = 'test'
+				}
+			}
+
+			// bin
+			if (answers.binEntry) {
+				await write(
+					'bin.cjs',
+					[
+						'#!/usr/bin/env node',
+						"'use strict'",
+						'',
+						`/** @type {typeof import("./${sourceEdition.binPath}") } */`,
+						`module.exports = require('editions').requirePackage(__dirname, require, '${nodeEdition.bin}')`,
+						'',
+					].join('\n')
+				)
+				packageData.bin = binEntry(answers, 'bin.cjs')
+				if (nodeEditionImport) {
+					await write(
+						'bin.mjs',
+						`export * from './${nodeEditionImport.testPath}')`
+					)
+					packageData.bin = binEntry(answers, 'bin')
+				}
+			}
+		}
+		// edition autoloader not used
+		else {
+			// bin
+			if (answers.binEntry) {
+				if (nodeEdition !== sourceEdition) {
+					// change this based on package type
+					const entry = 'bin.' + answers.packageModule ? 'mjs' : 'cjs'
+					await write(
+						entry,
+						[
+							'#!/usr/bin/env node',
+							"'use strict'",
+							'',
+							...(answers.packageModule
+								? [`export * from './${nodeEdition.binPath}'`]
+								: [
+										`/** @type {typeof import("./${sourceEdition.binPath}") } */`,
+										`module.exports = require('./${nodeEdition.binPath}')`,
+								  ]),
+							'',
+						].join('\n')
+					)
+					packageData.bin = binEntry(answers, entry)
+				} else if (nodeEdition) {
+					// check for websites
+					packageData.bin = binEntry(answers, nodeEdition.binPath)
+				}
+			}
+
+			// node
+			if (nodeEdition) {
+				// check for websites
+				packageData.main = nodeEdition.entryPath
+				state.test = nodeEdition.testPath
+			} else {
+				delete packageData.main
+				delete state.test
+			}
+		}
+
+		// type
+		packageData.type = answers.packageModule ? 'module' : 'commonjs'
+
+		// browser path
+		updateEditionEntries(state)
+
+		// log
+		status('...scaffolded edition files')
+	}
+	// no editions
+	else {
+		// go directly to source
+		if (answers.indexEntry) {
+			packageData.main = answers.indexEntry + '.js'
+		}
+		updateEditionEntries(state)
+		if (answers.testEntry) {
+			state.test = answers.testEntry + '.js'
+		}
+		packageData.bin = binEntry(answers, answers.binEntry + '.js')
+	}
+
+	// ensure it has permission, necessary for yarn publishing
+	if (packageData.bin) {
+		status('ensure correct bin permission...')
+		const bins = (typeof packageData.bin === 'string'
+			? [packageData.bin]
+			: Object.values(packageData.bin)
+		).map((i) => `./${i}`)
+		await spawn(['chmod', '+x', ...bins])
+		status('...ensured correct bin permission')
+	}
+}

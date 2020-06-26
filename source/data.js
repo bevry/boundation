@@ -1,53 +1,57 @@
-'use strict'
+// External
+import { cwd } from 'process'
 
-module.exports = {
-	// fill this with a map of dependency package names to versions that are busted
-	// so that if they are necessary, a previous verison is used instead
-	bustedVersions: {},
-	bevryOrganisationsList: 'balupton bevry bevry-trading docpad browserstate webwrite chainyjs interconnectapp'.split(
-		' '
-	),
-	allNodeVersions: [
-		'0.8',
-		'0.10',
-		'0.12',
-		'4',
-		'6',
-		'8',
-		'10',
-		'12',
-		'13',
-		'14',
-	],
-	allLanguages: [
-		'typescript',
-		'esnext',
-		'es5',
-		'coffeescript',
-		'json',
-		'react',
-		'jsx',
-		'mdx',
-		'html',
-		'css',
-	],
-	allEsTargets: [
-		'ESNext',
-		'ES2020',
-		'ES2019',
-		'ES2018',
-		'ES2017',
-		'ES2016',
-		'ES2015',
-		'ES5',
-		'ES3',
-	],
-	npmAuthToken: process.env.NPM_AUTHTOKEN,
-	travisEmail: process.env.TRAVIS_NOTIFICATION_EMAIL,
-	travisComToken: process.env.TRAVIS_COM_TOKEN,
-	travisOrgToken: process.env.TRAVIS_ORG_TOKEN,
-	bevryCDNToken: process.env.BEVRY_CDN_TOKEN,
-	surgeLogin: process.env.SURGE_LOGIN,
-	surgeToken: process.env.SURGE_TOKEN,
-	nowToken: process.env.NOW_TOKEN,
+export const pwd = cwd()
+
+// fill this with a map of dependency package names to versions that are busted
+// so that if they are necessary, a previous verison is used instead
+export const bustedVersions = {}
+
+export const bevryOrganisationsList = 'balupton bevry bevry-trading docpad browserstate webwrite chainyjs interconnectapp'.split(
+	' '
+)
+
+export const allNodeVersions = [
+	'0.8',
+	'0.10',
+	'0.12',
+	'4',
+	'6',
+	'8',
+	'10',
+	'12',
+	'13',
+	'14',
+]
+
+export const allLanguages = [
+	'typescript',
+	'esnext',
+	'es5',
+	'coffeescript',
+	'json',
+	'react',
+	'jsx',
+	'mdx',
+	'html',
+	'css',
+]
+
+export const allEsTargets = [
+	'ESNext',
+	'ES2020',
+	'ES2019',
+	'ES2018',
+	'ES2017',
+	'ES2016',
+	'ES2015',
+	'ES5',
+	'ES3',
+]
+
+export const languageNames = {
+	typescript: 'TypeScript',
+	esnext: 'ESNext',
+	es5: 'ES5',
+	coffeescript: 'CoffeeScript',
 }

@@ -77,7 +77,7 @@
       "tags": [
         "javascript",
         "esnext",
-        "require"
+        "import"
       ],
       "engines": {
         "node": "14"
@@ -85,8 +85,9 @@
     }
   ],
   "bin": "source/bin.js",
-  "type": "commonjs",
+  "type": "module",
   "main": "source/index.js",
+  "module": "source/index.js",
   "dependencies": {
     "@bevry/testen": "^3.7.0",
     "arrangekeys": "^4.11.0",
@@ -141,7 +142,9 @@
       "bevry"
     ],
     "rules": {
-      "require-atomic-updates": 0
+      "require-atomic-updates": 0,
+      "no-console": 0,
+      "no-use-before-define": 1
     }
   },
   "prettier": {

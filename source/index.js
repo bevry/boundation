@@ -1,22 +1,16 @@
-/* eslint no-sync:0, camelcase:0, no-console:0 */
-'use strict'
-
-// unhandledRejection
-require('./extensions')
-
 // Local
-const { status, success } = require('./log')
-const { spawn } = require('./fs.js')
-const { readPackage, updatePackageData } = require('./package.js')
-const { updateTravis } = require('./travis.js')
-const { getAnswers } = require('./questions.js')
-const { updateBaseFiles } = require('./base.js')
-const { generateEditions } = require('./editions.js')
-const { readWebsite, updateWebsite } = require('./website.js')
-const { updateRuntime } = require('./runtime.js')
-const { updateVersions } = require('./versions.js')
+import { status, success } from './log.js'
+import { spawn } from './fs.js'
+import { readPackage, updatePackageData } from './package.js'
+import { updateTravis } from './travis.js'
+import { getAnswers } from './questions.js'
+import { updateBaseFiles } from './base.js'
+import { generateEditions } from './editions.js'
+import { readWebsite, updateWebsite } from './website.js'
+import { updateRuntime } from './runtime.js'
+import { updateVersions } from './versions.js'
 
-async function init(state) {
+export default async function init(state) {
 	await readPackage(state)
 
 	await readWebsite(state)
@@ -45,5 +39,3 @@ async function init(state) {
 	// log
 	success('all done!')
 }
-
-module.exports = init

@@ -1,28 +1,28 @@
-'use strict'
+import * as pathUtil from 'path'
 
-const pathUtil = require('path')
-const { exists, parse } = require('./fs.js')
+import { pwd } from './data.js'
+import { exists, parse } from './fs.js'
 
-function getNowName(nowData) {
+export function getNowName(nowData) {
 	return nowData.name || null
 }
 
-function parseNowAliases(alias) {
+export function parseNowAliases(alias) {
 	if (alias) {
 		return Array.isArray(alias) ? alias : alias.split(/[,\s]+/)
 	}
 	return null
 }
 
-function getNowAliases(nowData) {
+export function getNowAliases(nowData) {
 	return parseNowAliases(nowData.alias) || []
 }
 
-async function readWebsite(state) {
-	const { cwd, packageData } = state
+export async function readWebsite(state) {
+	const { packageData } = state
 
 	// now
-	const nowPath = pathUtil.resolve(cwd, 'now.json')
+	const nowPath = pathUtil.resolve(pwd, 'now.json')
 	let nowData = {}
 	try {
 		if (await exists(nowPath)) nowData = (await parse(nowPath)) || {}
@@ -32,7 +32,7 @@ async function readWebsite(state) {
 	state.nowData = Object.assign({}, packageData.now || {}, nowData)
 }
 
-async function updateWebsite(state) {
+export async function updateWebsite(state) {
 	const { answers, nowData } = state
 
 	// add website deployment strategies
@@ -71,11 +71,4 @@ async function updateWebsite(state) {
 		// export
 		state.nowData = now
 	}
-}
-
-module.exports = {
-	readWebsite,
-	getNowAliases,
-	getNowName,
-	updateWebsite,
 }

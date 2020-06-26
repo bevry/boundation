@@ -1,25 +1,26 @@
-/* eslint no-console:0 */
-'use strict'
-
 // External
-const arrangekeys = require('arrangekeys').default
-const pathUtil = require('path')
-const typeChecker = require('typechecker')
+import * as pathUtil from 'path'
+import typeChecker from 'typechecker'
+
+// esm workarounds
+import a from 'arrangekeys'
+const arrangekeys = a.default
 
 // Local
-const { fixBalupton } = require('./util.js')
-const { status } = require('./log.js')
-const {
-	has,
-	repoToWebsite,
-	repoToOrganisation,
-	without,
-	ensureScript,
+import {
 	defaultDeploy,
+	ensureScript,
+	fixBalupton,
+	has,
 	isBevryOrganisation,
-} = require('./util.js')
-const { echoExists, exists, write, parse } = require('./fs.js')
-const { getNowName } = require('./website.js')
+	repoToOrganisation,
+	repoToWebsite,
+	without,
+} from './util.js'
+import { pwd } from './data.js'
+import { status } from './log.js'
+import { echoExists, exists, write, parse } from './fs.js'
+import { getNowName } from './website.js'
 
 // Prepare
 const mandatoryScriptsList = 'our:setup our:compile our:meta our:verify our:deploy our:release test'.split(
@@ -29,17 +30,17 @@ const mandatoryScriptsList = 'our:setup our:compile our:meta our:verify our:depl
 // ====================================
 // Fetchers
 
-async function isNPM() {
+export async function isNPM() {
 	const npmlock = await exists(`./package-lock.json`)
 	return npmlock
 }
 
-async function isPNPM() {
+export async function isPNPM() {
 	const pnpm = await exists(`./pnpm-lock.yaml`)
 	return pnpm
 }
 
-async function isYARN() {
+export async function isYARN() {
 	const pnpjs = await exists(`./.pnp.js`)
 	const pnp = await exists(`./.pnp`)
 	const yarnlock = await exists(`./yarn.lock`)
@@ -47,19 +48,19 @@ async function isYARN() {
 	return yarn
 }
 
-function getPackageName(packageData) {
+export function getPackageName(packageData) {
 	return packageData.name || null
 }
 
-function getPackageDescription(packageData) {
+export function getPackageDescription(packageData) {
 	return packageData.description || null
 }
 
-function getPackageKeywords(packageData) {
+export function getPackageKeywords(packageData) {
 	return (packageData.keywords && packageData.keywords.join(', ')) || null
 }
 
-function getPackageNodeEngineVersion(packageData) {
+export function getPackageNodeEngineVersion(packageData) {
 	return (
 		(packageData.engines &&
 			packageData.engines.node &&
@@ -68,7 +69,7 @@ function getPackageNodeEngineVersion(packageData) {
 	)
 }
 
-function getPackageDocumentationDependency(packageData) {
+export function getPackageDocumentationDependency(packageData) {
 	if (packageData.devDependencies) {
 		if (
 			packageData.devDependencies.documentation ||
@@ -81,7 +82,7 @@ function getPackageDocumentationDependency(packageData) {
 	return false
 }
 
-function getPackageFlowtypeDependency(packageData) {
+export function getPackageFlowtypeDependency(packageData) {
 	return (
 		(packageData.devDependencies &&
 			Boolean(packageData.devDependencies['flow-bin'])) ||
@@ -89,7 +90,7 @@ function getPackageFlowtypeDependency(packageData) {
 	)
 }
 
-function hasSyntax(packageData, syntax) {
+export function hasSyntax(packageData, syntax) {
 	const edition =
 		packageData.editions &&
 		packageData.editions.length &&
@@ -98,27 +99,27 @@ function hasSyntax(packageData, syntax) {
 	return has(tags, syntax)
 }
 
-function isSourceModule(packageData) {
+export function isSourceModule(packageData) {
 	return hasSyntax(packageData, 'import')
 }
 
-function isPackageModule(packageData) {
+export function isPackageModule(packageData) {
 	return packageData.type === 'module'
 }
 
-function getPackageRepoUrl(packageData) {
+export function getPackageRepoUrl(packageData) {
 	return (packageData.repository && packageData.repository.url) || null
 }
 
-function getPackageAuthor(packageData) {
+export function getPackageAuthor(packageData) {
 	return packageData.author || null
 }
 
-function hasEditions(packageData) {
+export function hasEditions(packageData) {
 	return packageData.editions && Boolean(packageData.editions.length)
 }
 
-function isES5(packageData) {
+export function isES5(packageData) {
 	return (
 		packageData.editions &&
 		packageData.editions[0] &&
@@ -126,15 +127,15 @@ function isES5(packageData) {
 	)
 }
 
-function getPackageScript(packageData, key) {
+export function getPackageScript(packageData, key) {
 	return (packageData.scripts && packageData.scripts[key]) || null
 }
 
-function hasPackageScript(packageData, key) {
+export function hasPackageScript(packageData, key) {
 	return Boolean(getPackageScript(packageData, key))
 }
 
-function hasPackageScriptPrefix(packageData, key) {
+export function hasPackageScriptPrefix(packageData, key) {
 	return Boolean(
 		Object.keys(packageData.scripts || {}).find((value) =>
 			value.startsWith(key)
@@ -142,22 +143,22 @@ function hasPackageScriptPrefix(packageData, key) {
 	)
 }
 
-function hasDocumentation(packageData) {
+export function hasDocumentation(packageData) {
 	return hasPackageScript(packageData, 'our:meta:docs')
 }
 
-function hasMultipleEditions(packageData) {
+export function hasMultipleEditions(packageData) {
 	if (packageData.editions) {
 		return packageData.editions.length > 1
 	}
 	return null
 }
 
-function isPackageJavaScript(packageData) {
+export function isPackageJavaScript(packageData) {
 	return hasSyntax(packageData, 'esnext')
 }
 
-function isPackageTypeScript(packageData) {
+export function isPackageTypeScript(packageData) {
 	if (packageData) {
 		if (/\.ts$/.test(packageData.main)) {
 			return true
@@ -174,11 +175,11 @@ function isPackageTypeScript(packageData) {
 	return false
 }
 
-function isPackageJSON(packageData) {
+export function isPackageJSON(packageData) {
 	return /\.json$/.test(packageData.main) || false
 }
 
-function isPackageCoffee(packageData) {
+export function isPackageCoffee(packageData) {
 	if (packageData) {
 		if (/\.coffee$/.test(packageData.main)) {
 			return true
@@ -198,21 +199,21 @@ function isPackageCoffee(packageData) {
 	return false
 }
 
-function getPackageProperty(packageData, key) {
+export function getPackageProperty(packageData, key) {
 	return packageData[key]
 }
 
-function getPackageOrganisation(packageData) {
+export function getPackageOrganisation(packageData) {
 	return repoToOrganisation(getPackageRepoUrl(packageData) || '') || null
 }
 
-function isPackageDocPadPlugin(packageData) {
+export function isPackageDocPadPlugin(packageData) {
 	return (
 		(packageData.name && packageData.name.startsWith('docpad-plugin-')) || false
 	)
 }
 
-function hasPackageDependency(packageData, key) {
+export function hasPackageDependency(packageData, key) {
 	const {
 		dependencies = {},
 		devDependencies = {},
@@ -225,7 +226,7 @@ function hasPackageDependency(packageData, key) {
 	)
 }
 
-function getBasename(path) {
+export function getBasename(path) {
 	// remove dirname, then remove extension
 	return (
 		(typeof path === 'string' &&
@@ -234,7 +235,7 @@ function getBasename(path) {
 	)
 }
 
-function getPackageTestEntry(packageData) {
+export function getPackageTestEntry(packageData) {
 	if (packageData) {
 		if (isPackageDocPadPlugin(packageData)) {
 			return 'test'
@@ -248,7 +249,7 @@ function getPackageTestEntry(packageData) {
 	return null
 }
 
-function getPackageBinEntry(packageData) {
+export function getPackageBinEntry(packageData) {
 	const bin = packageData.bin
 	if (bin) {
 		const entry = typeof bin === 'string' ? bin : Object.values(bin)[0]
@@ -257,7 +258,7 @@ function getPackageBinEntry(packageData) {
 	return null
 }
 
-function getPackageBinExecutable(packageData) {
+export function getPackageBinExecutable(packageData) {
 	const bin = packageData.bin
 	if (bin) {
 		if (typeof bin === 'string') return null
@@ -266,14 +267,14 @@ function getPackageBinExecutable(packageData) {
 	return null
 }
 
-async function getPackageIndexEntry(packageData) {
+export async function getPackageIndexEntry(packageData) {
 	if (packageData && isPackageDocPadPlugin(packageData)) {
 		return 'index'
 	}
 	return getBasename(packageData && packageData.main)
 }
 
-async function getPackageNodeEntry(packageData) {
+export async function getPackageNodeEntry(packageData) {
 	if (packageData && isPackageDocPadPlugin(packageData)) {
 		return 'index'
 	}
@@ -288,7 +289,7 @@ async function getPackageNodeEntry(packageData) {
 	// as otherwise when you delete the node entry file, to say use index entry file instead, the change won't be automatically detected
 }
 
-async function getPackageDenoEntry(packageData) {
+export async function getPackageDenoEntry(packageData) {
 	return getBasename(
 		(await echoExists('source/deno.ts')) || (packageData && packageData.deno)
 	)
@@ -297,7 +298,7 @@ async function getPackageDenoEntry(packageData) {
 	// as otherwise when you delete the deno entry file, to say use index entry file instead, the change won't be automatically detected
 }
 
-async function getPackageBrowserEntry() {
+export async function getPackageBrowserEntry() {
 	return getBasename(
 		(await echoExists('source/browser.ts')) ||
 			(await echoExists('source/browser.coffee')) ||
@@ -309,7 +310,7 @@ async function getPackageBrowserEntry() {
 	// as otherwise when you delete the browser entry file, to say use index entry file instead, the change won't be automatically detected
 }
 
-function getWebsiteType(packageData, nowData) {
+export function getWebsiteType(packageData, nowData) {
 	if (hasPackageDependency(packageData, 'next')) {
 		return '@now/next'
 	}
@@ -332,7 +333,7 @@ function getWebsiteType(packageData, nowData) {
 	return 'custom'
 }
 
-function getProjectType(packageData, nowData) {
+export function getProjectType(packageData, nowData) {
 	if (hasPackageScript(packageData, 'start') || getNowName(nowData)) {
 		return 'website'
 	}
@@ -342,7 +343,7 @@ function getProjectType(packageData, nowData) {
 // ====================================
 // Helpers
 
-function arrangePackage(state) {
+export function arrangePackage(state) {
 	let packageData = JSON.parse(JSON.stringify(state.packageData))
 
 	// Keywords
@@ -531,9 +532,8 @@ function arrangePackage(state) {
 // ====================================
 // Update
 
-async function readPackage(state) {
-	const { cwd } = state
-	const path = pathUtil.resolve(cwd, 'package.json')
+export async function readPackage(state) {
+	const path = pathUtil.resolve(pwd, 'package.json')
 	const special = ['start', 'test']
 
 	// read
@@ -581,16 +581,15 @@ async function readPackage(state) {
 	return packageData
 }
 
-async function writePackage(state) {
-	const { cwd } = state
-	const path = pathUtil.resolve(cwd, 'package.json')
+export async function writePackage(state) {
+	const path = pathUtil.resolve(pwd, 'package.json')
 
 	status('writing the package.json file...')
 	await write(path, JSON.stringify(arrangePackage(state), null, '  '))
 	status('...wrote the package.json file')
 }
 
-async function updatePackageData(state) {
+export async function updatePackageData(state) {
 	const packageDataLocal = state.packageData
 	const { answers } = state
 
@@ -734,47 +733,4 @@ async function updatePackageData(state) {
 
 	// apply
 	state.packageData = packageData
-}
-
-module.exports = {
-	hasPackageScriptPrefix,
-	getPackageAuthor,
-	getPackageBinEntry,
-	getPackageBinExecutable,
-	getPackageIndexEntry,
-	getPackageNodeEntry,
-	getPackageDenoEntry,
-	getPackageBrowserEntry,
-	getPackageDescription,
-	getPackageDocumentationDependency,
-	getPackageFlowtypeDependency,
-	getPackageKeywords,
-	getPackageName,
-	getPackageNodeEngineVersion,
-	getPackageOrganisation,
-	getPackageProperty,
-	getPackageRepoUrl,
-	getPackageScript,
-	getPackageTestEntry,
-	getProjectType,
-	getWebsiteType,
-	hasDocumentation,
-	hasEditions,
-	hasMultipleEditions,
-	hasPackageDependency,
-	hasPackageScript,
-	isES5,
-	isNPM,
-	isPackageCoffee,
-	isPackageDocPadPlugin,
-	isPackageJavaScript,
-	isPackageJSON,
-	isPackageModule,
-	isPackageTypeScript,
-	isSourceModule,
-	isPNPM,
-	isYARN,
-	readPackage,
-	updatePackageData,
-	writePackage,
 }

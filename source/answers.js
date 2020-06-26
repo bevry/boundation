@@ -1,10 +1,12 @@
-'use strict'
-
 // External
-const inquirer = require('inquirer')
-const chalk = require('chalk')
-const Errlop = require('errlop').default
-const getarg = require('get-cli-arg').default
+import inquirer from 'inquirer'
+import chalk from 'chalk'
+
+// esm workarounds
+import e from 'errlop'
+const Errlop = e.default
+import g from 'get-cli-arg'
+const getarg = g.default
 
 // Local
 const skipAllArg = '--auto'
@@ -16,7 +18,7 @@ function fetch(q, value, ...args) {
 }
 
 // Action
-async function getAnswers(questions, user) {
+export default async function getAnswers(questions, user) {
 	try {
 		// find defaults
 		const defaults = {}
@@ -143,5 +145,3 @@ async function getAnswers(questions, user) {
 		)
 	}
 }
-
-module.exports = { getAnswers }

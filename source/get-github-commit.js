@@ -1,16 +1,15 @@
-/* eslint no-console:0 */
-'use strict'
+// External
+import fetch from 'node-fetch'
+import gh from 'githubauthreq'
+const { getHeaders } = gh
+import { env } from 'process'
 
 // Local
-const { warn, fatal } = require('./log')
-const { getHeaders } = require('githubauthreq')
-const ghapi = process.env.GITHUB_API || 'https://api.github.com'
+import { warn, fatal } from './log.js'
+const { GITHUB_API = 'https://api.github.com' } = env
 
-// External
-const fetch = require('node-fetch').default
-
-async function getGithubCommit(slug, fallback = 'master') {
-	const url = `${ghapi}/repos/${slug}/commits`
+export async function getGithubCommit(slug, fallback = 'master') {
+	const url = `${GITHUB_API}/repos/${slug}/commits`
 	try {
 		const headers = getHeaders()
 		const init = {
@@ -40,5 +39,3 @@ async function getGithubCommit(slug, fallback = 'master') {
 		return fallback
 	}
 }
-
-module.exports = { getGithubCommit }

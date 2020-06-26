@@ -1,9 +1,15 @@
-/* eslint no-console:0 */
-'use strict'
+// External
+import e from 'errlop'
+const Errlop = e.default
+import fetch from 'node-fetch'
+import * as crypto from 'crypto'
 
-const Errlop = require('errlop').default
-const fetch = require('node-fetch').default
-const crypto = require('crypto')
+// Local
+import { writePackage } from './package.js'
+import { status } from './log.js'
+import { getGithubCommit } from './get-github-commit.js'
+import { readYAML, writeYAML } from './fs.js'
+import { hasScript } from './util.js'
 
 // curl flags:
 // -L will follow redirects
@@ -13,15 +19,8 @@ const crypto = require('crypto')
 // https://github.com/bevry/boundation/issues/15
 const curlFlags = '-fsSL'
 
-// Local
-const { writePackage } = require('./package.js')
-const { status } = require('./log.js')
-const { getGithubCommit } = require('./get-github-commit.js')
-const { readYAML, writeYAML } = require('./fs.js')
-const { hasScript } = require('./util.js')
-
 // Thing
-async function updateTravis(state) {
+export async function updateTravis(state) {
 	const { answers, nodeVersions, unsupportedNodeVersions, packageData } = state
 
 	// =================================
@@ -374,5 +373,3 @@ async function updateTravis(state) {
 	// log
 	status('...customised travis')
 }
-
-module.exports = { updateTravis }
