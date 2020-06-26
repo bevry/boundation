@@ -14,7 +14,11 @@ import {
 	getAllDepNames,
 } from './util.js'
 import { readPackage, writePackage } from './package.js'
-import { scaffoldEditions, updateEditionEntries } from './editions.js'
+import {
+	scaffoldEditions,
+	updateEditionEntries,
+	updateEditionFields,
+} from './editions.js'
 import { updateEngines } from './versions.js'
 
 // Consts
@@ -167,7 +171,11 @@ export async function updateRuntime(state) {
 	// =================================
 	// editions
 
+	updateEditionFields(state)
+
 	await scaffoldEditions(state)
+
+	updateEditionEntries(state)
 
 	// =================================
 	// DEPENDENCIES TO WORK WITH
@@ -720,9 +728,6 @@ export async function updateRuntime(state) {
 	if (answers.kava) {
 		packages.kava = packages['assert-helpers'] = 'dev'
 	}
-
-	// browser path
-	updateEditionEntries(state)
 
 	// package
 	if (answers.npm) {

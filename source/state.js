@@ -26,6 +26,9 @@ export const state = {
 			(edition) => edition.engines && edition.engines.node
 		)
 	},
+	get nodeEdition() {
+		return this.nodeEditions[0]
+	},
 	get nodeEditionsRequire() {
 		return this.nodeEditions.filter((edition) => has(edition.tags, 'require'))
 	},
@@ -49,9 +52,6 @@ export const state = {
 	},
 	get useEditionAutoloader() {
 		return this.nodeEditionsRequire.length >= 2
-	},
-	get nodeEdition() {
-		return this.nodeEditions[0]
 	},
 	get browserEdition() {
 		const browserEditions = this.browserEditions
