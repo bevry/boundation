@@ -29,13 +29,18 @@ export const state = {
 	get nodeEditionsRequire() {
 		return this.nodeEditions.filter((edition) => has(edition.tags, 'require'))
 	},
+	get nodeEditionRequire() {
+		return this.nodeEditionsRequire[0]
+	},
+	/** editions that the autoloader is compatible with */
+	get nodeEditionsAutoloader() {
+		return this.nodeEditionsRequire
+	},
 	get nodeEditionsImport() {
 		return this.nodeEditions.filter((edition) => has(edition.tags, 'import'))
 	},
 	get nodeEditionImport() {
-		return this.nodeEditionsImport.length === 1
-			? this.nodeEditionsImport[0]
-			: null
+		return this.nodeEditionsImport[0]
 	},
 	get browserEditions() {
 		return this.activeEditions.filter(

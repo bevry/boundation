@@ -126,7 +126,6 @@ export async function updateBaseFiles({ answers, packageData }) {
 			await rename(`./source/${docpadTesterEntry}.js`, './source/tester.js')
 		}
 	}
-
 	status('...renamed old files')
 
 	status('downloading files...')

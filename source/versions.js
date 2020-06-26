@@ -7,7 +7,7 @@ import testen from '@bevry/testen'
 const { Versions } = testen
 import { status } from './log.js'
 import { writePackage } from './package.js'
-import { without } from './util.js'
+import { without, has } from './util.js'
 import { updateRuntime } from './runtime.js'
 
 // Compare to versions simplify
@@ -64,8 +64,13 @@ export function nodeMajorVersions(array) {
 }
 // Update engines
 export async function updateEngines(state) {
-	const { answers, supportedNodeVersions, nodeVersions, packageData } = state
-	const nodeEditions = state.nodeEditions
+	const {
+		answers,
+		nodeEditionsAutoloader,
+		supportedNodeVersions,
+		nodeVersions,
+		packageData,
+	} = state
 	const allPassedVersions = new Set()
 	const serial = ['testen', 'safefs', 'lazy-require'].includes(answers.name)
 
@@ -73,8 +78,9 @@ export async function updateEngines(state) {
 	// run each edition against the supported node version
 	// to fetch the engines for each edition
 
-	if (nodeEditions.length === 0) {
-		// this can be the case if it is a website
+	// if we have no editions suitable for autoloading, do this
+	if (nodeEditionsAutoloader.length === 0) {
+		// this can be the case if it is a website, or a mjs package
 		status('determining engines for project...')
 		const versions = new Versions(nodeVersions)
 		await versions.load()
@@ -110,7 +116,7 @@ export async function updateEngines(state) {
 		let debug = ''
 
 		/* eslint no-loop-func:0 */
-		for (const edition of nodeEditions) {
+		for (const edition of nodeEditionsAutoloader) {
 			if (skip) {
 				console.log(
 					`The edition [${edition.directory}] will be trimmed, as a previous edition already passes all targets`

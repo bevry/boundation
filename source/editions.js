@@ -15,7 +15,86 @@ import {
 	binEntry,
 } from './util.js'
 import { languageNames } from './data.js'
-import { spawn, exists, rename, write, contains, unlink } from './fs.js'
+import { spawn, exists, rename, write, contains, unlink, exec } from './fs.js'
+
+async function writeLoader({
+	entry = 'index',
+	autoloader = false,
+	mjs = false,
+	exportDefault = false,
+	sourcePath = '',
+	targetEntry = '',
+	targetPath = '',
+}) {
+	const bin = entry.startsWith('bin')
+	const cjs = !mjs
+	const lines = [bin && '#!/usr/bin/env node', cjs && "'use strict'"]
+	if (autoloader) {
+		if (mjs) {
+			throw new Error('autoloader does not yet support mjs')
+		}
+		lines.push(`/** @type {typeof import("./${sourcePath}") } */`)
+		if (targetEntry) {
+			lines.push(
+				`module.exports = require('editions').requirePackage(__dirname, require, '${targetEntry}')`
+			)
+		} else {
+			lines.push(
+				`module.exports = require('editions').requirePackage(__dirname, require)`
+			)
+		}
+	} else {
+		if (mjs) lines.push(`export * from './${targetPath}'`)
+		if (exportDefault)
+			lines.push(
+				`import d from './${targetPath}'`,
+				// cjs exports {default} instead of default
+				'export default ' + (cjs ? 'd.default || d' : 'd')
+			)
+		if (cjs) lines.push(`module.exports = require('./${targetPath}')`)
+	}
+	await write(entry, lines.filter((i) => i).join('\n'))
+}
+
+async function writeEntry({
+	entry = 'index',
+	autoloader = false,
+	exportDefault = false,
+	resolve = false,
+	sourceEdition,
+	nodeEditionRequire,
+	nodeEditionImport,
+}) {
+	// only need to write, if we are doing the autoloader, or we have multiple module types
+	const write = autoloader || (nodeEditionRequire && nodeEditionImport)
+	const resolved = (nodeEditionRequire || nodeEditionImport)[entry + 'Path']
+	if (!write) return resolved
+	// we need to write, so continue
+	if (nodeEditionRequire) {
+		const entryWithExtension = entry + '.cjs'
+		await writeLoader({
+			entry: entryWithExtension,
+			autoloader,
+			sourcePath: sourceEdition[entry + 'Path'],
+			targetEntry: nodeEditionRequire[entry],
+			targetPath: nodeEditionRequire[entry + 'Path'],
+		})
+	}
+	if (nodeEditionImport) {
+		const entryWithExtension = entry + '.mjs'
+		await writeLoader({
+			entry: entryWithExtension,
+			autoloader: false,
+			mjs: true,
+			exportDefault,
+			sourcePath: sourceEdition[entry + 'Path'],
+			targetEntry: nodeEditionImport[entry],
+			targetPath: nodeEditionImport[entry + 'Path'],
+		})
+	}
+	if (resolve) return resolved
+	return entry
+}
 
 // Helpers
 class Edition {
@@ -321,7 +400,7 @@ export async function generateEditions(state) {
 						browser: addExtension(answers.browserEntry, `js`),
 						test: addExtension(answers.testEntry, `js`),
 						bin: addExtension(answers.binEntry, `js`),
-						tags: ['javascript', answers.packageModule ? 'import' : 'require'],
+						tags: ['javascript', 'require'],
 						targets: {
 							node: version,
 						},
@@ -344,11 +423,7 @@ export async function generateEditions(state) {
 						browser: addExtension(answers.browserEntry, `js`),
 						test: addExtension(answers.testEntry, `js`),
 						bin: addExtension(answers.binEntry, `js`),
-						tags: [
-							'javascript',
-							syntax,
-							answers.packageModule ? 'import' : 'require',
-						],
+						tags: ['javascript', syntax, 'require'],
 						targets: {
 							es: target,
 						},
@@ -387,6 +462,35 @@ export async function generateEditions(state) {
 			}
 		}
 
+		// add node esm edition if we have a source module
+		if (
+			answers.sourceModule &&
+			['typescript', 'babel'].includes(answers.compilerNode)
+		) {
+			editions.set(
+				`node-esm`,
+				new Edition({
+					compiler: answers.compilerNode,
+					directory: `edition-node-esm`,
+					index: addExtension(answers.indexEntry, `js`),
+					node: addExtension(answers.nodeEntry, `js`),
+					browser: addExtension(answers.browserEntry, `js`),
+					test: addExtension(answers.testEntry, `js`),
+					bin: addExtension(answers.binEntry, `js`),
+					tags: ['javascript', 'import'],
+					targets:
+						answers.compilerNode === 'babel'
+							? {
+									node: answers.targets[0],
+							  }
+							: { es: answers.targets[0] },
+					engines: {
+						node: true,
+						browsers: false,
+					},
+				})
+			)
+		}
 		// autogenerate various fields
 		editions.forEach(function (edition) {
 			const browserVersion =
@@ -448,13 +552,7 @@ export async function generateEditions(state) {
 							'@babel/preset-env',
 							{
 								targets: strip(edition.targets, 'es'),
-								modules:
-									edition.targets.esmodules ||
-									answers.sourceModule === answers.packageModule
-										? false
-										: answers.packageModule
-										? 'auto'
-										: 'commonjs',
+								modules: has(edition.tags, 'import') ? 'auto' : 'commonjs',
 							},
 						],
 					],
@@ -492,7 +590,7 @@ export async function generateEditions(state) {
 				const packageType = has(edition.tags, 'require') ? 'commonjs' : 'module'
 				edition.scripts[
 					compileScriptName
-				] += ` && echo '{"type": "${packageType}"} > ${edition.directory}/package.json`
+				] += ` && echo '{"type": "${packageType}"}' > ${edition.directory}/package.json`
 			}
 
 			// ensure description exists
@@ -548,31 +646,36 @@ export async function generateEditions(state) {
 export function updateEditionEntries({
 	answers,
 	nodeEdition,
+	nodeEditionRequire,
+	nodeEditionImport,
 	browserEdition,
 	packageData,
 }) {
 	// node
-	if (answers.node) {
-		if (nodeEdition) {
-			packageData.node = nodeEdition.nodePath
-		} else {
-			packageData.node = answers.nodeEntry + '.js'
-		}
-	} else {
-		delete packageData.node
-	}
+	// if (answers.node && nodeEdition) {
+	// 	packageData.node = nodeEdition.nodePath
+	// 	// require
+	// 	if (nodeEditionRequire) {
+	// 		packageData.cjs = nodeEdition.nodePath
+	// 	} else {
+	// 		delete packageData.cjs
+	// 	}
+	// 	// import
+	// 	if (nodeEditionImport) {
+	// 		packageData.mjs = nodeEdition.nodePath
+	// 	} else {
+	// 		delete packageData.mjs
+	// 	}
+	// } else {
+	delete packageData.node
+	delete packageData.mjs
+	delete packageData.cjs
+	// }
 	// browser
-	if (answers.browser) {
-		if (browserEdition) {
-			packageData.browser = browserEdition.browserPath
-			if (answers.sourceModule) {
-				packageData.module = packageData.browser
-			}
-		} else {
-			packageData.browser = answers.browserEntry + '.js'
-			if (answers.sourceModule) {
-				packageData.module = packageData.browser
-			}
+	if (answers.browser && browserEdition) {
+		packageData.browser = browserEdition.browserPath
+		if (answers.sourceModule) {
+			packageData.module = packageData.browser
 		}
 	} else {
 		delete packageData.browser
@@ -585,6 +688,7 @@ export async function scaffoldEditions(state) {
 	const {
 		sourceEdition,
 		nodeEdition,
+		nodeEditionRequire,
 		nodeEditionImport,
 		activeEditions,
 		packageData,
@@ -603,6 +707,17 @@ export async function scaffoldEditions(state) {
 		'test.cjs',
 		'test.mjs',
 	])
+
+	// export default
+	let exportDefault = false
+	answers.keywords.delete('export-default')
+	if (answers.sourceModule) {
+		try {
+			await exec(`cat ${sourceEdition.indexPath} | grep "export default"`)
+			exportDefault = true
+			answers.keywords.add('export-default')
+		} catch (err) {}
+	}
 
 	// handle
 	if (activeEditions.length) {
@@ -688,115 +803,56 @@ export async function scaffoldEditions(state) {
 			}
 		}
 
-		// setup main and test paths
-		if (state.useEditionAutoloader) {
-			// this is the case for any language that requires compilation
-			await write(
-				'index.cjs',
-				[
-					"'use strict'",
-					'',
-					`/** @type {typeof import("./${sourceEdition.indexPath}") } */`,
-					"module.exports = require('editions').requirePackage(__dirname, require)",
-					'',
-				].join('\n')
-			)
-			packageData.main = 'index.cjs'
-			if (nodeEditionImport) {
-				await write(
-					'index.mjs',
-					`export * from './${nodeEditionImport.indexPath}')`
-				)
-				packageData.main = 'index'
-			}
-
-			// don't bother with docpad plugins
-			if (answers.docpadPlugin === false) {
-				await write(
-					'test.cjs',
-					[
-						"'use strict'",
-						'',
-						`/** @type {typeof import("./${sourceEdition.testPath}") } */`,
-						`module.exports = require('editions').requirePackage(__dirname, require, '${nodeEdition.test}')`,
-						'',
-					].join('\n')
-				)
-				state.test = 'test.cjs'
-				if (nodeEditionImport) {
-					await write(
-						'test.mjs',
-						`export * from './${nodeEditionImport.testPath}')`
-					)
-					packageData.main = 'test'
-				}
-			}
+		// setup paths
+		if (nodeEdition) {
+			packageData.main = await writeEntry({
+				entry: 'index',
+				autoloader: state.useEditionAutoloader,
+				exportDefault,
+				sourceEdition,
+				nodeEditionRequire,
+				nodeEditionImport,
+			})
 
 			// bin
 			if (answers.binEntry) {
-				await write(
-					'bin.cjs',
-					[
-						'#!/usr/bin/env node',
-						"'use strict'",
-						'',
-						`/** @type {typeof import("./${sourceEdition.binPath}") } */`,
-						`module.exports = require('editions').requirePackage(__dirname, require, '${nodeEdition.bin}')`,
-						'',
-					].join('\n')
+				packageData.bin = binEntry(
+					answers,
+					await writeEntry({
+						entry: 'bin',
+						autoloader: state.useEditionAutoloader,
+						exportDefault,
+						sourceEdition,
+						nodeEditionRequire,
+						nodeEditionImport,
+					})
 				)
-				packageData.bin = binEntry(answers, 'bin.cjs')
-				if (nodeEditionImport) {
-					await write(
-						'bin.mjs',
-						`export * from './${nodeEditionImport.testPath}')`
-					)
-					packageData.bin = binEntry(answers, 'bin')
-				}
+			}
+
+			// don't bother test with docpad plugins
+			// as they hae their own testing solution
+			if (answers.docpadPlugin === false) {
+				state.test = await writeEntry({
+					entry: 'test',
+					autoloader: state.useEditionAutoloader,
+					exportDefault,
+					sourceEdition,
+					nodeEditionRequire,
+					nodeEditionImport,
+					resolve: true,
+				})
 			}
 		}
-		// edition autoloader not used
+		// no node edition, so no testing
 		else {
-			// bin
-			if (answers.binEntry) {
-				if (nodeEdition !== sourceEdition) {
-					// change this based on package type
-					const entry = 'bin.' + answers.packageModule ? 'mjs' : 'cjs'
-					await write(
-						entry,
-						[
-							'#!/usr/bin/env node',
-							"'use strict'",
-							'',
-							...(answers.packageModule
-								? [`export * from './${nodeEdition.binPath}'`]
-								: [
-										`/** @type {typeof import("./${sourceEdition.binPath}") } */`,
-										`module.exports = require('./${nodeEdition.binPath}')`,
-								  ]),
-							'',
-						].join('\n')
-					)
-					packageData.bin = binEntry(answers, entry)
-				} else if (nodeEdition) {
-					// check for websites
-					packageData.bin = binEntry(answers, nodeEdition.binPath)
-				}
-			}
-
-			// node
-			if (nodeEdition) {
-				// check for websites
-				packageData.main = nodeEdition.entryPath
-				state.test = nodeEdition.testPath
-			} else {
-				delete packageData.main
-				delete state.test
-			}
+			delete packageData.main
+			delete packageData.bin
+			delete packageData.test
+			delete state.test
 		}
 
 		// type
-		packageData.type = answers.packageModule ? 'module' : 'commonjs'
+		packageData.type = has(sourceEdition.tags, 'import') ? 'module' : 'commonjs'
 
 		// browser path
 		updateEditionEntries(state)

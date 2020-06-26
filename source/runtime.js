@@ -782,14 +782,6 @@ export async function updateRuntime(state) {
 		['types', 'typed'],
 		packageData.types || packages.jsdoc
 	)
-	if (answers.npm && answers.language === 'typescript') {
-		try {
-			await exec(`cat ${sourceEdition.indexPath} | grep "export default"`)
-			answers.keywords.add('export-default')
-		} catch (err) {
-			answers.keywords.delete('export-default')
-		}
-	}
 
 	// githubauthquerystring to githubauthreq
 	if (packageData.dependencies.githubauthquerystring) {
@@ -1037,7 +1029,9 @@ export async function updateRuntime(state) {
 
 	// continue
 	if (answers.language !== 'json') {
+		status('update engines...')
 		await updateEngines(state)
+		status('...updated engines')
 	}
 
 	// log
