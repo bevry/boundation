@@ -1,5 +1,12 @@
 # History
 
+## v1.65.0 2020 July 3
+
+-   move from `.cjs` and `.mjs` index files, to [`package.json:exports`](https://nodejs.org/api/esm.html#esm_conditional_exports)
+    -   if compiled-types exists, use that for the type information in the auto-loader
+-   package manager default changed from `yarn` back to `npm` - npm was swapped to yarn in v1.63.0
+    e
+
 ## v1.64.0 2020 June 26
 
 -   convert fixed dependency versions to `^` range

@@ -283,9 +283,9 @@ export async function getQuestions(state) {
 			type: 'list',
 			message: 'Which package manager to use?',
 			choices: ['npm', 'yarn'],
-			default: 'yarn',
+			default: 'npm',
 			// async default() {
-			// 	// having a dirrect package manager for dev and production is not feasible
+			// 	// having a different package manager for dev and production is not feasible
 			// 	// as npm scripts and dev commands are constantly overriding each other
 			// 	const yarn = await isYARN()
 			// 	const npm = await isNPM()
