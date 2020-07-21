@@ -44,12 +44,8 @@ import {
 	isPackageDocPadPlugin,
 	isPackageJavaScript,
 	isPackageJSON,
-	isPackageModule,
 	isPackageTypeScript,
 	isSourceModule,
-	isYARN,
-	isPNPM,
-	isNPM,
 } from './package.js'
 import { getNowAliases, getNowName } from './website.js'
 import { versionComparator } from './versions.js'

@@ -1,6 +1,5 @@
 // External
-import e from 'errlop'
-const Errlop = e.default
+import Errlop from 'errlop'
 import fetch from 'node-fetch'
 import * as pathUtil from 'path'
 import * as urlUtil from 'url'
@@ -55,7 +54,7 @@ export async function download(opts) {
 
 export async function updateBaseFiles({ answers, packageData }) {
 	// clean
-	status('reming old files...')
+	status('removing old files...')
 	const purgeList = [
 		// old ecosystem files
 		'.babelrc',
@@ -73,8 +72,8 @@ export async function updateBaseFiles({ answers, packageData }) {
 		'npm-debug.log',
 		'yarn-error.log',
 		// package manager caches
-		// npm
-		'node_modules/',
+		// npm (don't trim node_modules if we are boundation, as otherwise we can't run ourself)
+		answers.name === 'boundation' ? '' : 'node_modules/',
 		'package-lock.json',
 		// pnpn
 		'pnpm-lock.yaml',
@@ -82,7 +81,7 @@ export async function updateBaseFiles({ answers, packageData }) {
 		'.pnp',
 		'.pnp.js',
 		'yarn.lock',
-	]
+	].filter((i) => i)
 	if (answers.packageManager !== 'yarn')
 		purgeList.push('./.yarnrc', './.yarnrc.yml', './.yarn/')
 	await rmrf(purgeList.filter((i) => `./${i}`))

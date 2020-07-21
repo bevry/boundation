@@ -1,6 +1,5 @@
 // External
-import e from 'errlop'
-const Errlop = e.default
+import Errlop from 'errlop'
 import fetch from 'node-fetch'
 import * as crypto from 'crypto'
 

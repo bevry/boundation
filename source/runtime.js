@@ -906,7 +906,7 @@ export async function updateRuntime(state) {
 							target: 'ESNext',
 							lib: Array.from(lib),
 						},
-						answers.packageModule ? { module: 'ESNext' } : {}
+						answers.sourceModule ? { module: 'ESNext' } : {}
 					),
 					include: [answers.sourceDirectory],
 			  }
@@ -1039,6 +1039,19 @@ export async function updateRuntime(state) {
 		status('update engines...')
 		await updateEngines(state)
 		status('...updated engines')
+	}
+
+	// ensure it has correct permissions, necessary for yarn publishing
+	// as after runtime, as now everything is compiled and settled
+	// so we can guarantee the bin file exists in the right place
+	if (packageData.bin) {
+		status('ensure correct bin permission...')
+		const bins = (typeof packageData.bin === 'string'
+			? [packageData.bin]
+			: Object.values(packageData.bin)
+		).map((i) => `./${i}`)
+		await spawn(['chmod', '+x', ...bins])
+		status('...ensured correct bin permission')
 	}
 
 	// log

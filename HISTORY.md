@@ -1,11 +1,17 @@
 # History
 
+## v1.65.1 2020 July 22
+
+-   delete the `package.json:type` when we cannot determine what it should be
+-   correct handling of mjs, cjs, and js files
+-   fix application of `bin` permissions
+-   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
+
 ## v1.65.0 2020 July 3
 
 -   move from `.cjs` and `.mjs` index files, to [`package.json:exports`](https://nodejs.org/api/esm.html#esm_conditional_exports)
     -   if compiled-types exists, use that for the type information in the auto-loader
 -   package manager default changed from `yarn` back to `npm` - npm was swapped to yarn in v1.63.0
-    e
 
 ## v1.64.0 2020 June 26
 

@@ -5,8 +5,7 @@ import yaml from 'js-yaml'
 import safeps from 'safeps'
 
 // esm workarounds
-import e from 'errlop'
-const Errlop = e.default
+import Errlop from 'errlop'
 
 // Local
 import { status } from './log.js'
@@ -17,6 +16,7 @@ export function exists(file) {
 		const path = pathUtil.resolve(pwd, file)
 		return new Promise(function (resolve) {
 			fsUtil.exists(path, function (exists) {
+				console.log(path, exists ? 'does' : 'does not', 'exist')
 				resolve(exists)
 			})
 		})
@@ -42,9 +42,29 @@ export function unlink(file) {
 				if (error.message && error.message.includes('ENOENT')) return resolve()
 				return reject(error)
 			}
+			console.log(path, 'has been removed')
 			return resolve()
 		})
 	})
+}
+
+export async function unlinkIfContains(file, what) {
+	if (Array.isArray(file)) {
+		return Promise.all(file.map((i) => unlinkIfContains(i, what)))
+	}
+	const path = pathUtil.resolve(pwd, file)
+	if (await exists(path)) {
+		if (await contains(path, what)) {
+			console.log(path, 'will be removed because it contains:', what)
+			return unlink(path)
+		} else {
+			console.log(
+				path,
+				'will not be removed because it does not contain:',
+				what
+			)
+		}
+	}
 }
 
 export function rmrf(files) {

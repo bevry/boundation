@@ -3,8 +3,7 @@ import * as pathUtil from 'path'
 import typeChecker from 'typechecker'
 
 // esm workarounds
-import a from 'arrangekeys'
-const arrangekeys = a.default
+import arrangekeys from 'arrangekeys'
 
 // Local
 import {
@@ -99,10 +98,12 @@ export function hasSyntax(packageData, syntax) {
 	return has(tags, syntax)
 }
 
+/** Does the source code use ESM? */
 export function isSourceModule(packageData) {
 	return hasSyntax(packageData, 'import')
 }
 
+/** Does the exported package use USM by default? */
 export function isPackageModule(packageData) {
 	return packageData.type === 'module'
 }

@@ -10,16 +10,16 @@ cache: npm
 install:
   - >-
     eval "$(curl -fsSL
-    https://raw.githubusercontent.com/bevry/awesome-travis/9fa2fa025c77b463d03154f39922af95cadc9c67/scripts/node-install.bash)"
+    https://raw.githubusercontent.com/bevry/awesome-travis/master/scripts/node-install.bash)"
 before_script:
   - >-
     eval "$(curl -fsSL
-    https://raw.githubusercontent.com/bevry/awesome-travis/9fa2fa025c77b463d03154f39922af95cadc9c67/scripts/node-verify.bash)"
+    https://raw.githubusercontent.com/bevry/awesome-travis/master/scripts/node-verify.bash)"
 after_success:
   - >-
     eval "$(curl -fsSL
-    https://raw.githubusercontent.com/bevry/awesome-travis/9fa2fa025c77b463d03154f39922af95cadc9c67/scripts/node-publish.bash)"
+    https://raw.githubusercontent.com/bevry/awesome-travis/master/scripts/node-publish.bash)"
 notifications:
   email:
     recipients: >-
-      DXMFAT1LmRuDtH3jrY4sMT/E4smDY8DHanveEC6bAu5ZrtrHD+3Zx2MYxBrxRw6tg5aBK0AiZbzkgj+c1F/uWFyNFAabhLUvMdRmaICojOnyitz/pXMln1TnoAdqa8TnadCw/uhcLEn1y38s88paiXhgoJ5YjWS9dkay6v8unnn/eZnkIBVRd2c1fGDpf6937shn1XvtlkRZ03fP4CTMNXWHM5gnMa+feRiDRiug88O/wFCF0EhAEzQaJRQDQ1AhqwdDArSiqeokuCoiDTrVV4rqNiGMDC54W9pKvAxmqiT0pLDP6CYa5DH+6Z/ujJKDlBE7SRk4f07m3+vJFZcG6LV19wZCqZuuofSKozTEt1GTV/EPDA8VQC6q8HOkmiY6rCRbZUaD0UrCEL5hjinR997+8EdbF2al+9G8Af2g26rlk/HPvyNwkU5lMoJ58NWS5NYOCmfrLZaf1/wS7+j+Qknyag/0TX3cGkHD8yRKfev3G2T1yJJ7LUk8PFePSZC378vpldOWgyWjalVDeny+RMPu4Z8WVrxKkpWc87Nbv/j3gsyEADz9tmI+YNd/KhqjMMUhQ5besxCX2S1oTJqwo4X8NWQaFpNJ2aEZ3SkoPP4B7A0spQVYpbcWKo0230DHpV7Yl0WP8mUpTQfCctdJ8W0BrYG0pdOGR2EcvutCt3U=
+      ohIe1yBAAMeZqrVApw/zMmsTJSiOduw9onQ8fK3u8qmGk/3w3WeaMk/ovvhEzXtjl3unX/zdxrqcBzx8266coiPOth5fEe3YVA1gs381zl80s/6czDOcumitlVLQr/E1Hi8i/z3bnO67zXTYMJCQoo8Mm6D9xiZVaiJPRUQvxMQVDMz/hpa5c3eDpKiBLZnetzkjY5exyHp/MzW5K0+m3WCx2/nwV321nokShb0UBvZd8u2C3XxMKuisH8uz084eym8caPSHDZKtNZ59GI0aIZGmWG9wO14zgmtEO+8tST+r1sCRH1qHvNrTlYzPyybNud5atAa2pNdeSEBMna6v3+PXF4u0rM2sDQp9TpTYzoGp2PtVQ7EBlm/WG20JDrNyw5Fi6asSqEfuTNBJdWG3nOgyJLLydmyS0xpPO1Tc0Q+++Xje/q+nX37K5xY0tqjkQe1cGwLsIQUfdtgU3gdBYDo5qaDOTKnj9lJf4CQj89BNTT0b0EV+sPdwYnBTjhJPih1kENBwP7z2p39LGa5q9USBd5OMj8KtBu+hcyoGVDbihIW8REw3+fyr3p34WFR6/H7pjIZcReG3o0Tys1kd2qcm6rFN0/94fY3BlFhGKEG0OfBYkveQNMVK41aiza/2uX3DL+et9lzQpHYz0RsJNhtxJk8Z0f86ivK1+ABVoqI=

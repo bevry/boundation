@@ -29,7 +29,7 @@ export function set(obj, key, value) {
 }
 
 // return the bin entry as a string (if single bin entry), or as an object of strings that point to the same bin entry (if multiple bin names)
-export function binEntry(answers, binEntry) {
+export function binField(answers, binEntry) {
 	if (answers.binExecutable) {
 		if (answers.binExecutable === answers.name) {
 			return binEntry

@@ -1,7 +1,6 @@
 // External
 import fetch from 'node-fetch'
-import e from 'errlop'
-const Errlop = e.default
+import Errlop from 'errlop'
 
 // Local
 const now = new Date().getTime()

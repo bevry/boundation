@@ -3,10 +3,8 @@ import inquirer from 'inquirer'
 import chalk from 'chalk'
 
 // esm workarounds
-import e from 'errlop'
-const Errlop = e.default
-import g from 'get-cli-arg'
-const getarg = g.default
+import Errlop from 'errlop'
+import getarg from 'get-cli-arg'
 
 // Local
 const skipAllArg = '--auto'
