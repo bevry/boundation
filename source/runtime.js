@@ -98,8 +98,7 @@ function installRaw({
 	} else if (packageManager === 'npm') {
 		args.push('--no-fund', '--no-audit')
 		if (exact) args.push('--save-exact')
-		if (mode === 'development') args.push('--save-dev')
-		else args.push('--save-prod')
+		args.push(mode === 'development' ? '--save-dev' : '--save-prod')
 		command.push(...commands.npm.add)
 	} else {
 		throw new Error('unsupported package manager')
@@ -994,7 +993,7 @@ export async function updateRuntime(state) {
 		await install({
 			packageManager: answers.packageManager,
 			packageData,
-			dependencies: addDependencies,
+			dependencies: addDevDependencies,
 			mode: 'development',
 			versions,
 		})

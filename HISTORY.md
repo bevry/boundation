@@ -1,5 +1,10 @@
 # History
 
+## v1.65.2 2020 July 22
+
+-   fixed automated dependencies being saved as dev dependencies, and automated dev dependencies not being updated (regression since v1.64.0)
+-   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
+
 ## v1.65.1 2020 July 22
 
 -   delete the `package.json:type` when we cannot determine what it should be
@@ -15,9 +20,9 @@
 
 ## v1.64.0 2020 June 26
 
--   convert fixed dependency versions to `^` range
+-   boundation is now coded in ESM instead of CJS
+-   exact dependencies are now changed to the `^` range
     -   this can overidden by specifying any exact versions inside `package.json:boundation.versions`
--   converted boundation to ESM
 -   now we generate ESM editions for node.js, and do the `cjs` and `mjs` magic
     -   this is because esm modules compiled to cjs do not do `export default` but `export { default }` so a compatibility layer is necessary, such as precompiler magic, or generating an esm edition
         -   See [typescript](https://github.com/Microsoft/TypeScript/issues/5565#issuecomment-155216760) and [babel](https://github.com/babel/babel/issues/2212) for their lack of support for `export default`
