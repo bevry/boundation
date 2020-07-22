@@ -533,7 +533,7 @@ export async function getQuestions(state) {
 			message: 'What is the default entry filename (without extension)?',
 			validate: isSpecified, // @todo attempt to remove this
 			filter: trim,
-			default: getPackageIndexEntry(packageData) || 'index',
+			default: (await getPackageIndexEntry(packageData)) || 'index',
 			skip: editioned,
 			ignore({ website }) {
 				return website
@@ -560,7 +560,7 @@ export async function getQuestions(state) {
 			validate: isSpecified,
 			filter: trim,
 			async default({ indexEntry }) {
-				return (await getPackageBrowserEntry(packageData)) || indexEntry
+				return (await getPackageBrowserEntry()) || indexEntry
 			},
 			skip: editioned,
 			when({ browser, indexEntry }) {

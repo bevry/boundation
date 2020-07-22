@@ -1,5 +1,10 @@
 # History
 
+## v1.65.3 2020 July 22
+
+-   fixed fetching the default entry filename (regression since v1.62.0)
+-   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
+
 ## v1.65.2 2020 July 22
 
 -   fixed automated dependencies being saved as dev dependencies, and automated dev dependencies not being updated (regression since v1.64.0)
