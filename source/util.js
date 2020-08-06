@@ -1,5 +1,5 @@
 import { bevryOrganisationsList } from './data.js'
-import typeChecker from 'typechecker'
+import * as typeChecker from 'typechecker'
 
 export function unjoin(a, b) {
 	if (!b) return null

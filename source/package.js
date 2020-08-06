@@ -1,6 +1,6 @@
 // External
 import * as pathUtil from 'path'
-import typeChecker from 'typechecker'
+import * as typeChecker from 'typechecker'
 
 // esm workarounds
 import arrangekeys from 'arrangekeys'
