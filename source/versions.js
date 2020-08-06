@@ -72,7 +72,9 @@ export async function updateEngines(state) {
 		packageData,
 	} = state
 	const allPassedVersions = new Set()
-	const serial = ['testen', 'safefs', 'lazy-require'].includes(answers.name)
+	const serial =
+		['testen', 'safefs', 'lazy-require'].includes(answers.name) ||
+		answers.name.includes('docpad')
 
 	// =================================
 	// run each edition against the supported node version
@@ -134,7 +136,7 @@ export async function updateEngines(state) {
 
 			// determine the test script for the edition
 			const test = answers.docpadPlugin
-				? `docpad-plugintester --edition=${edition.directory}`
+				? `npx docpad-plugintester --edition=${edition.directory}`
 				: `node ./${join(edition.directory || '.', edition.test)}`
 
 			// set the versions to test on as the supported node versions,

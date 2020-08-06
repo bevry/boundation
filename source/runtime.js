@@ -411,7 +411,9 @@ export async function updateRuntime(state) {
 		})
 
 	// docpad plugin
-	if (answers.docpadPlugin) {
+	if (answers.name === 'docpad') {
+		packages['docpad-baseplugin'] = true
+	} else if (answers.docpadPlugin) {
 		packages['docpad-baseplugin'] = true
 		packages['docpad-plugintester'] = packages.docpad = 'dev'
 		state.scripts.test = 'docpad-plugintester'
@@ -726,7 +728,9 @@ export async function updateRuntime(state) {
 	}
 
 	// testing (not docpad plugin, nor website)
-	if (answers.kava) {
+	if (answers.name === 'docpad-plugintester') {
+		packages.kava = packages['assert-helpers'] = true
+	} else if (answers.kava) {
 		packages.kava = packages['assert-helpers'] = 'dev'
 	}
 
@@ -793,6 +797,16 @@ export async function updateRuntime(state) {
 	if (packageData.dependencies.githubauthquerystring) {
 		packages.githubauthquerystring = false
 		packages.githubauthreq = true
+	}
+
+	// special cases
+	if (answers.name === 'docpad-plugin-babel') {
+		packages['@babel/core'] = packages['@babel/preset-env'] = packages[
+			'@babel/preset-react'
+		] = true
+		packages['babel-core'] = packages['babel-preset-env'] = packages[
+			'babel-preset-react'
+		] = false
 	}
 
 	// joe to kava

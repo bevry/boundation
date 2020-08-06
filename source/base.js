@@ -90,6 +90,10 @@ export async function updateBaseFiles({ answers, packageData }) {
 	// rename old files
 	status('renaming old files...')
 
+	if (await exists('src')) {
+		await rename('src', 'source')
+	}
+
 	if (await exists('history.md')) {
 		await rename('history.md', 'HISTORY.md')
 	}
@@ -281,6 +285,11 @@ export async function updateBaseFiles({ answers, packageData }) {
 				"custom: ['https://bevry.me/fund']",
 			].join('\n')
 		)
+	}
+
+	// docpad plugin
+	if (answers.docpadPlugin && answers.languages.includes('esnext')) {
+		await write('.prettierignore', ['test/'].join('\n'))
 	}
 
 	// dependabot
