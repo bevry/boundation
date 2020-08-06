@@ -1,5 +1,21 @@
 # History
 
+## v1.65.4 2020 August 6
+
+-   Fix support of `--lts` argument
+-   Revised compatibility with [DocPad](https://github.com/docpad/docpad) ecosystem
+    -   src -> source
+    -   prettier should ignore test folder as makes comparisons harder if prettier is running on expected output
+    -   docpad should install docpad-baseplugin
+    -   docpad plugins should install baseplugin and plugintester and set their test script to the plugin tester
+    -   docpad plugin tester uses kava and assert helpers
+    -   docpad-plugin-babel uses some babel packages
+    -   use npx when testing docpad plugins, otherwise plugin tester is not found
+    -   run docpad ecosystem projects in serial mode when testing edition compatibility
+-   Fix `SyntaxError: The requested module 'typechecker' does not provide an export named 'default'`
+    -   Thanks to [Thomas Reggi](https://github.com/reggi) and [Sumit Rai](https://github.com/sumitrai) for [issue #72](https://github.com/bevry/boundation/issues/72)
+-   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
+
 ## v1.65.3 2020 July 22
 
 -   fixed fetching the default entry filename (regression since v1.62.0)
