@@ -621,7 +621,7 @@ export async function getQuestions(state) {
 		},
 		{
 			name: 'ltsNodeOnly',
-			arg: '--lts',
+			arg: 'lts',
 			message: `Change the minimum supported node version from ${nodeEngineVersion} to ${nodeMinimumLTSVersion}`,
 			type: 'confirm',
 			default() {
