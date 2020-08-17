@@ -1,5 +1,12 @@
 # History
 
+## v1.65.5 2020 August 17
+
+-   For DocPad Plugins, add `our:setup:dpt` script to install test dependencies
+-   For `docpad-plugintester` ensure `editions` dependency remains installed
+-   For TypeScript projects, specufy the `tsconfig.json:targets` as what was specified in the Q&A
+-   Updated dependencies
+
 ## v1.65.4 2020 August 6
 
 -   Fix support of `--lts` argument

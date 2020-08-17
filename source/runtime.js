@@ -416,6 +416,7 @@ export async function updateRuntime(state) {
 	} else if (answers.docpadPlugin) {
 		packages['docpad-baseplugin'] = true
 		packages['docpad-plugintester'] = packages.docpad = 'dev'
+		state.scripts['our:setup:dpt'] = 'cd test && npm install && cd ..'
 		state.scripts.test = 'docpad-plugintester'
 		if (packageData.peerDependencies) {
 			// it is read later, @todo why?
@@ -729,7 +730,7 @@ export async function updateRuntime(state) {
 
 	// testing (not docpad plugin, nor website)
 	if (answers.name === 'docpad-plugintester') {
-		packages.kava = packages['assert-helpers'] = true
+		packages.editions = packages.kava = packages['assert-helpers'] = true
 	} else if (answers.kava) {
 		packages.kava = packages['assert-helpers'] = 'dev'
 	}
@@ -889,7 +890,7 @@ export async function updateRuntime(state) {
 						moduleResolution: 'Node',
 						sourceMap: true,
 						strict: true,
-						target: 'ESNext',
+						target: answers.targets[0],
 						// new props
 						skipLibCheck: true,
 						forceConsistentCasingInFileNames: true,
@@ -916,7 +917,7 @@ export async function updateRuntime(state) {
 							maxNodeModuleJsDepth: 5,
 							moduleResolution: 'Node',
 							strict: true,
-							target: 'ESNext',
+							target: answers.targets[0],
 							lib: Array.from(lib),
 						},
 						answers.sourceModule ? { module: 'ESNext' } : {}
