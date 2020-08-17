@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 // External
 import Errlop from 'errlop'
 import fetch from 'node-fetch'
@@ -298,6 +299,8 @@ export async function updateBaseFiles({ answers, packageData }) {
 	// remove v1 file
 	await unlink('.dependabot/config.yml')
 	// add v2 file
+	// https://docs.github.com/en/github/administering-a-repository/enabling-and-disabling-version-updates#enabling-github-dependabot-version-updates
+	// https://docs.github.com/en/github/administering-a-repository/configuration-options-for-dependency-updates#ignore
 	await spawn(['mkdir', '-p', '.github'])
 	await writeYAML('.github/dependabot.yml', {
 		version: 2,
@@ -305,7 +308,25 @@ export async function updateBaseFiles({ answers, packageData }) {
 			{
 				'package-ecosystem': 'npm',
 				directory: '/',
-				schedule: { interval: 'weekly' },
+				schedule: { interval: 'weekly', day: 'sunday' },
+			},
+		],
+	})
+
+	// mergify
+	await writeYAML('.mergify.yml', {
+		pull_request_rules: [
+			{
+				name: 'automatic merge for Dependabot pull requests',
+				conditions: [
+					'author~=^dependabot(|-preview)\\[bot\\]$',
+					'status-success=Travis CI - Pull Request',
+				],
+				actions: {
+					merge: {
+						method: 'squash',
+					},
+				},
 			},
 		],
 	})

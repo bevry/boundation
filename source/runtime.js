@@ -874,6 +874,7 @@ export async function updateRuntime(state) {
 		} catch (e) {
 			// ignore
 		}
+		const target = answers.targets.find((i) => allEsTargets.includes(i))
 		status('writing tsconfig file...')
 		if (answers.keywords.has('webworker')) lib.add('WebWorker')
 		if (answers.keywords.has('dom')) lib.add('DOM').add('DOM.Iterable')
@@ -890,7 +891,7 @@ export async function updateRuntime(state) {
 						moduleResolution: 'Node',
 						sourceMap: true,
 						strict: true,
-						target: answers.targets[0],
+						target,
 						// new props
 						skipLibCheck: true,
 						forceConsistentCasingInFileNames: true,
@@ -917,7 +918,7 @@ export async function updateRuntime(state) {
 							maxNodeModuleJsDepth: 5,
 							moduleResolution: 'Node',
 							strict: true,
-							target: answers.targets[0],
+							target,
 							lib: Array.from(lib),
 						},
 						answers.sourceModule ? { module: 'ESNext' } : {}

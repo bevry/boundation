@@ -1,10 +1,17 @@
 # History
 
+## v1.65.6 2020 August 18
+
+-   For TypeScript projects, specify the `tsconfig.json:targets` as the ECMAScript version specified in the targets Q&A
+-   Dependabot now runs on Sunday
+-   Add [Mergify](https://mergify.io) configuration to auto-merge dependabot pull requests
+-   Updated dependencies
+
 ## v1.65.5 2020 August 17
 
 -   For DocPad Plugins, add `our:setup:dpt` script to install test dependencies
 -   For `docpad-plugintester` ensure `editions` dependency remains installed
--   For TypeScript projects, specufy the `tsconfig.json:targets` as what was specified in the Q&A
+-   For TypeScript projects, specify the `tsconfig.json:targets` as what was specified in the Q&A
 -   Updated dependencies
 
 ## v1.65.4 2020 August 6
