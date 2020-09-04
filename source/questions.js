@@ -777,7 +777,8 @@ export async function getQuestions(state) {
 						return ltsTypescriptTargets
 					return allTypescriptTargets
 				} else {
-					throw new Error('unexpected compiler for targets')
+					// ignored compiler
+					return []
 				}
 			},
 			default(opts) {

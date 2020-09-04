@@ -1,5 +1,9 @@
 # History
 
+## v1.66.3 2020 September 4
+
+-   Fix regression from v1.66.0 where compilers other than `babel` and `typescript` would fail on targets question
+
 ## v1.66.2 2020 September 4
 
 -   Fix regression from v1.66.0 where for javascript projects that compile for web browsers, both the source edition and browser edition would target web browsers
