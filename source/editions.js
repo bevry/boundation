@@ -22,7 +22,7 @@ import {
 	defaultBrowserTarget,
 	defaultCoffeeTarget,
 } from './data.js'
-import { spawn, exists, write, unlink, exec, unlinkIfContains } from './fs.js'
+import { spawn, exists, write, exec, unlinkIfContains } from './fs.js'
 
 async function writeLoader({
 	entry = 'index',
@@ -268,6 +268,7 @@ export async function generateEditions(state) {
 				description: 'source',
 				directory: '.',
 				tags: [
+					'source',
 					'website',
 					...answers.languages,
 					answers.sourceModule ? 'import' : 'require',
@@ -287,6 +288,7 @@ export async function generateEditions(state) {
 				test: addExtension(answers.testEntry, `js`),
 				bin: addExtension(answers.binEntry, `js`),
 				tags: [
+					'source',
 					'javascript',
 					'es5',
 					answers.sourceModule ? 'import' : 'require',
@@ -311,14 +313,14 @@ export async function generateEditions(state) {
 				test: addExtension(answers.testEntry, `js`),
 				bin: addExtension(answers.binEntry, `js`),
 				tags: [
+					'source',
 					'javascript',
 					'esnext',
 					answers.sourceModule ? 'import' : 'require',
 				],
 				engines: {
 					node: true,
-					browsers:
-						answers.browsers && answers.targets.includes('browser') === false,
+					browsers: answers.browsers && !answers.compilerBrowser,
 				},
 			})
 
@@ -337,7 +339,7 @@ export async function generateEditions(state) {
 					browser: addExtension(answers.browserEntry, `ts`),
 					test: addExtension(answers.testEntry, `ts`),
 					bin: addExtension(answers.binEntry, `js`),
-					tags: ['typescript', 'import'],
+					tags: ['source', 'typescript', 'import'],
 					engines: false,
 				})
 			)
@@ -351,7 +353,7 @@ export async function generateEditions(state) {
 					browser: addExtension(answers.browserEntry, `coffee`),
 					test: addExtension(answers.testEntry, `coffee`),
 					bin: addExtension(answers.binEntry, `coffee`),
-					tags: ['coffeescript', 'require'],
+					tags: ['source', 'coffeescript', 'require'],
 					engines: false,
 				})
 			)
@@ -366,11 +368,10 @@ export async function generateEditions(state) {
 					browser: addExtension(answers.browserEntry, `json`),
 					test: addExtension(answers.testEntry, `js`),
 					bin: addExtension(answers.binEntry, `js`),
-					tags: ['json'],
+					tags: ['source', 'json'],
 					engines: {
 						node: true,
-						browsers:
-							answers.browsers && answers.targets.includes('browser') === false,
+						browsers: answers.browsers && !answers.compilerBrowser,
 					},
 				})
 			)
@@ -390,7 +391,11 @@ export async function generateEditions(state) {
 					browser: addExtension(answers.browserEntry, `js`),
 					test: addExtension(answers.testEntry, `js`),
 					bin: addExtension(answers.binEntry, `js`),
-					tags: ['javascript', answers.sourceModule ? 'import' : 'require'],
+					tags: [
+						'compiled',
+						'javascript',
+						answers.sourceModule ? 'import' : 'require',
+					],
 					targets: {
 						es: defaultBrowserTarget,
 						esmodules: answers.sourceModule,
@@ -418,7 +423,7 @@ export async function generateEditions(state) {
 					browser: addExtension(answers.browserEntry, `js`),
 					test: addExtension(answers.testEntry, `js`),
 					bin: addExtension(answers.binEntry, `js`),
-					tags: ['javascript', syntax, 'require'],
+					tags: ['compiled', 'javascript', syntax, 'require'],
 					engines: {
 						node: true,
 						browsers: answers.browsers,
@@ -445,7 +450,7 @@ export async function generateEditions(state) {
 							browser: addExtension(answers.browserEntry, `js`),
 							test: addExtension(answers.testEntry, `js`),
 							bin: addExtension(answers.binEntry, `js`),
-							tags: ['javascript', targetModule],
+							tags: ['compiled', 'javascript', targetModule],
 							targets: {
 								node: version,
 							},
@@ -469,7 +474,7 @@ export async function generateEditions(state) {
 							browser: addExtension(answers.browserEntry, `js`),
 							test: addExtension(answers.testEntry, `js`),
 							bin: addExtension(answers.binEntry, `js`),
-							tags: ['javascript', version, targetModule],
+							tags: ['compiled', 'javascript', version, targetModule],
 							targets: {
 								es: targetVersion,
 							},
@@ -640,11 +645,7 @@ export function updateEditionFields(state) {
 // Helpers
 export function updateEditionEntries(state) {
 	const {
-		answers,
 		activeEdition,
-		activeEditions,
-		sourceEdition,
-		nodeEdition,
 		nodeEditionRequire,
 		nodeEditionImport,
 		browserEdition,

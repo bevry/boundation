@@ -1,5 +1,11 @@
 # History
 
+## v1.66.2 2020 September 4
+
+-   Fix regression from v1.66.0 where for javascript projects that compile for web browsers, both the source edition and browser edition would target web browsers
+    -   Instead, if one is electing to compile for web browsers, then don't mark the source edition as well as compatible for browsers
+-   Source editions now have the `source` tag added, and compiled editions now have the `compiled` tag added
+
 ## v1.66.1 2020 September 4
 
 -   When boundation fails, it will now fail with a failure exit code

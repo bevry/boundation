@@ -16,7 +16,6 @@ import {
 	unlink,
 	spawn,
 	writeYAML,
-	exec,
 	rmrf,
 } from './fs.js'
 
