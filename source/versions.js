@@ -2,16 +2,16 @@
 import { join } from 'path'
 
 // Local
-import { allNodeVersions } from './data.js'
+import { allNodeVersions, minimumEsmNodeVersion } from './data.js'
 import testen from '@bevry/testen'
 const { Versions } = testen
 import { status } from './log.js'
 import { writePackage } from './package.js'
-import { without, has } from './util.js'
+import { without } from './util.js'
 import { updateRuntime } from './runtime.js'
 
 // Compare to versions simplify
-// Works for 1, 1.1, or 1.1.1, or 1.1.1 - sadasd
+// Works for 1, 1.1, or 1.1.1
 export function versionComparator(a, b) {
 	// https://github.com/substack/versionComparator-compare/pull/4
 	const pa = String(a).split('.')
@@ -46,6 +46,9 @@ export async function updateVersions(state) {
 			versionComparator(version, answers.minimumSupportNodeVersion) >= 0 &&
 			versionComparator(version, answers.maximumSupportNodeVersion) <= 0
 	)
+	state.supportedEsmNodeVersions = state.supportedNodeVersions.filter(
+		(version) => versionComparator(version, minimumEsmNodeVersion) >= 0
+	)
 }
 
 export function nodeMajorVersion(value) {
@@ -66,8 +69,10 @@ export function nodeMajorVersions(array) {
 export async function updateEngines(state) {
 	const {
 		answers,
-		nodeEditionsAutoloader,
+		nodeEditionsRequire,
+		nodeEditionsImport,
 		supportedNodeVersions,
+		supportedEsmNodeVersions,
 		nodeVersions,
 		packageData,
 	} = state
@@ -80,8 +85,8 @@ export async function updateEngines(state) {
 	// run each edition against the supported node version
 	// to fetch the engines for each edition
 
-	// if we have no editions suitable for autoloading, do this
-	if (nodeEditionsAutoloader.length === 0) {
+	// if we have no editions suitable use `npm test` instead
+	if (nodeEditionsRequire.length === 0 && nodeEditionsImport.length === 0) {
 		// this can be the case if it is a website, or a mjs package
 		status('determining engines for project...')
 		const versions = new Versions(nodeVersions)
@@ -114,102 +119,159 @@ export async function updateEngines(state) {
 		)
 	} else {
 		let recompile = false
-		let skip = false
-		let debug = ''
 
 		/* eslint no-loop-func:0 */
-		for (const edition of nodeEditionsAutoloader) {
-			if (skip) {
-				console.log(
-					`The edition [${edition.directory}] will be trimmed, as a previous edition already passes all targets`
+		for (const { list, nodeVersions, mode } of [
+			{
+				list: nodeEditionsImport,
+				nodeVersions: supportedEsmNodeVersions,
+				mode: 'onlyAllSupported',
+			},
+			{
+				list: nodeEditionsRequire,
+				nodeVersions: supportedNodeVersions,
+				mode: 'allUnique',
+			},
+		]) {
+			// Skip when we do not care about that module type
+			if (list.length === 0) continue
+
+			// Prepare
+			const listPassedVersions = new Set()
+			let skip = false
+			let debug = ''
+
+			// Determine
+			for (const edition of list) {
+				if (skip) {
+					console.log(
+						`The edition [${edition.directory}] will be trimmed, as a previous edition already passes all targets`
+					)
+					edition.active = false
+					recompile = true
+					continue
+				}
+
+				status(`determining engines for edition [${edition.directory}]...`)
+
+				// determine the test script for the edition
+				const test = answers.docpadPlugin
+					? `npx docpad-plugintester --edition=${edition.directory}`
+					: `node ./${join(edition.directory || '.', edition.test)}`
+
+				// set the versions to test on as the supported node versions,
+				// and the target node version
+				const target =
+					(edition.targets && nodeMajorVersion(edition.targets.node)) || null
+				const versions = new Versions(nodeVersions.concat(target || []))
+
+				// install and test the versions
+				await versions.load()
+				await versions.install()
+				const numbers = versions.map((version) => version.version)
+				await versions.test(test, serial)
+				const passed = versions.json.passed || []
+				const failed = versions.json.failed || []
+
+				// update the sets
+				const passedUnique = passed.filter(
+					(version) =>
+						listPassedVersions.has(nodeMajorVersion(version)) === false
 				)
-				edition.active = false
-				recompile = true
-				continue
+				const failedUnique = failed.filter(
+					(version) =>
+						listPassedVersions.has(nodeMajorVersion(version)) === false
+				)
+				const range = nodeMajorVersions(passed).join(' || ')
+				skip = failed.length === 0
+
+				// log the results
+				debug += versions.messages.join('\n\n')
+				console.log(
+					[
+						`target:      ${target || '*'}`,
+						`passed:      ${passed.join(', ')}`,
+						`.unique:     ${passedUnique.join(', ')}`,
+						`failed:      ${failed.join(', ')}`,
+						`.unique:     ${failedUnique.join(', ')}`,
+						`range:       ${range}`,
+					].join('\n')
+				)
+
+				// trim
+				if (mode === 'allUnique') {
+					// is this one redundant
+					if (passedUnique.length === 0) {
+						console.log(
+							`The edition [${edition.directory}] will be trimmed, as it has no unique passing versions`
+						)
+						edition.active = false
+						recompile = true
+						continue
+					}
+				} else if (mode === 'onlyAllSupported') {
+					// does this one pass for all targets?
+					if (skip) {
+						// if so, deactivate all those prior
+						for (const priorEdition of list) {
+							if (priorEdition === edition) break
+							console.log(
+								`The prior edition [${priorEdition.directory}] will be trimmed, as a latter edition supports its versions`
+							)
+							priorEdition.active = false
+							recompile = true
+							continue
+						}
+					}
+				}
+
+				// make engines the passed versions
+				edition.engines.node = range
+
+				// add the unique versions to the list
+				passedUnique.forEach((version) =>
+					listPassedVersions.add(nodeMajorVersion(version))
+				)
+
+				// log
+				status(
+					`...determined engines for edition [${edition.directory}] as [${
+						edition.engines.node
+					}] against [${numbers.join(', ')}]`
+				)
 			}
 
-			status(`determining engines for edition [${edition.directory}]...`)
-
-			// Fetch the target and the range
-			const target =
-				(edition.targets && nodeMajorVersion(edition.targets.node)) || null
-
-			// determine the test script for the edition
-			const test = answers.docpadPlugin
-				? `npx docpad-plugintester --edition=${edition.directory}`
-				: `node ./${join(edition.directory || '.', edition.test)}`
-
-			// set the versions to test on as the supported node versions,
-			// and the target node version
-			const versions = new Versions(supportedNodeVersions.concat(target || []))
-
-			// install and test the versions
-			await versions.load()
-			await versions.install()
-			const numbers = versions.map((version) => version.version)
-			await versions.test(test, serial)
-			const passed = versions.json.passed || []
-			const failed = versions.json.failed || []
-
-			// update the sets
-			const passedUnique = passed.filter(
-				(version) => allPassedVersions.has(nodeMajorVersion(version)) === false
-			)
-			const failedUnique = failed.filter(
-				(version) => allPassedVersions.has(nodeMajorVersion(version)) === false
-			)
-			const trim = passedUnique.length === 0
-			const range = nodeMajorVersions(passed).join(' || ')
-			skip = failed.length === 0
-
-			// log the results
-			debug += versions.messages.join('\n\n')
-			console.log(
-				[
-					`target:      ${target || '*'}`,
-					`passed:      ${passed.join(', ')}`,
-					`.unique:     ${passedUnique.join(', ')}`,
-					`failed:      ${failed.join(', ')}`,
-					`.unique:     ${failedUnique.join(', ')}`,
-					`range:       ${range}`,
-					`trim:        ${trim ? 'yes' : 'no'}`,
-				].join('\n')
+			// fetch the editions we've kept
+			const keptEditions = Array.from(list.values()).filter(
+				(edition) => edition.active
 			)
 
-			// trim
-			if (trim) {
-				console.log(
-					`The edition [${edition.directory}] will be trimmed, as it has no unique passing versions`
-				)
-				edition.active = false
-				recompile = true
-				continue
-			}
-
-			// make engines the passed versions
-			edition.engines.node = range
-
-			// add the unique versions to the list
-			passedUnique.forEach((version) =>
-				allPassedVersions.add(nodeMajorVersion(version))
-			)
-
-			// log
-			status(
-				`...determined engines for edition [${edition.directory}] as [${
-					edition.engines.node
-				}] against [${numbers.join(', ')}]`
-			)
-		}
-
-		// verify we have editions that pass on our targets
-		for (const version of supportedNodeVersions) {
-			if (!allPassedVersions.has(version)) {
+			// if we only want one edition, verify we only have one edition
+			if (mode === 'onlyAllSupported' && keptEditions.length !== 1) {
 				console.error(debug.trim())
 				throw new Error(
-					`No editions passed for required node version [${version}]`
+					`Multiple editions were kept [${keptEditions
+						.map((edition) => edition.directory)
+						.join(', ')}] when only one should have been.`
 				)
 			}
+
+			// verify we have editions that pass on our targets
+			for (const version of nodeVersions) {
+				if (!listPassedVersions.has(version)) {
+					console.error(debug.trim())
+					throw new Error(
+						`The kept editions [${keptEditions
+							.map((edition) => edition.directory)
+							.join(
+								', '
+							)}] still did not pass for the required node version [${version}]`
+					)
+				}
+			}
+
+			// add the list passed versions to the all passed versions
+			listPassedVersions.forEach((i) => allPassedVersions.add(i))
 		}
 
 		// if there has been an editions change, try again with an updated runtime

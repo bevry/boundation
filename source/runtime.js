@@ -3,7 +3,13 @@ import * as pathUtil from 'path'
 
 // Local
 import { status } from './log.js'
-import { allEsTargets, allLanguages, bustedVersions, typesDir } from './data.js'
+import {
+	bustedVersions,
+	typesDir,
+	allTypescriptTargetsLowercase,
+	allLanguagesLowercase,
+	allTypescriptTargets,
+} from './data.js'
 import { parse, exec, exists, spawn, unlink, write } from './fs.js'
 import {
 	uniq,
@@ -11,7 +17,6 @@ import {
 	fixTsc,
 	getPreviousVersion,
 	getDuplicateDeps,
-	getAllDepNames,
 } from './util.js'
 import { readPackage, writePackage } from './package.js'
 import {
@@ -178,6 +183,17 @@ export async function updateRuntime(state) {
 
 	// =================================
 	// DEPENDENCIES TO WORK WITH
+
+	// ensure dependencies exist for us to read and write to
+	if (packageData.dependencies == null) {
+		packageData.dependencies = {}
+	}
+	if (packageData.devDependencies == null) {
+		packageData.devDependencies = {}
+	}
+	if (packageData.peerDependencies == null) {
+		packageData.peerDependencies = {}
+	}
 
 	/** @type {Object.<string, boolean | 'dev'>} */
 	const packages = {
@@ -410,18 +426,18 @@ export async function updateRuntime(state) {
 				.join(' && '),
 		})
 
-	// docpad plugin
+	// docpad
 	if (answers.name === 'docpad') {
 		packages['docpad-baseplugin'] = true
-	} else if (answers.docpadPlugin) {
+	}
+	// docpad plugin
+	else if (answers.docpadPlugin) {
 		packages['docpad-baseplugin'] = true
 		packages['docpad-plugintester'] = packages.docpad = 'dev'
 		state.scripts['our:setup:dpt'] = 'cd test && npm install && cd ..'
 		state.scripts.test = 'docpad-plugintester'
-		if (packageData.peerDependencies) {
-			// it is read later, @todo why?
-			delete packageData.peerDependencies.docpad
-		}
+		// this is needed for https://github.com/bevry/pluginclerk to resolve the correct plugin version for the docpad version
+		packageData.peerDependencies.docpad = '^6.82.0'
 	}
 	// docpad website
 	else if (answers.docpadWebsite) {
@@ -762,23 +778,24 @@ export async function updateRuntime(state) {
 		}
 	}
 
-	// keywords
-	const allLanguagesLowercase = allLanguages.map((i) => i.toLowerCase())
-	const allEsTargetsLowercase = allEsTargets.map((i) => i.toLowerCase())
-	const usedTargetsLowercase = state.activeEditions
-		.map((e) =>
-			Array.from(e.tags).find((t) =>
-				allEsTargetsLowercase.includes(t.toLowerCase())
+	// targets
+	const allTargets = uniq([
+		...allTypescriptTargetsLowercase,
+		...allLanguagesLowercase,
+	])
+	const usedTargets = uniq([
+		...answers.languages.map((i) => i.toLowerCase()),
+		...state.activeEditions
+			.map((e) =>
+				Array.from(e.tags).find((t) => allTargets.includes(t.toLowerCase()))
 			)
-		)
-		.filter((i) => i)
-		.map((i) => i.toLowerCase())
-	const usedLanguagesLowercase = answers.languages.map((i) => i.toLowerCase())
-	toggle(answers.keywords, allEsTargetsLowercase, false)
-	toggle(answers.keywords, usedTargetsLowercase, true)
-	toggle(answers.keywords, allLanguagesLowercase, false)
-	toggle(answers.keywords, usedLanguagesLowercase, true)
-	// console.log({ usedTargetsLowercase, usedLanguagesLowercase })
+			.filter((i) => i)
+			.map((i) => i.toLowerCase()),
+	])
+
+	// keywords
+	toggle(answers.keywords, allTargets, false)
+	toggle(answers.keywords, usedTargets, true)
 	toggle(answers.keywords, 'website', answers.website)
 	toggle(
 		answers.keywords,
@@ -874,11 +891,13 @@ export async function updateRuntime(state) {
 		} catch (e) {
 			// ignore
 		}
-		const target = answers.targets.find((i) => allEsTargets.includes(i))
 		status('writing tsconfig file...')
 		if (answers.keywords.has('webworker')) lib.add('WebWorker')
 		if (answers.keywords.has('dom')) lib.add('DOM').add('DOM.Iterable')
 		if (answers.keywords.has('esnext')) lib.add('ESNext')
+		const typescriptTarget = answers.targets.find((i) =>
+			allTypescriptTargets.includes(i)
+		)
 		const tsconfig = answers.website
 			? {
 					compilerOptions: {
@@ -891,7 +910,7 @@ export async function updateRuntime(state) {
 						moduleResolution: 'Node',
 						sourceMap: true,
 						strict: true,
-						target,
+						target: typescriptTarget,
 						// new props
 						skipLibCheck: true,
 						forceConsistentCasingInFileNames: true,
@@ -918,7 +937,7 @@ export async function updateRuntime(state) {
 							maxNodeModuleJsDepth: 5,
 							moduleResolution: 'Node',
 							strict: true,
-							target,
+							target: typescriptTarget,
 							lib: Array.from(lib),
 						},
 						answers.sourceModule ? { module: 'ESNext' } : {}
@@ -1040,14 +1059,6 @@ export async function updateRuntime(state) {
 
 	// read the updated package.json file
 	await readPackage(state)
-
-	// this will get written at a later point
-	if (answers.docpadPlugin) {
-		if (packageData.peerDependencies == null) {
-			packageData.peerDependencies = {}
-		}
-		packageData.peerDependencies.docpad = '^6.82.0'
-	}
 
 	// continue
 	if (answers.language !== 'json') {

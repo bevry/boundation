@@ -13,6 +13,8 @@ export const bevryOrganisationsList = 'balupton bevry bevry-trading docpad brows
 	' '
 )
 
+export const minimumEsmNodeVersion = '12'
+
 export const allNodeVersions = [
 	'0.8',
 	'0.10',
@@ -39,7 +41,9 @@ export const allLanguages = [
 	'css',
 ]
 
-export const allEsTargets = [
+export const allLanguagesLowercase = allLanguages.map((i) => i.toLowerCase())
+
+export const allTypescriptTargets = [
 	'ESNext',
 	'ES2020',
 	'ES2019',
@@ -50,6 +54,19 @@ export const allEsTargets = [
 	'ES5',
 	'ES3',
 ]
+
+export const allTypescriptTargetsLowercase = allTypescriptTargets.map((i) =>
+	i.toLowerCase()
+)
+
+export const latestTypescriptTargets = ['ESNext', 'ES2020', 'ES2019']
+
+export const ltsTypescriptTargets = ['ESNext', 'ES2020', 'ES2019', 'ES2018']
+
+export const defaultCoffeeTarget = 'ESNext'
+
+// previous year
+export const defaultBrowserTarget = 'ES' + (new Date().getFullYear() - 1)
 
 export const languageNames = {
 	typescript: 'TypeScript',

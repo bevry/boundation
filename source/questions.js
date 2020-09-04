@@ -4,8 +4,22 @@ import * as pathUtil from 'path'
 // Local
 import _getAnswers from './answers.js'
 import * as defaults from './defaults.js'
-import { pwd, allNodeVersions, allEsTargets, allLanguages } from './data.js'
-import { isNumber, isGitUrl, isSpecified, trim, repoToSlug } from './util.js'
+import {
+	pwd,
+	allNodeVersions,
+	allTypescriptTargets,
+	allLanguages,
+	latestTypescriptTargets,
+	ltsTypescriptTargets,
+} from './data.js'
+import {
+	isNumber,
+	isGitUrl,
+	isSpecified,
+	trim,
+	repoToSlug,
+	uniq,
+} from './util.js'
 import {
 	getGitBranch,
 	getGitEmail,
@@ -15,8 +29,12 @@ import {
 	getGitUsername,
 } from './get-git.js'
 import {
-	getMaximumNodeLTSVersion,
-	getMinimumNodeLTSVersion,
+	getNodeMaximumCurrentVersion,
+	getNodeMinimumCurrentVersion,
+	isNodeCurrentVersion,
+	getNodeVersions,
+	getNodeCurrentVersions,
+	isNodeMaximumCurrentVersion,
 } from './get-node.js'
 import {
 	getPackageAuthor,
@@ -48,7 +66,6 @@ import {
 	isSourceModule,
 } from './package.js'
 import { getNowAliases, getNowName } from './website.js'
-import { versionComparator } from './versions.js'
 
 // ====================================
 // Questions
@@ -62,12 +79,11 @@ export async function getQuestions(state) {
 	const browsersList = typeof browsers === 'string' ? browsers : 'defaults'
 	const editioned = hasEditions(packageData)
 	const nodeEngineVersion = getPackageNodeEngineVersion(packageData)
-	const nodeMinimumLTSVersion = await getMinimumNodeLTSVersion()
-	const nodeMaximumLTSVersion = await getMaximumNodeLTSVersion()
-	const minimumSupportNodeVersion = nodeEngineVersion || nodeMinimumLTSVersion
+	const nodeMinimumCurrentVersion = await getNodeMinimumCurrentVersion()
+	const nodeMaximumCurrentVersion = await getNodeMaximumCurrentVersion()
+	const minimumSupportNodeVersion =
+		nodeEngineVersion || nodeMinimumCurrentVersion
 	const maximumSupportNodeVersion = allNodeVersions[allNodeVersions.length - 1]
-	const alreadyLTS =
-		versionComparator(nodeEngineVersion, nodeMinimumLTSVersion) >= 0
 	return [
 		{
 			name: 'name',
@@ -344,7 +360,7 @@ export async function getQuestions(state) {
 		{
 			name: 'sourceModule',
 			type: 'confirm',
-			message: 'Will the source code use import for modules?',
+			message: 'Will the source code use ESM (import instead of require)?',
 			default({ languages }) {
 				return Boolean(
 					languages.includes('typescript') ? true : isSourceModule(packageData)
@@ -352,6 +368,23 @@ export async function getQuestions(state) {
 			},
 			skip({ language }) {
 				return language !== 'esnext'
+			},
+		},
+		{
+			name: 'targetModules',
+			type: 'checkbox',
+			message: 'Which module formats should we target?',
+			validate: isSpecified,
+			choices({ sourceModule, docpadPlugin }) {
+				if (docpadPlugin) return ['require']
+				if (sourceModule) return ['require', 'import']
+				return ['require']
+			},
+			default(opts) {
+				return this.choices(opts)
+			},
+			ignore({ website }) {
+				return website
 			},
 		},
 		{
@@ -489,36 +522,6 @@ export async function getQuestions(state) {
 			},
 		},
 		{
-			name: 'targets',
-			type: 'checkbox',
-			message: 'Which targets should editions be generated for?',
-			validate: isSpecified,
-			choices({ compilerNode, compilerBrowser }) {
-				const targets = []
-				if (compilerBrowser) targets.push('browser')
-				if (compilerNode === 'coffeescript') targets.push('esnext')
-				if (compilerNode === 'babel') {
-					targets.push('maximum', 'desired', 'minimum')
-				}
-				if (compilerNode === 'typescript') {
-					targets.push(...allEsTargets)
-				}
-				return targets
-			},
-			default(opts) {
-				const { compilerNode, compilerBrowser } = opts
-				if (compilerNode === 'typescript' && alreadyLTS) {
-					const targets = ['ESNext', 'ES2020', 'ES2019', 'ES2018']
-					if (compilerBrowser) targets.push('browser')
-					return targets
-				}
-				return this.choices(opts)
-			},
-			when({ compilerNode, compilerBrowser }) {
-				return compilerNode || compilerBrowser
-			},
-		},
-		{
 			name: 'sourceDirectory',
 			message: 'Which directory will the source code be located in?',
 			validate: isSpecified,
@@ -620,53 +623,66 @@ export async function getQuestions(state) {
 			},
 		},
 		{
+			// should be called currentNodeVersionsOnly, however due to b/c it remains as is
 			name: 'ltsNodeOnly',
 			arg: 'lts',
-			message: `Change the minimum supported node version from ${nodeEngineVersion} to ${nodeMinimumLTSVersion}`,
+			message: `Change the minimum supported node version from ${nodeEngineVersion} to ${nodeMinimumCurrentVersion}`,
 			type: 'confirm',
-			default() {
-				return !nodeEngineVersion
+			async default() {
+				return (
+					!nodeEngineVersion || (await isNodeCurrentVersion(nodeEngineVersion))
+				)
 			},
 			skip({ website, ltsNodeOnly }) {
-				return website || alreadyLTS || ltsNodeOnly
+				return website || ltsNodeOnly
 			},
 		},
 		{
 			name: 'desiredNodeVersion',
 			message: 'What is the desired node version?',
-			default({ nowWebsite }) {
-				// https://zeit.co/docs/v2/serverless-functions/supported-languages/?query=node%20version#defined-node.js-version
-				return nowWebsite ? '12' : nodeMaximumLTSVersion
-			},
+			type: 'list',
 			validate: isNumber,
-			skip({ ltsNodeOnly, nowWebsite }) {
-				return ltsNodeOnly || nowWebsite
+			choices({ nowWebsite, targetModules, ltsNodeOnly }) {
+				// https://vercel.com/docs/serverless-functions/supported-languages?query=node%20version#defined-node.js-version
+				// https://vercel.com/docs/runtimes#official-runtimes/node-js/node-js-version
+				if (nowWebsite) return ['12', '10']
+				if (targetModules.join('') === 'import') return ['14']
+				if (ltsNodeOnly) return getNodeCurrentVersions()
+				return getNodeVersions()
+			},
+			default({ nowWebsite }) {
+				if (nowWebsite) return '12'
+				return nodeMaximumCurrentVersion
+			},
+			async skip({ ltsNodeOnly, nowWebsite, targetModules }) {
+				return ltsNodeOnly || nowWebsite || targetModules.join('') === 'import'
 			},
 		},
 		{
 			name: 'desiredNodeOnly',
 			message: `Only support the desired node version?`,
 			type: 'confirm',
-			default({ website }) {
-				return Boolean(website)
+			default({ website, targetModules }) {
+				return Boolean(website) || targetModules.join('') === 'import'
 			},
-			skip({ website }) {
-				return website
-			},
-			when({ desiredNodeVersion }) {
-				return desiredNodeVersion
+			skip({ desiredNodeOnly }) {
+				return desiredNodeOnly
 			},
 		},
 		{
 			name: 'minimumSupportNodeVersion',
 			message: 'What is the minimum node version for support?',
+			type: 'list',
 			validate: isNumber,
+			choices({ desiredNodeOnly, desiredNodeVersion, ltsNodeOnly }) {
+				if (desiredNodeOnly) return [desiredNodeVersion]
+				if (ltsNodeOnly) return getNodeCurrentVersions()
+				return getNodeVersions()
+			},
 			default({ desiredNodeOnly, ltsNodeOnly, desiredNodeVersion }) {
-				return desiredNodeOnly
-					? desiredNodeVersion
-					: ltsNodeOnly
-					? nodeMinimumLTSVersion
-					: minimumSupportNodeVersion
+				if (desiredNodeOnly) return desiredNodeVersion
+				if (ltsNodeOnly) return nodeMinimumCurrentVersion
+				return minimumSupportNodeVersion
 			},
 			skip({ desiredNodeOnly, ltsNodeOnly }) {
 				return desiredNodeOnly || ltsNodeOnly
@@ -675,13 +691,17 @@ export async function getQuestions(state) {
 		{
 			name: 'maximumSupportNodeVersion',
 			message: 'What is the maximum node version for support?',
+			type: 'list',
 			validate: isNumber,
+			choices({ desiredNodeOnly, desiredNodeVersion, ltsNodeOnly }) {
+				if (desiredNodeOnly) return [desiredNodeVersion]
+				if (ltsNodeOnly) return getNodeCurrentVersions()
+				return getNodeVersions()
+			},
 			default({ desiredNodeOnly, ltsNodeOnly, desiredNodeVersion }) {
-				return desiredNodeOnly
-					? desiredNodeVersion
-					: ltsNodeOnly
-					? nodeMaximumLTSVersion
-					: maximumSupportNodeVersion
+				if (desiredNodeOnly) return desiredNodeVersion
+				if (ltsNodeOnly) return nodeMaximumCurrentVersion
+				return maximumSupportNodeVersion
 			},
 			skip({ desiredNodeOnly, ltsNodeOnly }) {
 				return desiredNodeOnly || ltsNodeOnly
@@ -690,21 +710,21 @@ export async function getQuestions(state) {
 		{
 			name: 'minimumTestNodeVersion',
 			message: 'What is the minimum node version for testing?',
+			type: 'list',
 			validate: isNumber,
+			choices({ desiredNodeOnly, desiredNodeVersion, ltsNodeOnly }) {
+				if (desiredNodeOnly) return [desiredNodeVersion]
+				if (ltsNodeOnly) return getNodeCurrentVersions()
+				return getNodeVersions()
+			},
 			default({
 				desiredNodeOnly,
-				ltsNodeOnly,
 				desiredNodeVersion,
 				minimumSupportNodeVersion,
 				language,
 			}) {
-				return desiredNodeOnly || language === 'json'
-					? desiredNodeVersion
-					: alreadyLTS
-					? minimumSupportNodeVersion
-					: ltsNodeOnly
-					? nodeMinimumLTSVersion
-					: minimumSupportNodeVersion
+				if (desiredNodeOnly || language === 'json') return desiredNodeVersion
+				return minimumSupportNodeVersion
 			},
 			skip({ desiredNodeOnly, ltsNodeOnly, language }) {
 				return desiredNodeOnly || ltsNodeOnly || language === 'json'
@@ -713,22 +733,58 @@ export async function getQuestions(state) {
 		{
 			name: 'maximumTestNodeVersion',
 			message: 'What is the maximum node version for testing?',
+			type: 'list',
 			validate: isNumber,
+			choices({ desiredNodeOnly, desiredNodeVersion, ltsNodeOnly }) {
+				if (desiredNodeOnly) return [desiredNodeVersion]
+				if (ltsNodeOnly) return getNodeCurrentVersions()
+				return getNodeVersions()
+			},
 			default({
 				desiredNodeOnly,
-				ltsNodeOnly,
 				desiredNodeVersion,
 				maximumSupportNodeVersion,
 				language,
 			}) {
-				return desiredNodeOnly || language === 'json'
-					? desiredNodeVersion
-					: ltsNodeOnly
-					? nodeMaximumLTSVersion
-					: maximumSupportNodeVersion
+				if (desiredNodeOnly || language === 'json') return desiredNodeVersion
+				return maximumSupportNodeVersion
 			},
 			skip({ desiredNodeOnly, ltsNodeOnly, language }) {
 				return desiredNodeOnly || ltsNodeOnly || language === 'json'
+			},
+		},
+		{
+			name: 'targets',
+			type: 'checkbox',
+			message: 'Which compile targets should be generated?',
+			validate: isSpecified,
+			async choices({
+				compilerNode,
+				desiredNodeVersion,
+				maximumSupportNodeVersion,
+				minimumSupportNodeVersion,
+			}) {
+				if (compilerNode === 'babel') {
+					return uniq([
+						desiredNodeVersion,
+						maximumSupportNodeVersion,
+						minimumSupportNodeVersion,
+					])
+				} else if (compilerNode === 'typescript') {
+					if (await isNodeMaximumCurrentVersion(minimumSupportNodeVersion))
+						return latestTypescriptTargets
+					if (await isNodeCurrentVersion(minimumSupportNodeVersion))
+						return ltsTypescriptTargets
+					return allTypescriptTargets
+				} else {
+					throw new Error('unexpected compiler for targets')
+				}
+			},
+			default(opts) {
+				return this.choices(opts)
+			},
+			when({ compilerNode }) {
+				return ['typescript', 'babel'].includes(compilerNode)
 			},
 		},
 		{

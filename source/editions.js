@@ -17,7 +17,11 @@ import {
 	set,
 	unjoin,
 } from './util.js'
-import { languageNames } from './data.js'
+import {
+	languageNames,
+	defaultBrowserTarget,
+	defaultCoffeeTarget,
+} from './data.js'
 import { spawn, exists, write, unlink, exec, unlinkIfContains } from './fs.js'
 
 async function writeLoader({
@@ -38,6 +42,7 @@ async function writeLoader({
 	]
 	if (autoloader) {
 		if (mjs) {
+			// https://github.com/bevry/editions/issues/83
 			throw new Error('autoloader does not yet support mjs')
 		}
 		lines.push(`/** @type {typeof import("${cojoin('.', typesPath)}") } */`)
@@ -255,7 +260,7 @@ export async function generateEditions(state) {
 	// log
 	status('updating editions...')
 
-	// handle
+	// source edition
 	if (answers.website) {
 		delete packageData.main
 		state.editions = [
@@ -272,7 +277,7 @@ export async function generateEditions(state) {
 	} else {
 		const editions = new Map()
 
-		// Generate base editions based on language
+		// Generate source edition based on language
 		if (answers.language === 'es5') {
 			const edition = new Edition({
 				directory: answers.sourceDirectory,
@@ -373,139 +378,111 @@ export async function generateEditions(state) {
 			throw new Error('language should have been defined, but it was missing')
 		}
 
-		// Add the compiled editions if necessary
-		let firstBabelTarget
-		for (const target of answers.targets) {
-			if (target === 'browser') {
-				editions.set(
-					'browser',
-					new Edition({
-						compiler: answers.compilerBrowser,
-						// for legacy b/c reasons this is not "edition-browser"
-						directory: 'edition-browsers',
-						index: addExtension(answers.browserEntry, `js`),
-						browser: addExtension(answers.browserEntry, `js`),
-						test: addExtension(answers.testEntry, `js`),
-						bin: addExtension(answers.binEntry, `js`),
-						tags: ['javascript', answers.sourceModule ? 'import' : 'require'],
-						targets: {
-							es: 'ES' + (new Date().getFullYear() - 1), // typescript browser target, set the previous year
-							esmodules: answers.sourceModule,
-							browsers: answers.browsers,
-						},
-						engines: {
-							node: false,
-							browsers: answers.browsers,
-						},
-					})
-				)
-			} else if (answers.compilerNode === 'babel') {
-				let version
-				if (target === 'desired') {
-					version = answers.desiredNodeVersion
-				} else if (target === 'minimum') {
-					version = answers.minimumSupportNodeVersion
-				} else if (target === 'maximum') {
-					version = answers.maximumSupportNodeVersion
-				} else {
-					throw new Error(`invalid target: ${target}`)
-				}
-				editions.set(
-					`node-${version}`,
-					new Edition({
-						compiler: 'babel',
-						directory: `edition-node-${version}`,
-						index: addExtension(answers.indexEntry, `js`),
-						node: addExtension(answers.nodeEntry, `js`),
-						browser: addExtension(answers.browserEntry, `js`),
-						test: addExtension(answers.testEntry, `js`),
-						bin: addExtension(answers.binEntry, `js`),
-						tags: ['javascript', 'require'],
-						targets: {
-							node: version,
-						},
-						engines: {
-							node: true,
-							browsers: false,
-						},
-					})
-				)
-			} else if (answers.compilerNode === 'typescript') {
-				const syntax = target.toLocaleLowerCase()
-				const directory = `edition-${syntax}`
-				editions.set(
-					syntax,
-					new Edition({
-						compiler: 'typescript',
-						directory,
-						index: addExtension(answers.indexEntry, `js`),
-						node: addExtension(answers.nodeEntry, `js`),
-						browser: addExtension(answers.browserEntry, `js`),
-						test: addExtension(answers.testEntry, `js`),
-						bin: addExtension(answers.binEntry, `js`),
-						tags: ['javascript', syntax, 'require'],
-						targets: {
-							es: target,
-						},
-						engines: {
-							node: true,
-							browsers:
-								answers.browsers &&
-								answers.targets.includes('browser') === false,
-						},
-					})
-				)
-			} else if (answers.compilerNode === 'coffeescript') {
-				const syntax = target.toLocaleLowerCase()
-				const directory = `edition-${syntax}`
-				editions.set(
-					syntax,
-					new Edition({
-						compiler: 'coffeescript',
-						directory,
-						index: addExtension(answers.indexEntry, `js`),
-						node: addExtension(answers.nodeEntry, `js`),
-						browser: addExtension(answers.browserEntry, `js`),
-						test: addExtension(answers.testEntry, `js`),
-						bin: addExtension(answers.binEntry, `js`),
-						tags: ['javascript', 'esnext', 'require'],
-						engines: {
-							node: true,
-							browsers:
-								answers.browsers &&
-								answers.targets.includes('browser') === false,
-						},
-					})
-				)
-			} else {
-				throw new Error(`invalid target: ${target}`)
-			}
+		// add browser edition
+		if (answers.compilerBrowser) {
+			editions.set(
+				'browser',
+				new Edition({
+					compiler: answers.compilerBrowser,
+					// for legacy b/c reasons this is not "edition-browser"
+					directory: 'edition-browsers',
+					index: addExtension(answers.browserEntry, `js`),
+					browser: addExtension(answers.browserEntry, `js`),
+					test: addExtension(answers.testEntry, `js`),
+					bin: addExtension(answers.binEntry, `js`),
+					tags: ['javascript', answers.sourceModule ? 'import' : 'require'],
+					targets: {
+						es: defaultBrowserTarget,
+						esmodules: answers.sourceModule,
+						browsers: answers.browsers,
+					},
+					engines: {
+						node: false,
+						browsers: answers.browsers,
+					},
+				})
+			)
 		}
 
-		// apply state, so we have access to state edition selectors
-		state.editions = Array.from(editions.values())
-
-		// add node esm edition if we have a source module that isn't loadable
-		if (answers.sourceModule && state.nodeEdition !== state.sourceEdition) {
+		// add coffeescript edition
+		if (answers.compilerNode === 'coffeescript') {
+			const syntax = defaultCoffeeTarget.toLowerCase()
+			const directory = `edition-${syntax}`
 			editions.set(
-				`node-esm`,
+				'coffeescript',
 				new Edition({
-					compiler: answers.compilerNode,
-					directory: `edition-node-esm`,
+					compiler: 'coffeescript',
+					directory,
 					index: addExtension(answers.indexEntry, `js`),
 					node: addExtension(answers.nodeEntry, `js`),
 					browser: addExtension(answers.browserEntry, `js`),
 					test: addExtension(answers.testEntry, `js`),
 					bin: addExtension(answers.binEntry, `js`),
-					tags: ['javascript', 'import'],
-					// proxy the active node edition so we can use whatever targets it uses and adapts to
-					targets: new Proxy(state.nodeEdition.targets, {}),
+					tags: ['javascript', syntax, 'require'],
 					engines: {
 						node: true,
-						browsers: false,
+						browsers: answers.browsers,
 					},
 				})
 			)
+		}
+
+		// add edition for each babel/typescript target
+		for (const targetModule of answers.targetModules) {
+			for (const targetVersion of answers.targets) {
+				if (answers.compilerNode === 'babel') {
+					const version = targetVersion
+					const directory =
+						`edition-node-${version}` +
+						(targetModule === 'import' ? '-esm' : '')
+					editions.set(
+						directory,
+						new Edition({
+							compiler: 'babel',
+							directory,
+							index: addExtension(answers.indexEntry, `js`),
+							node: addExtension(answers.nodeEntry, `js`),
+							browser: addExtension(answers.browserEntry, `js`),
+							test: addExtension(answers.testEntry, `js`),
+							bin: addExtension(answers.binEntry, `js`),
+							tags: ['javascript', targetModule],
+							targets: {
+								node: version,
+							},
+							engines: {
+								node: true,
+								browsers: false,
+							},
+						})
+					)
+				} else if (answers.compilerNode === 'typescript') {
+					const version = targetVersion.toLocaleLowerCase()
+					const directory =
+						`edition-${version}` + (targetModule === 'import' ? '-esm' : '')
+					editions.set(
+						directory,
+						new Edition({
+							compiler: 'typescript',
+							directory,
+							index: addExtension(answers.indexEntry, `js`),
+							node: addExtension(answers.nodeEntry, `js`),
+							browser: addExtension(answers.browserEntry, `js`),
+							test: addExtension(answers.testEntry, `js`),
+							bin: addExtension(answers.binEntry, `js`),
+							tags: ['javascript', version, targetModule],
+							targets: {
+								es: targetVersion,
+							},
+							engines: {
+								node: true,
+								browsers: false,
+							},
+						})
+					)
+				} else {
+					throw new Error(`invalid target for the compiler`)
+				}
+			}
 		}
 
 		// update state

@@ -1,37 +1,90 @@
 // External
 import fetch from 'node-fetch'
 import Errlop from 'errlop'
+import { versionComparator } from './versions.js'
 
 // Local
 const now = new Date().getTime()
 
-export function isLTS([version, meta]) {
-	if (meta.lts) {
-		const start = new Date(meta.start).getTime()
-		const end = new Date(meta.end).getTime()
-		return now > start && now < end
-	}
-	return false
+/*
+interface Version {
+	start: Date
+	lts?: Date
+	end: Date
+	maintenance?: Date
+	codename?: string
+	version: string
 }
+*/
 
-export async function getNodeLTSVersions() {
+let nodeVersions = null
+let nodeLtsVersions = null
+let nodeCurrentVersions = null
+let nodeMinimumCurrentVersion = null
+let nodeMaximumCurrentVersion = null
+export async function prepareNodeVersions() {
+	if (nodeVersions) return true
 	const url =
 		'https://raw.githubusercontent.com/nodejs/Release/master/schedule.json'
 	try {
 		const response = await fetch(url)
 		const json = await response.json()
-		const lts = Object.entries(json)
-		return lts
+		nodeVersions = Object.entries(json)
+			.map(function ([key, meta]) {
+				meta.version = key.replace('v', '')
+				meta.start = new Date(meta.start)
+				meta.end = new Date(meta.end)
+				if (meta.maintenance) meta.maintenance = new Date(meta.maintenance)
+				if (meta.lts) meta.lts = new Date(meta.lts)
+				return meta
+			})
+			.filter((meta) => {
+				const start = meta.start.getTime()
+				return now > start
+			})
+		nodeLtsVersions = nodeVersions.filter((meta) => meta.lts)
+		nodeCurrentVersions = nodeLtsVersions.filter((meta) => {
+			const end = meta.end.getTime()
+			return now < end
+		})
+		nodeMinimumCurrentVersion = nodeCurrentVersions[0].version
+		nodeMaximumCurrentVersion =
+			nodeCurrentVersions[nodeCurrentVersions.length - 1].version
+		return true
 	} catch (err) {
 		throw new Errlop(`failed to fetch node.js LTS releases from ${url}`, err)
 	}
 }
-export async function getMinimumNodeLTSVersion() {
-	const lts = await getNodeLTSVersions()
-	return lts.find(isLTS)[0].replace('v', '')
+
+export async function getNodeMinimumCurrentVersion() {
+	await prepareNodeVersions()
+	return nodeMinimumCurrentVersion
 }
 
-export async function getMaximumNodeLTSVersion() {
-	const lts = await getNodeLTSVersions()
-	return lts.reverse().find(isLTS)[0].replace('v', '')
+export async function getNodeMaximumCurrentVersion() {
+	await prepareNodeVersions()
+	return nodeMaximumCurrentVersion
+}
+
+export async function getNodeVersions() {
+	await prepareNodeVersions()
+	return nodeVersions.map((meta) => meta.version).reverse()
+}
+
+export async function getNodeCurrentVersions() {
+	await prepareNodeVersions()
+	return nodeCurrentVersions.reverse()
+}
+
+export async function isNodeCurrentVersion(version) {
+	await prepareNodeVersions()
+	return (
+		versionComparator(version, nodeMinimumCurrentVersion) >= 0 &&
+		versionComparator(version, nodeMaximumCurrentVersion) <= 0
+	)
+}
+
+export async function isNodeMaximumCurrentVersion(version) {
+	await prepareNodeVersions()
+	return versionComparator(version, nodeMaximumCurrentVersion) === 0
 }

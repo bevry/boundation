@@ -1,5 +1,15 @@
 # History
 
+## v1.66.0 2020 September 4
+
+-   Boundation now treats ESM seriously when ESM is desired
+    -   Before boundation would just generate an ESNext edition for ESM targets, and hope for compatibility, which often would not actually be the case during consumer runtime
+    -   Now boundation will generate multiple appropriate ESM editions, test each one against the targeted environments, then keep the edition that is most supported, and will error if ESM support could not be provided for an intended target environment
+-   When targetting modern environments, only the TypeScript targets necessary will be generated, with superflous ones skipped
+-   You can now select whether or not you want to generate only CJS, only ESM, or both
+-   For DocPad Plugins, ensure that `peerDependencies.docpad` is set correctly
+-   Updated dependencies
+
 ## v1.65.6 2020 August 18
 
 -   For TypeScript projects, specify the `tsconfig.json:targets` as the ECMAScript version specified in the targets Q&A

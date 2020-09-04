@@ -36,10 +36,6 @@ export const state = {
 	get nodeEditionRequire() {
 		return this.nodeEditionsRequire[0]
 	},
-	/** editions that the autoloader is compatible with */
-	get nodeEditionsAutoloader() {
-		return this.nodeEditionsRequire
-	},
 	get nodeEditionsImport() {
 		return this.nodeEditions.filter((edition) => has(edition.tags, 'import'))
 	},
