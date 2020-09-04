@@ -143,7 +143,7 @@ export async function upgradePackageDependencies(install) {
 		return await spawn(['ncu', '-u'])
 	} catch (err) {
 		if (install) {
-			return Promise.reject(err)
+			throw err
 		} else {
 			await spawn(['npm', 'i', '-g', 'npm-check-updates'])
 			upgradePackageDependencies(true)

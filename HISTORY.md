@@ -1,5 +1,9 @@
 # History
 
+## v1.66.1 2020 September 4
+
+-   When boundation fails, it will now fail with a failure exit code
+
 ## v1.66.0 2020 September 4
 
 -   Boundation now treats ESM seriously when ESM is desired

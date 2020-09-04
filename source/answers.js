@@ -138,8 +138,6 @@ export default async function getAnswers(questions, user) {
 		// return merge
 		return values
 	} catch (err) {
-		return Promise.reject(
-			new Errlop('Failed to fetch the answers from the user', err)
-		)
+		throw new Errlop('Failed to fetch the answers from the user', err)
 	}
 }

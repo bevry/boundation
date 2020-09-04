@@ -128,8 +128,8 @@ export async function updateTravis(state) {
 					return null // support DELETE and other times it passes but returns nothing
 				} else {
 					console.dir({ url, opts, text })
-					return Promise.reject(
-						new Error(`request failed with ${res.status}: ${res.statusText}`)
+					throw new Error(
+						`request failed with ${res.status}: ${res.statusText}`
 					)
 				}
 			}
@@ -145,15 +145,11 @@ export async function updateTravis(state) {
 						error = new Errlop(`${key}: ${value.default_message}`, error)
 					}
 				}
-				if (error) {
-					return Promise.reject(error)
-				}
+				if (error) throw error
 				return data
 			} catch (err) {
 				console.dir({ url, opts, text })
-				return Promise.reject(
-					new Errlop(`couldn't parse the data: ${text}`, err)
-				)
+				throw new Errlop(`couldn't parse the data: ${text}`, err)
 			}
 		}
 		function encrypt(data, value) {

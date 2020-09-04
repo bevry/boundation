@@ -49,7 +49,7 @@ export async function download(opts) {
 		}
 		return write(file, data)
 	} catch (err) {
-		return Promise.reject(new Errlop(`Download of ${opts.url} FAILED`, err))
+		throw new Errlop(`Download of ${opts.url} FAILED`, err)
 	}
 }
 

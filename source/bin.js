@@ -2,11 +2,12 @@
 
 // External
 import { resolve, join, dirname } from 'path'
-import Errlop from 'errlop'
 
 // get root with imports
 import url from 'url'
-const root = resolve(dirname(url.fileURLToPath(import.meta.url)), '..')
+import filedirname from 'filedirname'
+const [file, dir] = filedirname()
+const root = resolve(dir, '..')
 const pkgPath = join(root, 'package.json')
 
 // Internal
@@ -30,7 +31,10 @@ async function main() {
 	console.log(`Running on [${pwd}]`)
 
 	// run
-	boundation(state)
+	await boundation(state)
 }
 
-main()
+main().catch((err) => {
+	console.error(err)
+	process.exit(1)
+})
