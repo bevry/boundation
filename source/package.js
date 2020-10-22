@@ -629,6 +629,7 @@ export async function updatePackageData(state) {
 	} else {
 		packageData.engines.node = `>=${answers.minimumSupportNodeVersion}`
 	}
+	delete packageData.engines.docpad
 
 	// license
 	if (packageData.license && packageData.license.type) {
