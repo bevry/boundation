@@ -11,6 +11,7 @@ import {
 	allLanguages,
 	latestTypescriptTargets,
 	ltsTypescriptTargets,
+	importNodeVersions,
 } from './data.js'
 import {
 	isNumber,
@@ -646,7 +647,7 @@ export async function getQuestions(state) {
 				// https://vercel.com/docs/serverless-functions/supported-languages?query=node%20version#defined-node.js-version
 				// https://vercel.com/docs/runtimes#official-runtimes/node-js/node-js-version
 				if (nowWebsite) return ['12', '10']
-				if (targetModules.join('') === 'import') return ['14']
+				if (targetModules.join('') === 'import') return importNodeVersions
 				if (ltsNodeOnly) return getNodeCurrentVersions()
 				return getNodeVersions()
 			},

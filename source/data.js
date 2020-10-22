@@ -26,7 +26,10 @@ export const allNodeVersions = [
 	'12',
 	'13',
 	'14',
+	'15',
 ]
+
+export const importNodeVersions = ['15', '14']
 
 export const allLanguages = [
 	'typescript',
