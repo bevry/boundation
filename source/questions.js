@@ -620,21 +620,21 @@ export async function getQuestions(state) {
 			},
 		},
 		{
-			name: 'upgradeNodeVersions',
-			arg: 'lts',
-			message: `Should we only support the current node versions?`,
-			type: 'confirm',
-			default: true,
-			skip({ website }) {
-				return website
-			},
-		},
-		{
 			name: 'desiredNodeOnly',
 			message: `Should we only support the most desired node version?`,
 			type: 'confirm',
 			default({ website }) {
 				return Boolean(website)
+			},
+		},
+		{
+			name: 'upgradeNodeVersions',
+			arg: 'lts',
+			message: `Should we only support the maintained node versions?`,
+			type: 'confirm',
+			default: true,
+			skip({ website, desiredNodeOnly }) {
+				return website || desiredNodeOnly
 			},
 		},
 		{
@@ -646,20 +646,14 @@ export async function getQuestions(state) {
 			choices({ vercelWebsite, targetModules }) {
 				if (vercelWebsite) return fetchAndFilterNodeVersions({ vercel: true })
 				if (targetModules.join('') === 'import')
-					return fetchAndFilterNodeVersions({ esm: true })
-				return fetchAndFilterNodeVersions()
+					return fetchAndFilterNodeVersions({
+						maintainedOrLTS: true,
+						esm: true,
+					})
+				return fetchAndFilterNodeVersions({ maintainedOrLTS: true })
 			},
 			async default(opts) {
-				let choices = await this.choices(opts)
-				if (opts.upgradeNodeVersions) {
-					choices = filterNodeVersions(choices, {
-						activeOrCurrent: true,
-					})
-				} else {
-					choices = filterNodeVersions(choices, {
-						gtw: nodeEngineVersion,
-					})
-				}
+				const choices = await this.choices(opts)
 				if (opts.desiredNodeOnly) return [last(choices)]
 				return choices
 			},
@@ -678,119 +672,95 @@ export async function getQuestions(state) {
 			},
 		},
 		{
-			name: 'minimumSupportNodeVersion',
-			message: 'What is the minimum node version for support?',
-			type: 'list',
-			validate: isNumber,
-			choices({ nodeVersions }) {
-				return nodeVersions
-			},
-			default({ nodeVersions }) {
-				return first(nodeVersions)
-			},
-		},
-		{
-			name: 'maximumSupportNodeVersion',
-			message: 'What is the maximum node version for support?',
-			type: 'list',
-			validate: isNumber,
-			choices({ nodeVersions }) {
-				return nodeVersions
-			},
-			default({ nodeVersions }) {
-				return last(nodeVersions)
-			},
-		},
-		{
 			name: 'nodeVersionsSupported',
-			message: 'Automated property for providing the supported node versions',
+			message: 'Which Node.js versions must your package support?',
 			type: 'checkbox',
 			validate: isSpecified,
-			choices({
-				nodeVersions,
-				minimumSupportNodeVersion,
-				maximumSupportNodeVersion,
-			}) {
-				return filterNodeVersions(nodeVersions, {
-					within: [minimumSupportNodeVersion, maximumSupportNodeVersion],
-				})
+			choices({ nodeVersions, upgradeNodeVersions }) {
+				if (upgradeNodeVersions) {
+					return filterNodeVersions(nodeVersions, {
+						activeOrCurrent: true,
+						gte: nodeEngineVersion,
+					})
+				} else {
+					return filterNodeVersions(nodeVersions, { gte: nodeEngineVersion })
+				}
 			},
 			default(opts) {
 				return this.choices(opts)
 			},
-			skip: true,
 		},
 		{
-			name: 'nodeVersionsSupportedESM',
+			name: 'nodeVersionSupportedMinimum',
 			message:
-				'Automated property for providing supported node versions that support native ESM',
-			type: 'checkbox',
-			validate: isSpecified,
+				'Automated property for the minimum node version to be supported',
+			type: 'list',
+			validate: isNumber,
 			choices({ nodeVersionsSupported }) {
-				return filterNodeVersions(nodeVersionsSupported, { esm: true })
+				return nodeVersionsSupported
 			},
 			default(opts) {
-				return this.choices(opts)
+				return first(this.choices(opts))
 			},
 			skip: true,
 		},
 		{
-			name: 'minimumTestNodeVersion',
-			message: 'What is the minimum node version for testing?',
+			name: 'nodeVersionSupportedMaximum',
+			message:
+				'Automated property for the maximum node version to be supported support',
 			type: 'list',
 			validate: isNumber,
-			choices({ nodeVersions }) {
-				return nodeVersions
+			choices({ nodeVersionsSupported }) {
+				return nodeVersionsSupported
 			},
-			default({ nodeVersions, language, desiredNodeVersion }) {
-				if (language === 'json') return desiredNodeVersion
-				return first(nodeVersions)
+			default(opts) {
+				return last(this.choices(opts))
 			},
-		},
-		{
-			name: 'maximumTestNodeVersion',
-			message: 'What is the maximum node version for testing?',
-			type: 'list',
-			validate: isNumber,
-			choices({ nodeVersions }) {
-				return nodeVersions
-			},
-			default({ nodeVersions, language, desiredNodeVersion }) {
-				if (language === 'json') return desiredNodeVersion
-				return last(nodeVersions)
-			},
+			skip: true,
 		},
 		{
 			name: 'nodeVersionsTested',
 			message: 'Automated property for providing the tested node versions',
 			type: 'checkbox',
 			validate: isSpecified,
-			choices({
-				nodeVersions,
-				minimumTestNodeVersion,
-				maximumTestNodeVersion,
-			}) {
-				return filterNodeVersions(nodeVersions, {
-					within: [minimumTestNodeVersion, maximumTestNodeVersion],
-				})
+			choices({ nodeVersions, upgradeNodeVersions }) {
+				if (upgradeNodeVersions) {
+					return filterNodeVersions(nodeVersions, {
+						maintained: true,
+					})
+				} else {
+					return filterNodeVersions(nodeVersions, { gte: nodeEngineVersion })
+				}
 			},
 			default(opts) {
 				return this.choices(opts)
+			},
+		},
+		{
+			name: 'nodeVersionTestedMinimum',
+			message: 'Automated property for the minimum node version for testing',
+			type: 'list',
+			validate: isNumber,
+			choices({ language, desiredNodeVersion, nodeVersionsTested }) {
+				if (language === 'json') return [desiredNodeVersion]
+				return nodeVersionsTested
+			},
+			default(opts) {
+				return first(this.choices(opts))
 			},
 			skip: true,
 		},
 		{
-			name: 'nodeVersionsUnsupportedYetTested',
-			message:
-				'Automated property for providing the unsupported yet tested node versions',
-			type: 'checkbox',
-			choices({ nodeVersionsTested, nodeVersionsSupported }) {
-				return nodeVersionsTested.filter((version) => {
-					return !nodeVersionsSupported.includes(version)
-				})
+			name: 'nodeVersionTestedMaximum',
+			message: 'Automated property for the maximum node version for testing',
+			type: 'list',
+			validate: isNumber,
+			choices({ language, desiredNodeVersion, nodeVersionsTested }) {
+				if (language === 'json') return [desiredNodeVersion]
+				return nodeVersionsTested
 			},
 			default(opts) {
-				return this.choices(opts)
+				return last(this.choices(opts))
 			},
 			skip: true,
 		},
@@ -802,19 +772,19 @@ export async function getQuestions(state) {
 			async choices({
 				compilerNode,
 				desiredNodeVersion,
-				maximumSupportNodeVersion,
-				minimumSupportNodeVersion,
+				nodeVersionSupportedMinimum,
+				nodeVersionSupportedMaximum,
 			}) {
 				if (compilerNode === 'babel') {
 					return uniq([
 						desiredNodeVersion,
-						maximumSupportNodeVersion,
-						minimumSupportNodeVersion,
+						nodeVersionSupportedMinimum,
+						nodeVersionSupportedMaximum,
 					])
 				} else if (compilerNode === 'typescript') {
-					if (await isNodeVersionLatestCurrent(minimumSupportNodeVersion))
+					if (await isNodeVersionLatestCurrent(nodeVersionSupportedMinimum))
 						return currentTypescriptTargets
-					if (await isNodeVersionLatestActive(minimumSupportNodeVersion))
+					if (await isNodeVersionLatestActive(nodeVersionSupportedMinimum))
 						return activeTypescriptTargets
 					return allTypescriptTargets
 				} else {
@@ -989,13 +959,13 @@ export async function getAnswers(state) {
 	answers.keywords = new Set((answers.keywords || '').split(/,\s*/))
 
 	// ensure we don't have a situation where node 14 is about to be released, but we only support node 13 and up
-	if (answers.desiredNodeVersion && answers.maximumSupportNodeVersion) {
-		if (answers.desiredNodeVersion > answers.maximumSupportNodeVersion) {
+	if (answers.desiredNodeVersion && answers.nodeVersionSupportedMaximum) {
+		if (answers.desiredNodeVersion > answers.nodeVersionSupportedMaximum) {
 			console.log(
-				'constrained desiredNodeVersion to the maximumSupportNodeVersion of',
-				answers.maximumSupportNodeVersion
+				'constrained desiredNodeVersion to the nodeVersionSupportedMaximum of',
+				answers.nodeVersionSupportedMaximum
 			)
-			answers.desiredNodeVersion = answers.maximumSupportNodeVersion
+			answers.desiredNodeVersion = answers.nodeVersionSupportedMaximum
 		}
 	}
 

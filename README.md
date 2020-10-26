@@ -35,7 +35,7 @@ Automatic scaffolding and upgrading of your JavaScript ecosystem projects using 
 
 ## Usage
 
-Install the package globally on Node.js v14 or higher using `npm install --global boundation` then run `boundation` on your project or in an empty directory.
+Install the package globally on Node.js v12 or higher using `npm install --global boundation` then run `boundation` on your project or in an empty directory.
 
 It will ask you several questions about your project, then initialise or upgrade the project with the latest Bevry best-practices.
 

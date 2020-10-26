@@ -1,5 +1,14 @@
 # History
 
+## v1.68.0 2020 October 27
+
+-   Node version handling improvements have continued, now rather than presenting ranges, it will present versions
+-   The versions are filtered accordingly to the requirements of your environment and your preferences
+-   Initially supported versions are limited to the specified node engine
+-   If testing results in additionally supported versions, they will be added as supported
+-   The issue from v1.67.0 of dev versions being kept is now resolved
+-   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
+
 ## v1.67.0 2020 October 26
 
 -   Fixed compatibility with latest nvm versions
