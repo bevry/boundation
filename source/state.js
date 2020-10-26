@@ -5,10 +5,7 @@ export const state = {
 	typesDirectoryPath: null, // types directory with trailing slash and ./ prefix
 	answers: null,
 	packageData: {},
-	nowData: {},
-	nodeVersions: null,
-	supportedNodeVersions: null,
-	unsupportedNodeVersions: null,
+	vercelConfig: {},
 	editions: [],
 	get activeEditions() {
 		return this.editions.filter((edition) => edition.active !== false)

@@ -113,12 +113,14 @@ export default async function getAnswers(questions, user) {
 						'via',
 						reason,
 						'to',
+						// type="checkbox" returns arrays
+						// values could also be null, undefined, true, or false
 						chalk.bold.green(
-							value == null
-								? null
-								: question.type === 'password'
+							question.type === 'password'
 								? '[hidden]'
-								: value
+								: typeof value === 'string'
+								? value
+								: JSON.stringify(value)
 						),
 					]
 						.map((v) => color(v))

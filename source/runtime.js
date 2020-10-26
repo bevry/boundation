@@ -206,9 +206,11 @@ export async function updateRuntime(state) {
 		'joe-reporter-list': false,
 		editions: state.useEditionAutoloader,
 		surge: false,
+		vercel: false,
 		now: false,
 		next: false,
 		'@zeit/next-typescript': false,
+		'@zeit/next-mdx': false,
 		'next-server': false,
 		'@types/next': false,
 		'@types/react': false,
@@ -272,12 +274,7 @@ export async function updateRuntime(state) {
 
 	// Override the versions that are installed if these dependencies are needed
 	/** @type {Object.<string, number | string>} */
-	const versions = {
-		// next: 'canary',
-		// now: 'canary',
-		// '@zeit/next-typescript': 'canary',
-		// '@zeit/next-mdx': 'canary',
-	}
+	const versions = {}
 
 	// apply busted version fixes
 	for (const [key, version] of Object.entries(bustedVersions)) {
@@ -447,7 +444,7 @@ export async function updateRuntime(state) {
 
 	// css
 	if (answers.languages.includes('css')) {
-		if (answers.nowWebsite) {
+		if (answers.vercelWebsite) {
 			state.scripts['our:verify:stylelint'] =
 				"echo 'disabled due to https://spectrum.chat/zeit/general/resolved-deployments-fail-with-enospc-no-space-left-on-device-write~d1b9f61a-65e8-42a3-9042-f9c6a6fae6fd'"
 		} else {
@@ -703,13 +700,13 @@ export async function updateRuntime(state) {
 				'my:deploy'
 			] = `surge ./${answers.staticDirectory} ${answers.deployTarget}`
 		}
-		// now
-		else if (answers.nowWebsite) {
-			packages.now = 'dev'
+		// vercel
+		else if (answers.vercelWebsite) {
+			packages.vercel = 'dev'
 			// next / react
 			if (answers.website.includes('next')) {
 				Object.assign(state.scripts, {
-					'now-build': [...run, 'our:compile:next'].join(' '),
+					build: [...run, 'our:compile:next'].join(' '),
 					'our:compile:next': 'next build',
 					start: [
 						[...run, 'our:verify'],
@@ -877,7 +874,7 @@ export async function updateRuntime(state) {
 	if (answers.tsconfig === 'tsconfig.json') {
 		// based from
 		// https://blogs.msdn.microsoft.com/typescript/2018/08/27/typescript-and-babel-7/
-		// https://github.com/zeit/next-plugins/tree/master/packages/next-typescript
+		// https://github.com/vercel/next-plugins/tree/master/packages/next-typescript
 		// https://github.com/Microsoft/TypeScript/issues/29056#issuecomment-448386794
 		// Only enable isolatedModules on TypeScript projects, as for JavaScript projects it will be incompatible with 'use strict'
 		// resolveJsonModule seems to cause too many issues, so is disabled unless needed
@@ -1035,8 +1032,8 @@ export async function updateRuntime(state) {
 		status('...added the development dependencies')
 	}
 
-	// disable yarn pnp for zeit
-	if (answers.packageManager === 'yarn' && answers.nowWebsite) {
+	// disable yarn pnp for vercel
+	if (answers.packageManager === 'yarn' && answers.vercelWebsite) {
 		status('yarn disabling plug and play...')
 		await spawn(commands.yarn.disablepnp)
 		status('...yarn disabled plug and play')

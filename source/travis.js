@@ -20,7 +20,7 @@ const curlFlags = '-fsSL'
 
 // Thing
 export async function updateTravis(state) {
-	const { answers, nodeVersions, unsupportedNodeVersions, packageData } = state
+	const { answers, packageData } = state
 
 	// =================================
 	// customise travis
@@ -37,12 +37,14 @@ export async function updateTravis(state) {
 		version: '~> 1.0',
 		sudo: false,
 		language: 'node_js',
-		node_js: nodeVersions,
+		node_js: answers.nodeVersionsTested,
 		matrix: {
 			fast_finish: true,
-			allow_failures: unsupportedNodeVersions.map((version) => ({
-				node_js: version,
-			})),
+			allow_failures: answers.nodeVersionsUnsupportedYetTested.map(
+				(version) => ({
+					node_js: version,
+				})
+			),
 		},
 		cache: answers.packageManager,
 		install: [

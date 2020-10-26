@@ -2,54 +2,13 @@
 import { join } from 'path'
 
 // Local
-import { allNodeVersions, minimumEsmNodeVersion } from './data.js'
 import testen from '@bevry/testen'
 const { Versions } = testen
 import { status } from './log.js'
 import { writePackage } from './package.js'
 import { without } from './util.js'
 import { updateRuntime } from './runtime.js'
-
-// Compare to versions simplify
-// Works for 1, 1.1, or 1.1.1
-export function versionComparator(a, b) {
-	// https://github.com/substack/versionComparator-compare/pull/4
-	const pa = String(a).split('.')
-	const pb = String(b).split('.')
-	for (let i = 0; i < Math.min(pa.length, pb.length); i++) {
-		const na = Number(pa[i])
-		const nb = Number(pb[i])
-		if (na > nb) return 1
-		if (nb > na) return -1
-		if (!isNaN(na) && isNaN(nb)) return 1
-		if (isNaN(na) && !isNaN(nb)) return -1
-	}
-	return 0
-}
-
-export async function updateVersions(state) {
-	const { answers } = state
-
-	// fetch node versions
-	state.nodeVersions = allNodeVersions.filter(
-		(version) =>
-			versionComparator(version, answers.minimumTestNodeVersion) >= 0 &&
-			versionComparator(version, answers.maximumTestNodeVersion) <= 0
-	)
-	state.unsupportedNodeVersions = state.nodeVersions.filter(
-		(version) =>
-			versionComparator(version, answers.minimumSupportNodeVersion) < 0 ||
-			versionComparator(version, answers.maximumSupportNodeVersion) > 0
-	)
-	state.supportedNodeVersions = state.nodeVersions.filter(
-		(version) =>
-			versionComparator(version, answers.minimumSupportNodeVersion) >= 0 &&
-			versionComparator(version, answers.maximumSupportNodeVersion) <= 0
-	)
-	state.supportedEsmNodeVersions = state.supportedNodeVersions.filter(
-		(version) => versionComparator(version, minimumEsmNodeVersion) >= 0
-	)
-}
+import versionCompare from './version-compare.js'
 
 export function nodeMajorVersion(value) {
 	if (typeof value === 'number') {
@@ -71,9 +30,6 @@ export async function updateEngines(state) {
 		answers,
 		nodeEditionsRequire,
 		nodeEditionsImport,
-		supportedNodeVersions,
-		supportedEsmNodeVersions,
-		nodeVersions,
 		packageData,
 	} = state
 	const allPassedVersions = new Set()
@@ -89,7 +45,7 @@ export async function updateEngines(state) {
 	if (nodeEditionsRequire.length === 0 && nodeEditionsImport.length === 0) {
 		// this can be the case if it is a website, or a mjs package
 		status('determining engines for project...')
-		const versions = new Versions(nodeVersions)
+		const versions = new Versions(answers.nodeVersionsSupported)
 		await versions.load()
 		await versions.install()
 		const numbers = versions.map((version) => version.version)
@@ -124,12 +80,12 @@ export async function updateEngines(state) {
 		for (const { list, nodeVersions, mode } of [
 			{
 				list: nodeEditionsImport,
-				nodeVersions: supportedEsmNodeVersions,
+				nodeVersions: answers.nodeVersionsSupportedESM,
 				mode: 'onlyAllSupported',
 			},
 			{
 				list: nodeEditionsRequire,
-				nodeVersions: supportedNodeVersions,
+				nodeVersions: answers.nodeVersionsSupported,
 				mode: 'allUnique',
 			},
 		]) {
@@ -283,18 +239,14 @@ export async function updateEngines(state) {
 	// =================================
 	// update engines.node
 
-	const passed = Array.from(allPassedVersions.values()).sort(versionComparator)
-	const supported = Array.from(supportedNodeVersions.values()).sort(
-		versionComparator
-	)
-	const unsupported = without(supported, passed)
+	const passed = Array.from(allPassedVersions.values()).sort(versionCompare)
+	const supported = answers.nodeVersionsSupported
+	const failed = without(supported, passed)
 	const extra = without(passed, supported)
 
-	if (unsupported.length) {
+	if (failed.length) {
 		throw new Error(
-			`The project does not support the required versions: ${unsupported.join(
-				', '
-			)}`
+			`The project does not support the required versions: ${failed.join(', ')}`
 		)
 	}
 	if (extra.length) {

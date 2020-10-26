@@ -3,72 +3,71 @@ import * as pathUtil from 'path'
 import { pwd } from './data.js'
 import { exists, parse } from './fs.js'
 
-export function getNowName(nowData) {
-	return nowData.name || null
+export function getVercelName(vercelConfig) {
+	return vercelConfig.name || null
 }
 
-export function parseNowAliases(alias) {
+export function parseVercelAliases(alias) {
 	if (alias) {
 		return Array.isArray(alias) ? alias : alias.split(/[,\s]+/)
 	}
 	return null
 }
 
-export function getNowAliases(nowData) {
-	return parseNowAliases(nowData.alias) || []
+export function getVercelAliases(vercelConfig) {
+	return parseVercelAliases(vercelConfig.alias) || []
 }
 
 export async function readWebsite(state) {
 	const { packageData } = state
-
-	// now
-	const nowPath = pathUtil.resolve(pwd, 'now.json')
-	let nowData = {}
-	try {
-		if (await exists(nowPath)) nowData = (await parse(nowPath)) || {}
-	} catch (err) {}
-
-	// apply
-	state.nowData = Object.assign({}, packageData.now || {}, nowData)
+	state.vercelConfig = Object.assign(
+		{},
+		packageData.now || {},
+		packageData.vercel || {},
+		(await parse(pathUtil.resolve(pwd, 'now.json'))) || {},
+		(await parse(pathUtil.resolve(pwd, 'vercel.json'))) || {}
+	)
 }
 
 export async function updateWebsite(state) {
-	const { answers, nowData } = state
+	const { answers, vercelConfig } = state
+	if (!vercelConfig) {
+		throw new Error('updateWebsite was called before readWebsite')
+	}
 
 	// add website deployment strategies
-	if (answers.nowWebsite) {
-		// add the versions we know
-		const now = Object.assign(nowData || {}, {
-			version: 2,
-			name: answers.nowName,
-			alias: parseNowAliases(answers.nowAliases),
-		})
+	if (answers.vercelWebsite) {
 		// trim version 1 fields
-		if (nowData && nowData.version !== 2) {
-			delete now.type
-			delete now.public
-			delete now.files
-			delete now.static
+		if (vercelConfig.version !== 2) {
+			delete vercelConfig.type
+			delete vercelConfig.public
+			delete vercelConfig.files
+			delete vercelConfig.static
 		}
+
+		// add the versions we know
+		vercelConfig.version = 2
+		vercelConfig.name = answers.vercelName
+		vercelConfig.alias = parseVercelAliases(answers.vercelAliases)
+
 		// next.js builder
 		if (answers.website.includes('next')) {
 			// remove old routes as they are no longer needed due to public directory now existing
-			if (now.routes)
-				now.routes = now.routes.filter(
+			if (vercelConfig.routes)
+				vercelConfig.routes = vercelConfig.routes.filter(
 					(route) =>
 						['/favicon.ico', '/robots.txt'].includes(route.src) === false
 				)
-			// new format
-			if (!now.builds) now.builds = [{ src: 'package.json', use: '@now/next' }]
+			// delete old format
+			delete vercelConfig.build
 		}
+
 		// static builder
 		if (answers.staticWebsite) {
-			if (!now.builds)
-				now.builds = [
-					{ src: `${answers.staticDirectory}/**`, use: '@now/static' },
+			if (!vercelConfig.builds)
+				vercelConfig.builds = [
+					{ src: `${answers.staticDirectory}/**`, use: '@vercel/static' },
 				]
 		}
-		// export
-		state.nowData = now
 	}
 }

@@ -13,24 +13,6 @@ export const bevryOrganisationsList = 'balupton bevry bevry-trading docpad brows
 	' '
 )
 
-export const minimumEsmNodeVersion = '12'
-
-export const allNodeVersions = [
-	'0.8',
-	'0.10',
-	'0.12',
-	'4',
-	'6',
-	'8',
-	'10',
-	'12',
-	'13',
-	'14',
-	'15',
-]
-
-export const importNodeVersions = ['15', '14']
-
 export const allLanguages = [
 	'typescript',
 	'esnext',
@@ -62,9 +44,11 @@ export const allTypescriptTargetsLowercase = allTypescriptTargets.map((i) =>
 	i.toLowerCase()
 )
 
-export const latestTypescriptTargets = ['ESNext', 'ES2020', 'ES2019']
+/** Which typescript targets apply to the latest current node release? */
+export const currentTypescriptTargets = ['ESNext', 'ES2020', 'ES2019']
 
-export const ltsTypescriptTargets = ['ESNext', 'ES2020', 'ES2019', 'ES2018']
+/** Which typescript targets apply to the latest active node LTS release? */
+export const activeTypescriptTargets = ['ESNext', 'ES2020', 'ES2019', 'ES2018']
 
 export const defaultCoffeeTarget = 'ESNext'
 

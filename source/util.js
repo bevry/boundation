@@ -1,6 +1,15 @@
 import { bevryOrganisationsList } from './data.js'
 import * as typeChecker from 'typechecker'
 
+// utilities
+export function first(arr) {
+	return arr[0]
+}
+
+export function last(arr) {
+	return arr[arr.length - 1]
+}
+
 export function unjoin(a, b) {
 	if (!b) return null
 	const A = a.endsWith('/') ? a : a + '/'

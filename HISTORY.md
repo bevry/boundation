@@ -1,5 +1,12 @@
 # History
 
+## v1.67.0 2020 October 26
+
+-   Fixed compatibility with latest nvm versions
+-   Improved forward compatibility with latest node versions
+-   Improved compatibility with zeit/now to vercel rename
+-   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
+
 ## v1.66.3 2020 September 4
 
 -   Fix regression from v1.66.0 where compilers other than `babel` and `typescript` would fail on targets question

@@ -8,7 +8,6 @@ import { updateBaseFiles } from './base.js'
 import { generateEditions } from './editions.js'
 import { readWebsite, updateWebsite } from './website.js'
 import { updateRuntime } from './runtime.js'
-import { updateVersions } from './versions.js'
 
 export default async function init(state) {
 	await readPackage(state)
@@ -16,8 +15,6 @@ export default async function init(state) {
 	await readWebsite(state)
 
 	await getAnswers(state)
-
-	await updateVersions(state)
 
 	await updatePackageData(state)
 

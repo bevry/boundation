@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 
 // External
-import { resolve, join, dirname } from 'path'
+import { resolve, join } from 'path'
 
 // get root with imports
-import url from 'url'
 import filedirname from 'filedirname'
 const [file, dir] = filedirname()
 const root = resolve(dir, '..')

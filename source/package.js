@@ -19,7 +19,7 @@ import {
 import { pwd } from './data.js'
 import { status } from './log.js'
 import { echoExists, exists, write, parse } from './fs.js'
-import { getNowName } from './website.js'
+import { getVercelName } from './website.js'
 
 // Prepare
 const mandatoryScriptsList = 'our:setup our:compile our:meta our:verify our:deploy our:release test'.split(
@@ -311,22 +311,22 @@ export async function getPackageBrowserEntry() {
 	// as otherwise when you delete the browser entry file, to say use index entry file instead, the change won't be automatically detected
 }
 
-export function getWebsiteType(packageData, nowData) {
+export function getWebsiteType(packageData, vercelConfig) {
 	if (hasPackageDependency(packageData, 'next')) {
-		return '@now/next'
+		return 'vercel: next.js'
 	}
 	if (hasPackageDependency(packageData, 'docpad')) {
-		return 'docpad on @now/static'
+		return 'vercel: docpad'
 	}
-	if (getNowName(nowData)) {
+	if (getVercelName(vercelConfig)) {
 		if (
-			nowData.builds &&
-			nowData.builds.length &&
-			nowData.builds[0].use === '@now/static'
+			vercelConfig.builds &&
+			vercelConfig.builds.length &&
+			vercelConfig.builds[0].use === '@vercel/static'
 		) {
-			return '@now/static'
+			return 'vercel: static'
 		}
-		return 'now'
+		return 'vercel: custom'
 	}
 	if (hasPackageDependency(packageData, 'surge')) {
 		return 'surge'
@@ -334,8 +334,8 @@ export function getWebsiteType(packageData, nowData) {
 	return 'custom'
 }
 
-export function getProjectType(packageData, nowData) {
-	if (hasPackageScript(packageData, 'start') || getNowName(nowData)) {
+export function getProjectType(packageData, vercelConfig) {
+	if (hasPackageScript(packageData, 'start') || getVercelName(vercelConfig)) {
 		return 'website'
 	}
 	return 'package'
@@ -421,7 +421,7 @@ export function arrangePackage(state) {
 	// package keys
 	packageData = arrangekeys(
 		packageData,
-		'title name version private description homepage license keywords badges funding author sponsors maintainers contributors bugs repository engines editions bin types type main node cjs mjs test exports deno browser module jspm dependencies optionalDependencies devDependencies peerDependencies scripts now eslintConfig prettier babel'
+		'title name version private description homepage license keywords badges funding author sponsors maintainers contributors bugs repository engines editions bin types type main node cjs mjs test exports deno browser module jspm dependencies optionalDependencies devDependencies peerDependencies scripts vercel eslintConfig prettier babel'
 	)
 
 	// ---------------------------------
@@ -671,8 +671,11 @@ export async function updatePackageData(state) {
 	delete packageData.nakeConfiguration
 	delete packageData.cakeConfiguration
 	delete packageData.directories
-	delete packageData.now
 	delete packageData.preferGlobal
+
+	// moved to vercel.json
+	delete packageData.now
+	delete packageData.vercel
 
 	// badges
 	const removeBadges = ['gratipay']

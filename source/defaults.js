@@ -8,4 +8,4 @@ export const travisOrgToken = env.TRAVIS_ORG_TOKEN
 export const bevryCDNToken = env.BEVRY_CDN_TOKEN
 export const surgeLogin = env.SURGE_LOGIN
 export const surgeToken = env.SURGE_TOKEN
-export const nowToken = env.NOW_TOKEN
+export const vercelToken = env.VERCEL_TOKEN || env.NOW_TOKEN
