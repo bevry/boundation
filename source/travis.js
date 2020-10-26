@@ -40,11 +40,9 @@ export async function updateTravis(state) {
 		node_js: answers.nodeVersionsTested,
 		matrix: {
 			fast_finish: true,
-			allow_failures: answers.nodeVersionsUnsupportedYetTested.map(
-				(version) => ({
-					node_js: version,
-				})
-			),
+			allow_failures: state.nodeVersionsOptional.map((version) => ({
+				node_js: version,
+			})),
 		},
 		cache: answers.packageManager,
 		install: [

@@ -140,6 +140,18 @@ export function isNodeVersionMaintenance(version) {
 	return now >= start.getTime() && now <= end.getTime()
 }
 
+/**
+ * Is the version a maintained release or a historical LTS release?
+ */
+export function isNodeVersionMaintainedOrLTS(version) {
+	const meta = getNodeVersion(version)
+	if (meta.lts) return true
+	const start = meta.start
+	const end = meta.end
+	if (!start || !end) return false
+	return now >= start.getTime() && now <= end.getTime()
+}
+
 /** Is the version greater than or equal to the seek version? */
 export function isNodeVersionGTE(seek) {
 	return function (version) {
@@ -166,7 +178,18 @@ export function isNodeVersionWithin(lesser, greater) {
 
 /** Does the version natively support ESM? */
 export function isNodeVersionESM(version) {
-	return versionCompare(version, '14') >= 0
+	return versionCompare(version, '12') >= 0
+}
+
+/**
+ * Is the node version compatible with vercel?
+ * https://vercel.com/docs/serverless-functions/supported-languages?query=node%20version#defined-node.js-version
+ * https://vercel.com/docs/runtimes#official-runtimes/node-js/node-js-version
+ */
+export function isNodeVersionVercel(version) {
+	return (
+		versionCompare(version, '10') === 0 || versionCompare(version, '12') === 0
+	)
 }
 
 /** Is the version of these versions? */
@@ -209,6 +232,7 @@ export function filterNodeVersions(versions, filters = {}) {
 		active,
 		current,
 		activeOrCurrent,
+		maintainedOrLTS,
 		maintenance,
 		born = true,
 		maintained,
@@ -219,9 +243,8 @@ export function filterNodeVersions(versions, filters = {}) {
 		within,
 	} = filters
 
-	// https://vercel.com/docs/serverless-functions/supported-languages?query=node%20version#defined-node.js-version
-	// https://vercel.com/docs/runtimes#official-runtimes/node-js/node-js-version
-	if (vercel) these = (these || []).concat(['10', '12'])
+	// is the node version compatible with vercel
+	if (vercel) these = versions.filter(isNodeVersionVercel)
 
 	// gte
 	if (gte) versions = versions.filter(isNodeVersionGTE(gte))
@@ -253,6 +276,9 @@ export function filterNodeVersions(versions, filters = {}) {
 
 	// only active or current releases
 	if (activeOrCurrent) versions = versions.filter(isNodeVersionActiveOrCurrent)
+
+	// only releases that are maintained, or historical LTS releases
+	if (maintainedOrLTS) versions = versions.filter(isNodeVersionMaintainedOrLTS)
 
 	// only maintenance releases
 	if (maintenance) versions = versions.filter(isNodeVersionMaintenance)

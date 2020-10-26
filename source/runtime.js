@@ -351,12 +351,12 @@ export async function updateRuntime(state) {
 		kava: 3,
 		'assert-helpers': 4,
 	}
-	if (answers.minimumSupportNodeVersion < 8) {
+	if (answers.nodeVersionSupportedMinimum < 8) {
 		for (const [key, value] of Object.entries(dependencyCompat)) {
 			versions[key] = value
 		}
 	}
-	if (answers.minimumTestNodeVersion < 8) {
+	if (answers.nodeVersionTestedMinimum < 8) {
 		for (const [key, value] of Object.entries(devDependencyCompat)) {
 			versions[key] = value
 		}

@@ -4,6 +4,7 @@ export const state = {
 	travisTLD: null, // or "org" or "com"
 	typesDirectoryPath: null, // types directory with trailing slash and ./ prefix
 	answers: null,
+	nodeVersionsOptional: [],
 	packageData: {},
 	vercelConfig: {},
 	editions: [],
