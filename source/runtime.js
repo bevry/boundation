@@ -6,8 +6,7 @@ import { status } from './log.js'
 import {
 	bustedVersions,
 	typesDir,
-	allTypescriptTargetsLowercase,
-	allLanguagesLowercase,
+	allLanguages,
 	allTypescriptTargets,
 } from './data.js'
 import { parse, exec, exists, spawn, unlink, write } from './fs.js'
@@ -349,7 +348,6 @@ export async function updateRuntime(state) {
 	}
 	const devDependencyCompat = {
 		kava: 3,
-		'assert-helpers': 4,
 	}
 	if (answers.nodeVersionSupportedMinimum < 8) {
 		for (const [key, value] of Object.entries(dependencyCompat)) {
@@ -776,10 +774,9 @@ export async function updateRuntime(state) {
 	}
 
 	// targets
-	const allTargets = uniq([
-		...allTypescriptTargetsLowercase,
-		...allLanguagesLowercase,
-	])
+	const allTargets = uniq([...allTypescriptTargets, ...allLanguages]).map((i) =>
+		i.toLowerCase()
+	)
 	const usedTargets = uniq([
 		...answers.languages.map((i) => i.toLowerCase()),
 		...state.activeEditions

@@ -1,7 +1,8 @@
 /* eslint-disable no-use-before-define */
 import fetch from 'node-fetch'
 import Errlop from 'errlop'
-import versionCompare from './version-compare.js'
+import withinRange from 'version-range'
+import versionCompare from 'version-compare'
 
 // prepare date
 const nodeVersionsMap = new Map()
@@ -26,6 +27,11 @@ export async function fetchNodeVersions() {
 		// fetch node versions that have been released
 		const response = await fetch(url)
 		const json = await response.json()
+		nodeVersionsMap.set('0.8', {
+			version: '0.8',
+			start: new Date('2012-06-25'),
+			end: new Date('2014-07-31'),
+		})
 		for (const [key, meta] of Object.entries(json)) {
 			const version = key.replace('v', '')
 			const start = new Date(meta.start)
@@ -41,8 +47,8 @@ export async function fetchNodeVersions() {
 				lts,
 				codename: meta.codename,
 			})
-			nodeVersionsList.push(version)
 		}
+		nodeVersionsList.push(...Array.from(nodeVersionsMap.keys()))
 		nodeVersionLatestCurrent = last(
 			filterNodeVersions(nodeVersionsList, { current: true })
 		)
@@ -63,7 +69,12 @@ export async function fetchNodeVersions() {
 
 /** Get the release metadata for the version number */
 export function getNodeVersion(version) {
-	return nodeVersionsMap.get(String(version))
+	const meta = nodeVersionsMap.get(String(version))
+	if (!meta)
+		throw new Error(
+			`Unable to find the Node.js version: ${JSON.stringify(version)}`
+		)
+	return meta
 }
 
 /** Has the version existed at some point? */
@@ -145,7 +156,9 @@ export function isNodeVersionMaintenance(version) {
  */
 export function isNodeVersionMaintainedOrLTS(version) {
 	const meta = getNodeVersion(version)
-	if (meta.lts) return true
+	// is it a LTS release, or is it a release before LTS was a thing (no lts and no maintenance details)
+	// 0.8, 0.10, 0.12
+	if (meta.lts || !meta.maintenance) return true
 	const start = meta.start
 	const end = meta.end
 	if (!start || !end) return false
@@ -199,6 +212,13 @@ export function isNodeVersionThese(these) {
 	}
 }
 
+/** Is the version within this range? */
+export function isNodeVersionWithinRange(range) {
+	return function (version) {
+		return withinRange(version, range)
+	}
+}
+
 /**
  * Is the version the latest current release?
  * Current > Active > Maintenance > EOL
@@ -240,21 +260,20 @@ export function filterNodeVersions(versions, filters = {}) {
 		vercel,
 		gte,
 		lte,
-		within,
+		range,
 	} = filters
 
 	// is the node version compatible with vercel
 	if (vercel) these = versions.filter(isNodeVersionVercel)
+
+	// range
+	if (range) versions = versions.filter(isNodeVersionWithinRange(range))
 
 	// gte
 	if (gte) versions = versions.filter(isNodeVersionGTE(gte))
 
 	// lte
 	if (lte) versions = versions.filter(isNodeVersionLTE(lte))
-
-	// within
-	if (within)
-		versions = versions.filter(isNodeVersionWithin(within[0], within[1]))
 
 	// certain numbers
 	if (these) versions = versions.filter(isNodeVersionThese(these))

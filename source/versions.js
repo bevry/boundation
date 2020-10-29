@@ -6,9 +6,9 @@ import testen from '@bevry/testen'
 const { Versions } = testen
 import { status } from './log.js'
 import { writePackage } from './package.js'
-import { without } from './util.js'
+import { complement, intersect } from './util.js'
 import { updateRuntime } from './runtime.js'
-import versionCompare from './version-compare.js'
+import versionCompare from 'version-compare'
 import { filterNodeVersions } from './node-versions.js'
 
 export function nodeMajorVersion(value) {
@@ -242,33 +242,44 @@ export async function updateEngines(state) {
 	// =================================
 	// update engines.node
 
-	const passed = Array.from(allPassedVersions.values()).sort(versionCompare)
 	const supported = answers.nodeVersionsSupported
 	const tested = answers.nodeVersionsTested
-	const failed = without(supported, passed)
-	const extra = without(passed, supported)
-	const optional = without(tested, passed)
+	const testedAndPassed = Array.from(allPassedVersions.values()).sort(
+		versionCompare
+	)
+	const testedAndFailed = complement(tested, testedAndPassed)
+	const testedAndSupported = intersect(tested, supported)
+	const failedAndSupported = intersect(testedAndSupported, testedAndFailed)
+	const passedAndUnsupported = complement(testedAndPassed, supported)
+	const failedAndUnsupported = complement(testedAndFailed, supported)
 
-	if (failed.length) {
+	if (failedAndSupported.length) {
 		throw new Error(
-			`The project does not support the required versions: ${failed.join(', ')}`
+			`The project does not support the required versions: ${failedAndSupported.join(
+				', '
+			)}`
 		)
 	}
-	if (extra.length) {
-		console.log(`The project supports the extra versions: ${extra.join(', ')}`)
+
+	if (passedAndUnsupported.length) {
+		console.log(
+			`The project supports the extra versions: ${passedAndUnsupported.join(
+				', '
+			)}`
+		)
 	}
 
 	// if we are testing all supported versions
 	// then make the engines the first passed version
 	if (answers.nodeVersionSupportedMinimum >= answers.nodeVersionTestedMinimum) {
-		packageData.engines.node = '>=' + passed[0]
+		packageData.engines.node = '>=' + testedAndPassed[0]
 	} else {
 		// otherwise use the supported version, as all our tests passed
 		packageData.engines.node = '>=' + answers.nodeVersionSupportedMinimum
 	}
 
 	// apply the optional versions so that travis has access
-	state.nodeVersionsOptional = optional
+	state.nodeVersionsOptional = failedAndUnsupported
 
 	// =================================
 	// update the package.json file

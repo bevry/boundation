@@ -4,13 +4,7 @@ import * as pathUtil from 'path'
 // Local
 import _getAnswers from './answers.js'
 import * as defaults from './defaults.js'
-import {
-	pwd,
-	allTypescriptTargets,
-	allLanguages,
-	activeTypescriptTargets,
-	currentTypescriptTargets,
-} from './data.js'
+import { pwd, allLanguages } from './data.js'
 import {
 	isNumber,
 	isGitUrl,
@@ -62,9 +56,9 @@ import { getVercelAliases, getVercelName } from './website.js'
 import {
 	fetchAndFilterNodeVersions,
 	filterNodeVersions,
-	isNodeVersionLatestActive,
-	isNodeVersionLatestCurrent,
+	isNodeVersionActiveOrCurrent,
 } from './node-versions.js'
+import { getESVersionsForNodeVersions } from './es-versions.js'
 
 // ====================================
 // Questions
@@ -628,16 +622,6 @@ export async function getQuestions(state) {
 			},
 		},
 		{
-			name: 'upgradeNodeVersions',
-			arg: 'lts',
-			message: `Should we only support the maintained node versions?`,
-			type: 'confirm',
-			default: true,
-			skip({ website, desiredNodeOnly }) {
-				return website || desiredNodeOnly
-			},
-		},
-		{
 			name: 'nodeVersions',
 			message:
 				'Automated property to provide node versions for the upcoming questions',
@@ -654,7 +638,6 @@ export async function getQuestions(state) {
 			},
 			async default(opts) {
 				const choices = await this.choices(opts)
-				if (opts.desiredNodeOnly) return [last(choices)]
 				return choices
 			},
 			skip: true,
@@ -668,6 +651,12 @@ export async function getQuestions(state) {
 				return nodeVersions
 			},
 			default({ nodeVersions }) {
+				// prefer the active LTS
+				const preference = last(
+					filterNodeVersions(nodeVersions, { active: true })
+				)
+				if (preference) return preference
+				// otherwise fallback to the latest preselected
 				return last(nodeVersions)
 			},
 		},
@@ -676,14 +665,20 @@ export async function getQuestions(state) {
 			message: 'Which Node.js versions must your package support?',
 			type: 'checkbox',
 			validate: isSpecified,
-			choices({ nodeVersions, upgradeNodeVersions }) {
-				if (upgradeNodeVersions) {
+			choices({ nodeVersions, desiredNodeOnly, desiredNodeVersion }) {
+				if (desiredNodeOnly) return [desiredNodeVersion]
+				if (
+					nodeEngineVersion &&
+					isNodeVersionActiveOrCurrent(nodeEngineVersion)
+				) {
 					return filterNodeVersions(nodeVersions, {
 						activeOrCurrent: true,
 						gte: nodeEngineVersion,
 					})
 				} else {
-					return filterNodeVersions(nodeVersions, { gte: nodeEngineVersion })
+					return filterNodeVersions(nodeVersions, {
+						gte: nodeEngineVersion,
+					})
 				}
 			},
 			default(opts) {
@@ -719,17 +714,39 @@ export async function getQuestions(state) {
 			skip: true,
 		},
 		{
+			name: 'nodeVersionsTestedRange',
+			message:
+				'Is there a semver range that you want to constrain test versions to?',
+			filter: trim,
+			skip({ desiredNodeOnly }) {
+				return Boolean(desiredNodeOnly)
+			},
+		},
+		{
 			name: 'nodeVersionsTested',
 			message: 'Automated property for providing the tested node versions',
 			type: 'checkbox',
 			validate: isSpecified,
-			choices({ nodeVersions, upgradeNodeVersions }) {
-				if (upgradeNodeVersions) {
+			choices({
+				nodeVersions,
+				desiredNodeOnly,
+				desiredNodeVersion,
+				nodeVersionsTestedRange,
+			}) {
+				if (desiredNodeOnly) return [desiredNodeVersion]
+				if (
+					nodeEngineVersion &&
+					isNodeVersionActiveOrCurrent(nodeEngineVersion)
+				) {
 					return filterNodeVersions(nodeVersions, {
 						maintained: true,
+						range: nodeVersionsTestedRange,
 					})
 				} else {
-					return filterNodeVersions(nodeVersions, { gte: nodeEngineVersion })
+					return filterNodeVersions(nodeVersions, {
+						range: nodeVersionsTestedRange,
+						gte: nodeEngineVersion,
+					})
 				}
 			},
 			default(opts) {
@@ -769,11 +786,12 @@ export async function getQuestions(state) {
 			type: 'checkbox',
 			message: 'Which compile targets should be generated?',
 			validate: isSpecified,
-			async choices({
+			choices({
 				compilerNode,
 				desiredNodeVersion,
 				nodeVersionSupportedMinimum,
 				nodeVersionSupportedMaximum,
+				nodeVersionsSupported,
 			}) {
 				if (compilerNode === 'babel') {
 					return uniq([
@@ -782,11 +800,7 @@ export async function getQuestions(state) {
 						nodeVersionSupportedMaximum,
 					])
 				} else if (compilerNode === 'typescript') {
-					if (await isNodeVersionLatestCurrent(nodeVersionSupportedMinimum))
-						return currentTypescriptTargets
-					if (await isNodeVersionLatestActive(nodeVersionSupportedMinimum))
-						return activeTypescriptTargets
-					return allTypescriptTargets
+					return getESVersionsForNodeVersions(nodeVersionsSupported)
 				} else {
 					// ignored compiler
 					return []

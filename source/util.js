@@ -217,7 +217,39 @@ export function repoToProject(input = '') {
 	return (input && repoToSlug(input).split('/')[1]) || ''
 }
 
-export function without(list, blacklist) {
+/**
+ * Get the distinct elements from both the lists.
+ * Given two sets A and B, their union is the set consisting of all objects which are elements of A or of B or of both (see axiom of union). It is denoted by A ∪ B.
+ * https://en.wikipedia.org/wiki/Naive_set_theory
+ * @param {Array<*>} list The left subset.
+ * @param {Array<*>} include The right subset.
+ * @returns the superset/combination of both lists, without redundancy.
+ */
+export function union(list, include) {
+	return Array.from(new Set(list.concat(include)).values())
+}
+
+/**
+ * Get the elements from the list that only also exist within the other list.
+ * The intersection of A and B is the set of all objects which are both in A and in B. It is denoted by A ∩ B.
+ * https://en.wikipedia.org/wiki/Naive_set_theory
+ * @param {Array<*>} list The left set to intersect.
+ * @param {Array<*>} allowlist The right set to intersect.
+ * @returns the intersection, the values that are within both sets
+ */
+export function intersect(list, allowlist) {
+	return list.filter((value) => allowlist.includes(value))
+}
+
+/**
+ * Get the list without elements from the other list.
+ * Finally, the relative complement of B relative to A, also known as the set theoretic difference of A and B, is the set of all objects that belong to A but not to B. It is written as A \ B or A − B.
+ * https://en.wikipedia.org/wiki/Naive_set_theory
+ * @param {Array<*>} list The superset.
+ * @param {Array<*>} blacklist The excluded subset.
+ *
+ */
+export function complement(list, blacklist) {
 	return list.filter((value) => blacklist.includes(value) === false)
 }
 

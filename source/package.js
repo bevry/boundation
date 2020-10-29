@@ -14,7 +14,7 @@ import {
 	isBevryOrganisation,
 	repoToOrganisation,
 	repoToWebsite,
-	without,
+	complement,
 } from './util.js'
 import { pwd } from './data.js'
 import { status } from './log.js'
@@ -627,7 +627,7 @@ export async function updatePackageData(state) {
 	if (answers.website) {
 		packageData.engines.node = `>=${answers.desiredNodeVersion}`
 	} else {
-		packageData.engines.node = `>=${answers.minimumSupportNodeVersion}`
+		packageData.engines.node = `>=${answers.nodeVersionSupportedMinimum}`
 	}
 	delete packageData.engines.docpad
 
@@ -730,7 +730,7 @@ export async function updatePackageData(state) {
 	}
 
 	// apply badge removals
-	packageData.badges.list = without(packageData.badges.list, removeBadges)
+	packageData.badges.list = complement(packageData.badges.list, removeBadges)
 	delete packageData.badges.gratipayUsername
 
 	// note

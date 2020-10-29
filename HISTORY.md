@@ -1,5 +1,17 @@
 # History
 
+## v1.69.0 2020 October 29
+
+-   Node version handling improvements have continued even further
+    -   Historical versions are only kept if they were LTS versions (no more v11, v13)
+    -   TypeScript Targets are now determined accurately, with only the necessary ones automatically determined
+    -   You can now specify a `nodeVersionTestedRange` to limit the testing versions
+    -   The failed and tolerated versions are now correctly determined
+    -   Node v0.8 is now recognised again
+    -   Node versions are intelligently upgraded if everything is streamlined, but if the engines are custom, then they are kept and expanded if more are indeed available
+    -   `desiredNodeOnly` works with the upgrade flow once more
+-   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
+
 ## v1.68.0 2020 October 27
 
 -   Node version handling improvements have continued, now rather than presenting ranges, it will present versions

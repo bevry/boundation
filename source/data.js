@@ -1,5 +1,6 @@
 // External
 import { cwd } from 'process'
+import { getAllESVersions, getESVersion } from './es-versions.js'
 
 export const pwd = cwd()
 
@@ -26,34 +27,12 @@ export const allLanguages = [
 	'css',
 ]
 
-export const allLanguagesLowercase = allLanguages.map((i) => i.toLowerCase())
-
-export const allTypescriptTargets = [
-	'ESNext',
-	'ES2020',
-	'ES2019',
-	'ES2018',
-	'ES2017',
-	'ES2016',
-	'ES2015',
-	'ES5',
-	'ES3',
-]
-
-export const allTypescriptTargetsLowercase = allTypescriptTargets.map((i) =>
-	i.toLowerCase()
-)
-
-/** Which typescript targets apply to the latest current node release? */
-export const currentTypescriptTargets = ['ESNext', 'ES2020', 'ES2019']
-
-/** Which typescript targets apply to the latest active node LTS release? */
-export const activeTypescriptTargets = ['ESNext', 'ES2020', 'ES2019', 'ES2018']
+export const allTypescriptTargets = getAllESVersions()
 
 export const defaultCoffeeTarget = 'ESNext'
 
 // previous year
-export const defaultBrowserTarget = 'ES' + (new Date().getFullYear() - 1)
+export const defaultBrowserTarget = getESVersion(-1)
 
 export const languageNames = {
 	typescript: 'TypeScript',
