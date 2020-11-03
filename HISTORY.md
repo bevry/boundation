@@ -1,5 +1,9 @@
 # History
 
+## v1.69.3 2020 November 3
+
+-   Fix where errors are written (regression since v1.69.2)
+
 ## v1.69.2 2020 November 3
 
 -   Use [@bevry/ansi](https://github.com/bevry/ansi) for colors and styles
