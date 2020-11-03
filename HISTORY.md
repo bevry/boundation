@@ -1,5 +1,9 @@
 # History
 
+## v1.69.2 2020 November 3
+
+-   Use [@bevry/ansi](https://github.com/bevry/ansi) for colors and styles
+
 ## v1.69.1 2020 November 3
 
 -   Extracted out some utilities into [@bevry/list](https://github.com/bevry/list), [arrange-package-json](https://github.com/bevry/arrange-package-json), and [@bevry/github-orgs](https://github.com/bevry/github-orgs)

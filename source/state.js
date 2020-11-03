@@ -1,5 +1,5 @@
-// local
-import { has } from './util.js'
+// external
+import { has } from '@bevry/list'
 
 export const state = {
 	travisTLD: null, // or "org" or "com"

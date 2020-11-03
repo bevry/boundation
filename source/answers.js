@@ -1,6 +1,6 @@
 // external
 import inquirer from 'inquirer'
-import chalk from 'chalk'
+import * as ansi from '@bevry/ansi'
 
 // external
 import Errlop from 'errlop'
@@ -106,21 +106,23 @@ export default async function getAnswers(questions, user) {
 				// if we are not proceeding then ignore
 				if (reason) {
 					const value = defaults[name]
-					const color = opaque ? (v) => v : chalk.dim
+					const color = opaque ? (v) => v : ansi.dim
 					const message = [
 						'Automated',
-						chalk.bold.underline(name),
+						ansi.bold(ansi.underline(name)),
 						'via',
 						reason,
 						'to',
 						// type="checkbox" returns arrays
 						// values could also be null, undefined, true, or false
-						chalk.bold.green(
-							question.type === 'password'
-								? '[hidden]'
-								: typeof value === 'string'
-								? value
-								: JSON.stringify(value)
+						ansi.bold(
+							ansi.green(
+								question.type === 'password'
+									? '[hidden]'
+									: typeof value === 'string'
+									? value
+									: JSON.stringify(value)
+							)
 						),
 					]
 						.map((v) => color(v))
