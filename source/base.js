@@ -1,12 +1,16 @@
 /* eslint-disable camelcase */
-// External
-import Errlop from 'errlop'
-import fetch from 'node-fetch'
+
+// builtin
 import * as pathUtil from 'path'
 import * as urlUtil from 'url'
 
-// Local
-import { trimOrgName, isBevryOrganisation } from './util.js'
+// external
+import Errlop from 'errlop'
+import fetch from 'node-fetch'
+import { is as isBevryOrganisation } from '@bevry/github-orgs'
+
+// local
+import { trimOrgName } from './util.js'
 import { status } from './log.js'
 import {
 	exists,

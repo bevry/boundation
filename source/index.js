@@ -1,4 +1,4 @@
-// Local
+// local
 import { status, success } from './log.js'
 import { spawn } from './fs.js'
 import { readPackage, updatePackageData } from './package.js'

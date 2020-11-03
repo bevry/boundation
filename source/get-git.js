@@ -1,4 +1,4 @@
-// Local
+// local
 import { pwd } from './data.js'
 import { exec } from './fs.js'
 import { repoToOrganisation, repoToProject } from './util.js'

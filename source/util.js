@@ -1,14 +1,4 @@
-import { bevryOrganisationsList } from './data.js'
 import * as typeChecker from 'typechecker'
-
-// utilities
-export function first(arr) {
-	return arr[0]
-}
-
-export function last(arr) {
-	return arr[arr.length - 1]
-}
 
 export function unjoin(a, b) {
 	if (!b) return null
@@ -138,20 +128,6 @@ export function trimOrgName(str) {
 	return str
 }
 
-export function has(s = [], i) {
-	// @ts-ignore
-	const check = s.has || s.includes
-	return check ? check.call(s, i) : s[i] != null
-}
-
-export function add(s, ...a) {
-	const add = s.add || s.push
-	for (const i of a) {
-		add.call(s, i)
-	}
-	return s
-}
-
 export function strip(o, ...a) {
 	for (const i of a) {
 		delete o[i]
@@ -161,25 +137,6 @@ export function strip(o, ...a) {
 
 export function addExtension(file, extension) {
 	return file ? `${file}.${extension}` : file
-}
-
-export function toggle(set, value, mode) {
-	if (Array.isArray(value)) {
-		for (const v of value) {
-			toggle(set, v, mode)
-		}
-		return set
-	}
-	if (mode) {
-		set.add(value)
-	} else {
-		set.delete(value)
-	}
-	return set
-}
-
-export function isBevryOrganisation(organisation) {
-	return bevryOrganisationsList.includes(organisation)
 }
 
 export function trim(input) {
@@ -215,46 +172,6 @@ export function repoToOrganisation(input = '') {
 }
 export function repoToProject(input = '') {
 	return (input && repoToSlug(input).split('/')[1]) || ''
-}
-
-/**
- * Get the distinct elements from both the lists.
- * Given two sets A and B, their union is the set consisting of all objects which are elements of A or of B or of both (see axiom of union). It is denoted by A ∪ B.
- * https://en.wikipedia.org/wiki/Naive_set_theory
- * @param {Array<*>} list The left subset.
- * @param {Array<*>} include The right subset.
- * @returns the superset/combination of both lists, without redundancy.
- */
-export function union(list, include) {
-	return Array.from(new Set(list.concat(include)).values())
-}
-
-/**
- * Get the elements from the list that only also exist within the other list.
- * The intersection of A and B is the set of all objects which are both in A and in B. It is denoted by A ∩ B.
- * https://en.wikipedia.org/wiki/Naive_set_theory
- * @param {Array<*>} list The left set to intersect.
- * @param {Array<*>} allowlist The right set to intersect.
- * @returns the intersection, the values that are within both sets
- */
-export function intersect(list, allowlist) {
-	return list.filter((value) => allowlist.includes(value))
-}
-
-/**
- * Get the list without elements from the other list.
- * Finally, the relative complement of B relative to A, also known as the set theoretic difference of A and B, is the set of all objects that belong to A but not to B. It is written as A \ B or A − B.
- * https://en.wikipedia.org/wiki/Naive_set_theory
- * @param {Array<*>} list The superset.
- * @param {Array<*>} blacklist The excluded subset.
- *
- */
-export function complement(list, blacklist) {
-	return list.filter((value) => blacklist.includes(value) === false)
-}
-
-export function uniq(list) {
-	return Array.from(new Set(list.filter((i) => i)).values())
 }
 
 export const defaultScript = 'echo no need for this project'

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-// External
+// builtin
 import { resolve, join } from 'path'
 
 // get root with imports
@@ -9,7 +9,7 @@ const [file, dir] = filedirname()
 const root = resolve(dir, '..')
 const pkgPath = join(root, 'package.json')
 
-// Internal
+// internal
 import { readJSON } from './fs.js'
 import boundation from './index.js'
 import state from './state.js'

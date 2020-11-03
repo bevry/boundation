@@ -1,20 +1,14 @@
-// External
+// builtin
 import * as pathUtil from 'path'
 
-// Local
+// external
+import { unique, last, first } from '@bevry/list'
+
+// local
 import _getAnswers from './answers.js'
 import * as defaults from './defaults.js'
 import { pwd, allLanguages } from './data.js'
-import {
-	isNumber,
-	isGitUrl,
-	isSpecified,
-	trim,
-	repoToSlug,
-	uniq,
-	last,
-	first,
-} from './util.js'
+import { isNumber, isGitUrl, isSpecified, trim, repoToSlug } from './util.js'
 import {
 	getGitBranch,
 	getGitEmail,
@@ -675,9 +669,13 @@ export async function getQuestions(state) {
 						activeOrCurrent: true,
 						gte: nodeEngineVersion,
 					})
-				} else {
+				} else if (nodeEngineVersion) {
 					return filterNodeVersions(nodeVersions, {
 						gte: nodeEngineVersion,
+					})
+				} else {
+					return filterNodeVersions(nodeVersions, {
+						maintained: true,
 					})
 				}
 			},
@@ -735,7 +733,7 @@ export async function getQuestions(state) {
 			}) {
 				if (desiredNodeOnly) return [desiredNodeVersion]
 				if (
-					nodeEngineVersion &&
+					!nodeEngineVersion ||
 					isNodeVersionActiveOrCurrent(nodeEngineVersion)
 				) {
 					return filterNodeVersions(nodeVersions, {
@@ -794,7 +792,7 @@ export async function getQuestions(state) {
 				nodeVersionsSupported,
 			}) {
 				if (compilerNode === 'babel') {
-					return uniq([
+					return unique([
 						desiredNodeVersion,
 						nodeVersionSupportedMinimum,
 						nodeVersionSupportedMaximum,

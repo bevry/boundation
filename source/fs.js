@@ -1,13 +1,13 @@
-// External
+// builtin
 import * as pathUtil from 'path'
 import * as fsUtil from 'fs'
+
+// external
 import yaml from 'js-yaml'
 import safeps from 'safeps'
-
-// esm workarounds
 import Errlop from 'errlop'
 
-// Local
+// local
 import { status } from './log.js'
 import { pwd } from './data.js'
 

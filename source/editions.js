@@ -1,11 +1,12 @@
-// External
+// builtin
 import * as pathUtil from 'path'
 
-// Local
+// external
+import { add, has } from '@bevry/list'
+
+// local
 import { status } from './log.js'
 import {
-	add,
-	has,
 	strip,
 	addExtension,
 	fixTsc,

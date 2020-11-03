@@ -1,4 +1,4 @@
-// External
+// builtin
 import { env } from 'process'
 
 export const npmAuthToken = env.NPM_AUTHTOKEN

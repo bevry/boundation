@@ -1,9 +1,9 @@
-// External
+// external
 import Errlop from 'errlop'
 import fetch from 'node-fetch'
 import * as crypto from 'crypto'
 
-// Local
+// local
 import { writePackage } from './package.js'
 import { status } from './log.js'
 import { getGithubCommit } from './get-github-commit.js'

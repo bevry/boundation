@@ -1,12 +1,12 @@
-// External
+// external
 import inquirer from 'inquirer'
 import chalk from 'chalk'
 
-// esm workarounds
+// external
 import Errlop from 'errlop'
 import getarg from 'get-cli-arg'
 
-// Local
+// vars
 const skipAllArg = '--auto'
 const skipAll = process.argv.includes(skipAllArg)
 

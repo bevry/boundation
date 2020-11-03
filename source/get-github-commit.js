@@ -1,10 +1,10 @@
-// External
+// external
 import fetch from 'node-fetch'
 import gh from 'githubauthreq'
 const { getHeaders } = gh
 import { env } from 'process'
 
-// Local
+// local
 import { warn, fatal } from './log.js'
 const { GITHUB_API = 'https://api.github.com' } = env
 

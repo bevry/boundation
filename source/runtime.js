@@ -1,7 +1,10 @@
-// External
+// builtin
 import * as pathUtil from 'path'
 
-// Local
+// local
+import { unique, toggle } from '@bevry/list'
+
+// local
 import { status } from './log.js'
 import {
 	bustedVersions,
@@ -10,13 +13,7 @@ import {
 	allTypescriptTargets,
 } from './data.js'
 import { parse, exec, exists, spawn, unlink, write } from './fs.js'
-import {
-	uniq,
-	toggle,
-	fixTsc,
-	getPreviousVersion,
-	getDuplicateDeps,
-} from './util.js'
+import { fixTsc, getPreviousVersion, getDuplicateDeps } from './util.js'
 import { readPackage, writePackage } from './package.js'
 import {
 	scaffoldEditions,
@@ -774,10 +771,11 @@ export async function updateRuntime(state) {
 	}
 
 	// targets
-	const allTargets = uniq([...allTypescriptTargets, ...allLanguages]).map((i) =>
-		i.toLowerCase()
-	)
-	const usedTargets = uniq([
+	const allTargets = unique([
+		...allTypescriptTargets,
+		...allLanguages,
+	]).map((i) => i.toLowerCase())
+	const usedTargets = unique([
 		...answers.languages.map((i) => i.toLowerCase()),
 		...state.activeEditions
 			.map((e) =>
@@ -913,7 +911,7 @@ export async function updateRuntime(state) {
 						resolveJsonModule: true,
 						isolatedModules: true,
 					},
-					include: uniq([
+					include: unique([
 						'components',
 						'pages',
 						'public',

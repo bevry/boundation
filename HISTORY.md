@@ -1,5 +1,9 @@
 # History
 
+## v1.69.1 2020 November 3
+
+-   Extracted out some utilities into [@bevry/list](https://github.com/bevry/list), [arrange-package-json](https://github.com/bevry/arrange-package-json), and [@bevry/github-orgs](https://github.com/bevry/github-orgs)
+
 ## v1.69.0 2020 October 29
 
 -   Node version handling improvements have continued even further

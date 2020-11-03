@@ -1,12 +1,14 @@
-// External
+// builtin
 import { join } from 'path'
 
-// Local
+// external
 import testen from '@bevry/testen'
+import { complement, intersect } from '@bevry/list'
+
+// local
 const { Versions } = testen
 import { status } from './log.js'
 import { writePackage } from './package.js'
-import { complement, intersect } from './util.js'
 import { updateRuntime } from './runtime.js'
 import versionCompare from 'version-compare'
 import { filterNodeVersions } from './node-versions.js'

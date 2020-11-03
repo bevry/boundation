@@ -1,8 +1,11 @@
 /* eslint-disable no-use-before-define */
+
+// external
 import fetch from 'node-fetch'
 import Errlop from 'errlop'
 import withinRange from 'version-range'
 import versionCompare from 'version-compare'
+import { last } from '@bevry/list'
 
 // prepare date
 const nodeVersionsMap = new Map()
@@ -11,11 +14,6 @@ let nodeVersionLatestCurrent,
 	nodeVersionLatestActive,
 	nodeVersionLatestMaintenance
 const now = new Date().getTime()
-
-// utilities
-export function last(arr) {
-	return arr[arr.length - 1]
-}
 
 // fetch
 export async function fetchNodeVersions() {

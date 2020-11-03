@@ -1,5 +1,7 @@
-// External
+// builtin
 import { cwd } from 'process'
+
+// local
 import { getAllESVersions, getESVersion } from './es-versions.js'
 
 export const pwd = cwd()
@@ -9,10 +11,6 @@ export const typesDir = 'compiled-types'
 // fill this with a map of dependency package names to versions that are busted
 // so that if they are necessary, a previous verison is used instead
 export const bustedVersions = {}
-
-export const bevryOrganisationsList = 'balupton bevry bevry-trading docpad browserstate webwrite chainyjs interconnectapp'.split(
-	' '
-)
 
 export const allLanguages = [
 	'typescript',

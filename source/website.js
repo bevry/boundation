@@ -1,7 +1,9 @@
+// builtin
 import * as pathUtil from 'path'
 
+// local
 import { pwd } from './data.js'
-import { exists, parse } from './fs.js'
+import { parse } from './fs.js'
 
 export function getVercelName(vercelConfig) {
 	return vercelConfig.name || null

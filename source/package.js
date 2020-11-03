@@ -1,20 +1,22 @@
-// External
+// builtin
 import * as pathUtil from 'path'
+
+// external
 import * as typeChecker from 'typechecker'
+import { is as isBevryOrganisation } from '@bevry/github-orgs'
+import { complement, has } from '@bevry/list'
 
 // esm workarounds
 import arrangekeys from 'arrangekeys'
+import arrangePackageProperties from 'arrange-package-json'
 
-// Local
+// local
 import {
 	defaultDeploy,
 	ensureScript,
 	fixBalupton,
-	has,
-	isBevryOrganisation,
 	repoToOrganisation,
 	repoToWebsite,
-	complement,
 } from './util.js'
 import { pwd } from './data.js'
 import { status } from './log.js'
@@ -419,10 +421,7 @@ export function arrangePackage(state) {
 	// Arrange
 
 	// package keys
-	packageData = arrangekeys(
-		packageData,
-		'title name version private description homepage license keywords badges funding author sponsors maintainers contributors bugs repository engines editions bin types type main node cjs mjs test exports deno browser module jspm dependencies optionalDependencies devDependencies peerDependencies scripts vercel eslintConfig prettier babel'
-	)
+	packageData = arrangePackageProperties(packageData)
 
 	// ---------------------------------
 	// Scripts

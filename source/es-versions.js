@@ -1,5 +1,8 @@
-import { fetchNodeVersions, getNodeVersion } from './node-versions.js'
+// external
 import versionCompare from 'version-compare'
+
+// local
+import { fetchNodeVersions, getNodeVersion } from './node-versions.js'
 
 const now = new Date()
 const thisYear = now.getFullYear()
