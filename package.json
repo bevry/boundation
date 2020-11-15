@@ -104,7 +104,7 @@
     "errlop": "^4.1.0",
     "filedirname": "^2.4.0",
     "get-cli-arg": "^6.8.0",
-    "githubauthreq": "^5.19.0",
+    "githubauthreq": "^6.0.0",
     "inquirer": "^7.3.3",
     "js-yaml": "^3.14.0",
     "node-fetch": "^2.6.1",
