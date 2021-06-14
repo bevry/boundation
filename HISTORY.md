@@ -1,5 +1,17 @@
 # History
 
+## v1.70.0 2021 June 14
+
+-   Moved from TravisCI to GitHub Actions, as TravisCI nuked our ability to use their free tier which is the only one we can afford
+-   Changed `cdnDeploymentStrategy` question to be `deploymentStrategy`, introducing `custom` option
+-   Updated `nodeVersions` question to default to only release node versions
+-   Removed questions pertaining to secrets/tokens, as they are now handled via the GitHub Actions secret engine
+-   Updated `targets` question to correct sort order otherwise edition trimming will not work
+-   YAML log messages are now always human readable, instead of using references sometimes
+-   Extracted out some utilities into [@bevry/node-versions](https://github.com/bevry/node-versions), [version-compare](https://github.com/bevry/version-compare), and [@bevry/github-orgs](https://github.com/bevry/github-orgs)
+-   This work was done in November 2021, however life circumstances mean it is only released now
+-   Updated dependencies
+
 ## v1.69.3 2020 November 3
 
 -   Fix where errors are written (regression since v1.69.2)
