@@ -4,6 +4,7 @@ import { join } from 'path'
 // external
 import testen from '@bevry/testen'
 import { complement, intersect } from '@bevry/list'
+import { filterNodeVersions } from '@bevry/node-versions'
 
 // local
 const { Versions } = testen
@@ -11,30 +12,12 @@ import { status } from './log.js'
 import { writePackage } from './package.js'
 import { updateRuntime } from './runtime.js'
 import versionCompare from 'version-compare'
-import { filterNodeVersions } from './node-versions.js'
+import { nodeMajorVersion, nodeMajorVersions } from './util.js'
 
-export function nodeMajorVersion(value) {
-	if (typeof value === 'number') {
-		value = String(value)
-	} else if (typeof value !== 'string') {
-		return null
-	}
-	return value.startsWith('0')
-		? value.split('.').slice(0, 2).join('.')
-		: value.split('.')[0]
-}
-
-export function nodeMajorVersions(array) {
-	return array.map((version) => nodeMajorVersion(version))
-}
 // Update engines
 export async function updateEngines(state) {
-	const {
-		answers,
-		nodeEditionsRequire,
-		nodeEditionsImport,
-		packageData,
-	} = state
+	const { answers, nodeEditionsRequire, nodeEditionsImport, packageData } =
+		state
 	const allPassedVersions = new Set()
 	const serial =
 		['testen', 'safefs', 'lazy-require'].includes(answers.name) ||
@@ -50,7 +33,7 @@ export async function updateEngines(state) {
 		status('determining engines for project...')
 		const versions = new Versions(answers.nodeVersionsTested)
 		await versions.load()
-		await versions.install()
+		await versions.install() // @todo if this fails (so no internet), it continues, this should not be the case
 		const numbers = versions.map((version) => version.version)
 		await versions.test(`${answers.packageManager} test`, serial)
 		const passed = versions.json.passed || []
@@ -280,7 +263,7 @@ export async function updateEngines(state) {
 		packageData.engines.node = '>=' + answers.nodeVersionSupportedMinimum
 	}
 
-	// apply the optional versions so that travis has access
+	// apply the optional versions so that ci has access
 	state.nodeVersionsOptional = failedAndUnsupported
 
 	// =================================

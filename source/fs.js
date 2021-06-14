@@ -16,7 +16,7 @@ export function exists(file) {
 		const path = pathUtil.resolve(pwd, file)
 		return new Promise(function (resolve) {
 			fsUtil.exists(path, function (exists) {
-				console.log(path, exists ? 'does' : 'does not', 'exist')
+				// console.log(path, exists ? 'does' : 'does not', 'exist')
 				resolve(exists)
 			})
 		})
@@ -134,7 +134,7 @@ export async function readYAML(file) {
 }
 
 export function writeYAML(file, data) {
-	return write(file, yaml.dump(data))
+	return write(file, yaml.dump(data, { noRefs: true }))
 }
 
 export function spawn(command, opts = {}) {

@@ -180,12 +180,9 @@ export async function updateBaseFiles({ answers, packageData }) {
 	// write the readme file
 	// trim say `@bevry/update-contributors` to `update-contributors` for API doc links
 	let newDocumentationLink = ''
-	if (
-		answers.docs &&
-		['bevry', 'surge'].includes(answers.cdnDeploymentStrategy)
-	) {
+	if (answers.docs && ['bevry', 'surge'].includes(answers.deploymentStrategy)) {
 		const newDocumentationPrefix =
-			answers.cdnDeploymentStrategy === 'bevry'
+			answers.deploymentStrategy === 'bevry'
 				? `https://cdn.bevry.me/${trimOrgName(answers.name)}/master/`
 				: `http://master.${trimOrgName(answers.name)}.${
 						answers.organisation
@@ -295,42 +292,4 @@ export async function updateBaseFiles({ answers, packageData }) {
 	if (answers.docpadPlugin && answers.languages.includes('esnext')) {
 		await write('.prettierignore', ['test/'].join('\n'))
 	}
-
-	// dependabot
-	// CI will fail if any dep caused failure in any supported version
-	// Security Updates are now standard and controlled by github repository settings
-	// remove v1 file
-	await unlink('.dependabot/config.yml')
-	// add v2 file
-	// https://docs.github.com/en/github/administering-a-repository/enabling-and-disabling-version-updates#enabling-github-dependabot-version-updates
-	// https://docs.github.com/en/github/administering-a-repository/configuration-options-for-dependency-updates#ignore
-	await spawn(['mkdir', '-p', '.github'])
-	await writeYAML('.github/dependabot.yml', {
-		version: 2,
-		updates: [
-			{
-				'package-ecosystem': 'npm',
-				directory: '/',
-				schedule: { interval: 'weekly', day: 'sunday' },
-			},
-		],
-	})
-
-	// mergify
-	await writeYAML('.mergify.yml', {
-		pull_request_rules: [
-			{
-				name: 'automatic merge for Dependabot pull requests',
-				conditions: [
-					'author~=^dependabot(|-preview)\\[bot\\]$',
-					'status-success=Travis CI - Pull Request',
-				],
-				actions: {
-					merge: {
-						method: 'squash',
-					},
-				},
-			},
-		],
-	})
 }

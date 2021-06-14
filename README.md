@@ -7,7 +7,6 @@
 
 <!-- BADGES/ -->
 
-<span class="badge-travisci"><a href="http://travis-ci.com/bevry/boundation" title="Check this project's build status on TravisCI"><img src="https://img.shields.io/travis/com/bevry/boundation/master.svg" alt="Travis CI Build Status" /></a></span>
 <span class="badge-npmversion"><a href="https://npmjs.org/package/boundation" title="View this project on NPM"><img src="https://img.shields.io/npm/v/boundation.svg" alt="NPM version" /></a></span>
 <span class="badge-npmdownloads"><a href="https://npmjs.org/package/boundation" title="View this project on NPM"><img src="https://img.shields.io/npm/dm/boundation.svg" alt="NPM downloads" /></a></span>
 <span class="badge-daviddm"><a href="https://david-dm.org/bevry/boundation" title="View the status of this project's dependencies on DavidDM"><img src="https://img.shields.io/david/bevry/boundation.svg" alt="Dependency Status" /></a></span>
@@ -39,19 +38,28 @@ Install the package globally on Node.js v12 or higher using `npm install --globa
 
 It will ask you several questions about your project, then initialise or upgrade the project with the latest Bevry best-practices.
 
-If you have the `secret env` command available, you can preload `boundation` with the following usage:
-
-```bash
-secret env GITHUB_CLIENT_ID GITHUB_CLIENT_SECRET NPM_AUTHTOKEN TRAVIS_NOTIFICATION_EMAIL SURGE_LOGIN SURGE_TOKEN VERCEL_TOKEN -- boundation
-```
-
 ## Features
 
 -   Supports JavaScript, TypeScript, CoffeeScript, and Website projects
 -   Automatic [Editions](https://github.com/bevry/editions) setup and upgrades for automatic selection of the best edition for the environment, allowing you to develop for the latest environment with the latest technology, then automatically test on and support older environments
+    -   Automated edition generation so the one package can be used between Node.js, Web Browsers, and Deno where applicable
+    -   Automated ES6 Import and CJS Require compatibility generation
+    -   Automated compatible editions generated for Web Browsers, Node.js, Deno
+    -   Each generated edition is targeted specifically for each version of each target that you intend to support, with each edition compatibility tested and trimmed if redundant overlaps are present
 -   Uses [Projectz](https://github.com/bevry/projectz) to automatically generate and maintain your readme, license, badges, and the contributing file
--   Uses [Bevry's Base Files](https://github.com/bevry/base) which provides linting configurations that automatically detect the features of your projects, and adjusts the linting accordingly, as well as pulling down files like `.gitignore` and `.npmignore` with respect for custom sections
--   ESLint for JavaScript and TypeScript projects, and CoffeeLint for CoffeeScript projects
+-   Automatically configures sensible defaults based on the features that your project is using, while maintaining support for your extensions and customisations, supports
+    -   TSConfig for JavaScript and TypeScript projects
+    -   ESLint for JavaScript and TypeScript projects
+    -   Flow for JavaScript projects
+    -   CoffeeLint for CoffeeSCript projects
+    -   Zeit's Now and Next.js
+    -   DocPad Plugins
+-   Automatically gives you documentation generation and publishing for the following:
+    -   TypeDoc for TypeScript projects
+    -   JSDoc for JavaScript projects
+    -   YUIDoc for new CoffeeScript projects, and Biscotto for older projects
+-   Automated GitHub Actions setup and configuration for a variety of projects
+-   Automated package dependency upgrades and migrations to compatible versions
 -   Powerful NPM Scripts
     -   `npm run our:setup` for setting up the project for development
         -   automatic addition of your `my:setup:*` scripts
@@ -67,16 +75,6 @@ secret env GITHUB_CLIENT_ID GITHUB_CLIENT_SECRET NPM_AUTHTOKEN TRAVIS_NOTIFICATI
         -   on code projects, it will run verify, check for uncommitted changes, a changelog entry, performing the git tag automatically, and the git push
         -   on website projects, it will run verify and git push
         -   automatic addition of your `my:release:*` scripts
--   Optional automatic Travis CI setup to release your project to npm when tests pass, and to test on older environments
-    -   Powered by [Awesome Travis](https://github.com/bevry/awesome-travis)
--   Optional JSDoc for JavaScript projects
--   Automatic TypeDoc for TypeScript projects
--   Optional YUIDoc for new CoffeeScript projects, and Biscotto for old
--   Optional Flow Type for type checking of JavaScript projects
--   Optional ES6 Import module support
--   Automatic Babel support when needing to support browsers and older targets
--   Optional DocPad Plugin support
--   Automatic package dependency upgrades
 
 <!-- INSTALL/ -->
 

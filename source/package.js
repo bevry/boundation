@@ -17,6 +17,7 @@ import {
 	fixBalupton,
 	repoToOrganisation,
 	repoToWebsite,
+	trimEmpty,
 } from './util.js'
 import { pwd } from './data.js'
 import { status } from './log.js'
@@ -24,9 +25,10 @@ import { echoExists, exists, write, parse } from './fs.js'
 import { getVercelName } from './website.js'
 
 // Prepare
-const mandatoryScriptsList = 'our:setup our:compile our:meta our:verify our:deploy our:release test'.split(
-	' '
-)
+const mandatoryScriptsList =
+	'our:setup our:compile our:meta our:verify our:deploy our:release test'.split(
+		' '
+	)
 
 // ====================================
 // Fetchers
@@ -385,37 +387,7 @@ export function arrangePackage(state) {
 	}
 
 	// trim empty keys
-	for (const key in packageData) {
-		if (packageData.hasOwnProperty(key)) {
-			const value = packageData[key]
-			if (typeChecker.isArray(value) && typeChecker.isEmptyArray(value)) {
-				console.log(`trim: array: package.json:${key}`)
-				delete packageData[key]
-			} else if (
-				typeChecker.isPlainObject(value) &&
-				typeChecker.isEmptyPlainObject(value)
-			) {
-				console.log(`trim: empty: package.json:${key}`)
-				delete packageData[key]
-			} else if (value == null || value === '') {
-				console.log(`trim: null|'': package.json:${key}`)
-				delete packageData[key]
-			}
-		}
-	}
-
-	// ---------------------------------
-	// Badges
-
-	// set travisTLD if it is com
-	// we don't set it explicity to org
-	// so that when the official migration happens, there will be no manual changes
-	if (
-		packageData.badges.list.includes('travisci') &&
-		state.travisTLD === 'com'
-	) {
-		packageData.badges.config.travisTLD = state.travisTLD
-	}
+	trimEmpty(packageData)
 
 	// ---------------------------------
 	// Arrange
@@ -681,7 +653,7 @@ export async function updatePackageData(state) {
 	if (isBevryOrganisation(answers.organisation)) {
 		packageData.badges = {
 			list: [
-				'travisci',
+				'githubworkflow',
 				'npmversion',
 				'npmdownloads',
 				'daviddm',
@@ -698,6 +670,7 @@ export async function updatePackageData(state) {
 				'wishlist',
 			],
 			config: {
+				githubWorkflow: state.githubWorkflow,
 				githubSponsorsUsername: 'balupton',
 				buymeacoffeeUsername: 'balupton',
 				cryptoURL: 'https://bevry.me/crypto',
@@ -719,7 +692,7 @@ export async function updatePackageData(state) {
 		!packageData.badges.list.length
 	) {
 		packageData.badges = {
-			list: ['travisci', 'npmversion', 'npmdownloads', 'daviddm', 'daviddmdev'],
+			list: ['npmversion', 'npmdownloads', 'daviddm', 'daviddmdev'],
 		}
 	}
 

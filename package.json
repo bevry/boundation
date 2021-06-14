@@ -19,7 +19,6 @@
   ],
   "badges": {
     "list": [
-      "travisci",
       "npmversion",
       "npmdownloads",
       "daviddm",
@@ -45,14 +44,15 @@
       "patreonUsername": "bevry",
       "paypalURL": "https://bevry.me/paypal",
       "wishlistURL": "https://bevry.me/wishlist",
-      "travisTLD": "com",
       "githubUsername": "bevry",
       "githubRepository": "boundation",
       "githubSlug": "bevry/boundation",
       "npmPackageName": "boundation"
     }
   },
-  "funding": "https://bevry.me/fund",
+  "funding": {
+    "url": "https://bevry.me/fund"
+  },
   "author": "2017+ Bevry <us@bevry.me> (http://bevry.me)",
   "maintainers": [
     "Benjamin Lupton <b@lupton.cc> (https://github.com/balupton)"
@@ -86,7 +86,9 @@
       }
     }
   ],
-  "bin": "bin.mjs",
+  "bin": {
+    "boundation": "bin.mjs"
+  },
   "type": "module",
   "main": "source/index.js",
   "exports": {
@@ -98,34 +100,35 @@
     "@bevry/ansi": "^3.0.0",
     "@bevry/github-orgs": "^1.1.0",
     "@bevry/list": "^1.0.0",
+    "@bevry/node-versions": "^1.1.0",
     "@bevry/testen": "^3.7.1",
     "arrange-package-json": "^2.0.0",
     "arrangekeys": "^4.21.0",
-    "errlop": "^4.1.0",
+    "errlop": "^4.2.0",
+    "es-versions": "^1.0.0",
     "filedirname": "^2.4.0",
-    "get-cli-arg": "^6.8.0",
-    "githubauthreq": "^5.19.0",
-    "inquirer": "^7.3.3",
-    "js-yaml": "^3.14.0",
+    "get-cli-arg": "^7.0.0",
+    "inquirer": "^8.1.0",
+    "js-yaml": "^4.1.0",
     "node-fetch": "^2.6.1",
     "safeps": "^10.15.0",
-    "semver": "^7.3.2",
+    "semver": "^7.3.5",
     "typechecker": "^7.17.0",
-    "version-compare": "^1.1.0",
-    "version-range": "^1.1.0"
+    "version-compare": "^1.2.0",
+    "version-range": "^1.2.0"
   },
   "devDependencies": {
     "@bevry/update-contributors": "^1.18.0",
-    "@types/node-fetch": "^2.5.7",
+    "@types/node-fetch": "^2.5.10",
     "assert-helpers": "^8.1.0",
-    "eslint": "^7.12.1",
+    "eslint": "^7.28.0",
     "eslint-config-bevry": "^3.23.0",
-    "eslint-config-prettier": "^6.15.0",
-    "eslint-plugin-prettier": "^3.1.4",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^3.4.0",
     "kava": "^5.13.0",
-    "prettier": "^2.1.2",
-    "projectz": "^2.17.0",
-    "valid-directory": "^3.5.0"
+    "prettier": "^2.3.1",
+    "projectz": "^2.18.0",
+    "valid-directory": "^3.6.0"
   },
   "scripts": {
     "our:clean": "rm -Rf ./docs ./edition* ./es2015 ./es5 ./out ./.next",

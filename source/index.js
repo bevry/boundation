@@ -2,7 +2,7 @@
 import { status, success } from './log.js'
 import { spawn } from './fs.js'
 import { readPackage, updatePackageData } from './package.js'
-import { updateTravis } from './travis.js'
+import { updateCI } from './ci.js'
 import { getAnswers } from './questions.js'
 import { updateBaseFiles } from './base.js'
 import { generateEditions } from './editions.js'
@@ -26,7 +26,7 @@ export default async function init(state) {
 
 	await updateRuntime(state)
 
-	await updateTravis(state)
+	await updateCI(state)
 
 	// and finish it all up
 	status('running release prepare...')

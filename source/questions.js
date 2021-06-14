@@ -3,14 +3,25 @@ import * as pathUtil from 'path'
 
 // external
 import { unique, last, first } from '@bevry/list'
+import {
+	fetchAndFilterNodeVersions,
+	filterNodeVersions,
+	isNodeVersionActiveOrCurrent,
+	getESVersionsForNodeVersions,
+} from '@bevry/node-versions'
 
 // local
 import _getAnswers from './answers.js'
-import * as defaults from './defaults.js'
 import { pwd, allLanguages } from './data.js'
-import { isNumber, isGitUrl, isSpecified, trim, repoToSlug } from './util.js'
 import {
-	getGitBranch,
+	isNumber,
+	isGitUrl,
+	isSpecified,
+	trim,
+	repoToSlug,
+	hasScript,
+} from './util.js'
+import {
 	getGitEmail,
 	getGitOrganisation,
 	getGitOriginUrl,
@@ -47,12 +58,7 @@ import {
 	isSourceModule,
 } from './package.js'
 import { getVercelAliases, getVercelName } from './website.js'
-import {
-	fetchAndFilterNodeVersions,
-	filterNodeVersions,
-	isNodeVersionActiveOrCurrent,
-} from './node-versions.js'
-import { getESVersionsForNodeVersions } from './es-versions.js'
+import versionCompare from 'version-compare'
 
 // ====================================
 // Questions
@@ -230,22 +236,6 @@ export async function getQuestions(state) {
 			},
 			when({ vercelWebsite }) {
 				return vercelWebsite
-			},
-		},
-		{
-			// @todo this needs to be reworked
-			// as in travis.js we also just check for my:deploy
-			// and this is set to always skip, so is manually applied
-			// yet it has a default value
-			name: 'travisWebsite',
-			type: 'confirm',
-			message: 'Will it utilise a travis deploy script?',
-			default({ website }) {
-				return website === 'surge' || website === 'custom'
-			},
-			skip: true,
-			when({ travisWebsite }) {
-				return travisWebsite
 			},
 		},
 		{
@@ -622,13 +612,19 @@ export async function getQuestions(state) {
 			type: 'checkbox',
 			validate: isSpecified,
 			choices({ vercelWebsite, targetModules }) {
-				if (vercelWebsite) return fetchAndFilterNodeVersions({ vercel: true })
+				// use released flag just in case something ever changes
+				if (vercelWebsite)
+					return fetchAndFilterNodeVersions({ released: true, vercel: true })
 				if (targetModules.join('') === 'import')
 					return fetchAndFilterNodeVersions({
+						released: true,
 						maintainedOrLTS: true,
 						esm: true,
 					})
-				return fetchAndFilterNodeVersions({ maintainedOrLTS: true })
+				return fetchAndFilterNodeVersions({
+					released: true,
+					maintainedOrLTS: true,
+				})
 			},
 			async default(opts) {
 				const choices = await this.choices(opts)
@@ -791,18 +787,19 @@ export async function getQuestions(state) {
 				nodeVersionSupportedMaximum,
 				nodeVersionsSupported,
 			}) {
-				if (compilerNode === 'babel') {
-					return unique([
-						desiredNodeVersion,
-						nodeVersionSupportedMinimum,
-						nodeVersionSupportedMaximum,
-					])
-				} else if (compilerNode === 'typescript') {
-					return getESVersionsForNodeVersions(nodeVersionsSupported)
-				} else {
-					// ignored compiler
-					return []
-				}
+				// ensure versions are in order of most preferred to least preferred
+				// otherwise edition trimming will not work as expected
+				return (
+					compilerNode === 'babel'
+						? unique([
+								desiredNodeVersion,
+								nodeVersionSupportedMinimum,
+								nodeVersionSupportedMaximum,
+						  ]).sort(versionCompare)
+						: compilerNode === 'typescript'
+						? getESVersionsForNodeVersions(nodeVersionsSupported)
+						: []
+				).reverse()
 			},
 			default(opts) {
 				return this.choices(opts)
@@ -835,124 +832,14 @@ export async function getQuestions(state) {
 			},
 		},
 		{
-			name: 'cdnDeploymentStrategy',
+			name: 'deploymentStrategy',
 			message:
-				'Which CDN deployment strategy should be used for the project and its documentation?',
-			choices: ['surge', 'bevry', 'none'],
+				'Which deployment strategy should be used for the project and its documentation?',
+			choices: ['surge', 'bevry', 'custom', 'none'],
 			validate: isSpecified,
-			default: defaults.bevryCDNToken
-				? 'bevry'
-				: defaults.surgeLogin
-				? 'surge'
-				: 'none',
-			when({ docs }) {
-				return docs
-			},
-		},
-		{
-			name: 'travisComToken',
-			type: 'password',
-			message:
-				'If you wish to update travis, what is your token for travis-ci.com?\nYou can find it here: https://travis-ci.com/account/preferences',
-			filter: trim,
-			default: defaults.travisComToken,
-			skip: defaults.travisComToken,
-			ignore({ githubSlug }) {
-				return !githubSlug
-			},
-		},
-		{
-			name: 'travisOrgToken',
-			type: 'password',
-			message:
-				'If you wish to update travis, what is your token for travis-ci.org?\nYou can find it here: https://travis-ci.org/account/preferences',
-			filter: trim,
-			default: defaults.travisOrgToken,
-			skip: defaults.travisOrgToken,
-			ignore({ githubSlug }) {
-				return !githubSlug
-			},
-		},
-		{
-			name: 'travisUpdateEnvironment',
-			type: 'confirm',
-			message:
-				'Would you like to update the remote travis environment variables?',
-			default({ travisComToken, travisOrgToken }) {
-				return Boolean(travisComToken || travisOrgToken)
-			},
-			skip: true,
-		},
-		{
-			name: 'deployBranch',
-			message: 'For deploying the website, which branch should be deployed?',
-			validate: isSpecified,
-			filter: trim,
-			default: (await getGitBranch()) || 'master',
-			when({ travisUpdateEnvironment, travisWebsite }) {
-				return travisUpdateEnvironment && travisWebsite
-			},
-		},
-		{
-			name: 'bevryCDNToken',
-			type: 'password',
-			message: 'What is your Bevry CDN Token?',
-			validate: isSpecified,
-			filter: trim,
-			default: defaults.bevryCDNToken,
-			skip: defaults.bevryCDNToken,
-			when({ travisUpdateEnvironment, cdnDeploymentStrategy }) {
-				return travisUpdateEnvironment && cdnDeploymentStrategy === 'bevry'
-			},
-		},
-		{
-			name: 'surgeLogin',
-			message: 'What is your surge.sh username?',
-			validate: isSpecified,
-			filter: trim,
-			default: defaults.surgeLogin,
-			skip: defaults.surgeLogin,
-			when({ travisUpdateEnvironment, cdnDeploymentStrategy, website }) {
-				return (
-					travisUpdateEnvironment &&
-					(cdnDeploymentStrategy === 'surge' || website === 'surge')
-				)
-			},
-		},
-		{
-			name: 'surgeToken',
-			type: 'password',
-			message: 'What is your surge.sh token?',
-			validate: isSpecified,
-			filter: trim,
-			default: defaults.surgeToken,
-			skip: defaults.surgeToken,
-			when({ surgeLogin }) {
-				return surgeLogin
-			},
-		},
-		{
-			name: 'npmAuthToken',
-			type: 'password',
-			message: 'What will be the npm auth token for releasing on travis?',
-			validate: isSpecified,
-			filter: trim,
-			default: defaults.npmAuthToken,
-			skip: defaults.npmAuthToken,
-			when({ npm, cdnDeploymentStrategy }) {
-				return npm || cdnDeploymentStrategy === 'bevry'
-			},
-		},
-		{
-			name: 'travisEmail',
-			message: 'What email to use for travis notifications?',
-			filter: trim,
-			default: defaults.travisEmail || (await getGitEmail()),
-			skip() {
-				return defaults.travisEmail
-			},
-			when({ travisUpdateEnvironment }) {
-				return travisUpdateEnvironment
+			default: hasScript(packageData.scripts, 'my:deploy') ? 'custom' : 'surge',
+			when({ docs, website }) {
+				return docs || website
 			},
 		},
 	]

@@ -1,15 +1,19 @@
 // builtin
 import { cwd } from 'process'
 
-// local
-import { getAllESVersions, getESVersion } from './es-versions.js'
+// external
+import {
+	getAllESVersions,
+	getESVersion,
+	getDateWithYearOffset,
+} from 'es-versions'
 
 export const pwd = cwd()
 
 export const typesDir = 'compiled-types'
 
 // fill this with a map of dependency package names to versions that are busted
-// so that if they are necessary, a previous verison is used instead
+// so that if they are necessary, a previous version is used instead
 export const bustedVersions = {}
 
 export const allLanguages = [
@@ -25,12 +29,13 @@ export const allLanguages = [
 	'css',
 ]
 
-export const allTypescriptTargets = getAllESVersions()
+// @todo document why we reverse
+export const allTypescriptTargets = ['ESNext', ...getAllESVersions().reverse()]
 
 export const defaultCoffeeTarget = 'ESNext'
 
 // previous year
-export const defaultBrowserTarget = getESVersion(-1)
+export const defaultBrowserTarget = getESVersion(getDateWithYearOffset(-1))
 
 export const languageNames = {
 	typescript: 'TypeScript',

@@ -1,7 +1,7 @@
 // builtin
 import * as pathUtil from 'path'
 
-// local
+// external
 import { unique, toggle } from '@bevry/list'
 
 // local
@@ -481,9 +481,10 @@ export async function updateRuntime(state) {
 
 	// eslint
 	if (packages.eslint) {
-		packages.prettier = packages['eslint-config-prettier'] = packages[
-			'eslint-plugin-prettier'
-		] = 'dev'
+		packages.prettier =
+			packages['eslint-config-prettier'] =
+			packages['eslint-plugin-prettier'] =
+				'dev'
 		if (!packageData.eslintConfig) packageData.eslintConfig = {}
 		if (answers.name === 'eslint-config-bevry') {
 			packageData.eslintConfig.extends = ['./local.js']
@@ -546,9 +547,11 @@ export async function updateRuntime(state) {
 	}
 	// partially typescript
 	if (answers.languages.includes('typescript')) {
-		packages.typescript = packages[
-			'@typescript-eslint/eslint-plugin'
-		] = packages['@typescript-eslint/parser'] = 'dev'
+		packages.typescript =
+			packages['@typescript-eslint/eslint-plugin'] =
+			packages['@typescript-eslint/parser'] =
+				'dev'
+		versions.typescript = '4.2' // work around typedoc not supporting 4.3 yet
 	}
 	// not typescript
 	else {
@@ -613,13 +616,8 @@ export async function updateRuntime(state) {
 					packages.typedoc = 'dev'
 					parts.push(
 						'typedoc',
-						// use includeDeclarations if we are not a typescript project
-						answers.language === 'typescript' ? '' : '--includeDeclarations',
-						'--mode file',
 						"--exclude '**/+(*test*|node_modules)'",
 						'--excludeExternals',
-						'--name "$npm_package_name"',
-						'--readme ./README.md',
 						`--out ${out}`,
 						sourcePath
 					)
@@ -771,10 +769,9 @@ export async function updateRuntime(state) {
 	}
 
 	// targets
-	const allTargets = unique([
-		...allTypescriptTargets,
-		...allLanguages,
-	]).map((i) => i.toLowerCase())
+	const allTargets = unique([...allTypescriptTargets, ...allLanguages]).map(
+		(i) => i.toLowerCase()
+	)
 	const usedTargets = unique([
 		...answers.languages.map((i) => i.toLowerCase()),
 		...state.activeEditions
@@ -803,20 +800,27 @@ export async function updateRuntime(state) {
 		packageData.types || packages.jsdoc
 	)
 
-	// githubauthquerystring to githubauthreq
-	if (packageData.dependencies.githubauthquerystring) {
-		packages.githubauthquerystring = false
-		packages.githubauthreq = true
-	}
-
 	// special cases
 	if (answers.name === 'docpad-plugin-babel') {
-		packages['@babel/core'] = packages['@babel/preset-env'] = packages[
-			'@babel/preset-react'
-		] = true
-		packages['babel-core'] = packages['babel-preset-env'] = packages[
-			'babel-preset-react'
-		] = false
+		packages['@babel/core'] =
+			packages['@babel/preset-env'] =
+			packages['@babel/preset-react'] =
+				true
+		packages['babel-core'] =
+			packages['babel-preset-env'] =
+			packages['babel-preset-react'] =
+				false
+	}
+
+	// if an old package name exists, change it to its new version
+	const packageRewrites = {
+		githubauthquerystring: 'githubauthreq',
+	}
+	for (const [from, to] of Object.entries(packageRewrites)) {
+		if (packageData.dependencies[from]) {
+			packages[from] = false
+			packages[to] = true
+		}
 	}
 
 	// joe to kava
@@ -1064,9 +1068,10 @@ export async function updateRuntime(state) {
 	// so we can guarantee the bin file exists in the right place
 	if (packageData.bin) {
 		status('ensure correct bin permission...')
-		const bins = (typeof packageData.bin === 'string'
-			? [packageData.bin]
-			: Object.values(packageData.bin)
+		const bins = (
+			typeof packageData.bin === 'string'
+				? [packageData.bin]
+				: Object.values(packageData.bin)
 		).map((i) => `./${i}`)
 		await spawn(['chmod', '+x', ...bins])
 		status('...ensured correct bin permission')

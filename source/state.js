@@ -1,8 +1,9 @@
 // external
 import { has } from '@bevry/list'
 
+// export
 export const state = {
-	travisTLD: null, // or "org" or "com"
+	githubWorkflow: 'bevry', // will change if custom was detected
 	typesDirectoryPath: null, // types directory with trailing slash and ./ prefix
 	answers: null,
 	nodeVersionsOptional: [],

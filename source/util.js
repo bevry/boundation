@@ -1,19 +1,62 @@
+// external
 import * as typeChecker from 'typechecker'
 
-export function unjoin(a, b) {
-	if (!b) return null
-	const A = a.endsWith('/') ? a : a + '/'
-	const B = b.startsWith(A) ? b.substr(A.length) : A
-	return B
+/** Delete the keys of the object which have empty values */
+export function trimEmpty(obj, log = false, parents = []) {
+	for (const key in obj) {
+		if (obj.hasOwnProperty(key)) {
+			const keys = [...parents, key]
+			const value = obj[key]
+			if (typeChecker.isArray(value) && typeChecker.isEmptyArray(value)) {
+				if (log) console.log('trim:', keys, value)
+				delete obj[key]
+			} else if (
+				typeChecker.isPlainObject(value) &&
+				typeChecker.isEmptyPlainObject(trimEmpty(value, log, keys))
+			) {
+				if (log) console.log('trim:', keys, value)
+				delete obj[key]
+			} else if (value == null || value === '') {
+				if (log) console.log('trim:', keys, value)
+				delete obj[key]
+			}
+		}
+	}
+	return obj
 }
 
-export function cojoin(a, b) {
-	if (!b) return null
-	const A = a.endsWith('/') ? a : a + '/'
-	const B = b.startsWith(A) ? b : A + b
-	return B
+export function nodeMajorVersion(value) {
+	if (typeof value === 'number') {
+		value = String(value)
+	} else if (typeof value !== 'string') {
+		return null
+	}
+	return value.startsWith('0')
+		? value.split('.').slice(0, 2).join('.')
+		: value.split('.')[0]
 }
 
+export function nodeMajorVersions(array) {
+	return array.map((version) => nodeMajorVersion(version))
+}
+
+/** Ensure that the suffix path does not start with the prefix directory path. */
+export function unjoin(prefix, suffix) {
+	if (!suffix) return null
+	const start = prefix.endsWith('/') ? prefix : prefix + '/'
+	const result = suffix.startsWith(start) ? suffix.substr(start.length) : start // @todo should be suffix?
+	return result
+}
+
+/** Ensure that the suffix path starts with the prefix directory path. */
+export function cojoin(prefix, suffix) {
+	if (!suffix) return null
+	const start = prefix.endsWith('/') ? prefix : prefix + '/'
+	const result = suffix.startsWith(start) ? suffix : start + suffix
+	return result
+}
+
+/** Is the value empty? */
 export function isEmpty(value) {
 	if (value == null) return true
 	if (value === '') return true
@@ -22,6 +65,7 @@ export function isEmpty(value) {
 	return false
 }
 
+/** Set the property inside the object to the value, however if value is empty, delete the property instead. */
 export function set(obj, key, value) {
 	if (isEmpty(value)) delete obj[key]
 	else obj[key] = value
@@ -43,20 +87,30 @@ export function binField(answers, binEntry) {
 	return null
 }
 
-export function importOrRequire(left, right, modules = true) {
-	return modules
+/**
+ * Get the import/require statement text
+ * @returns an ESM import if `isESM` is truthy, otherwise a CJS require if `isESM` is falsey
+ */
+export function importOrRequire(left, right, isESM = true) {
+	return isESM
 		? `import ${left} from '${right}'`
-		: `const ${left} = require('${modules}')`
+		: `const ${left} = require('${right}')`
 }
 
-export function exportOrExports(content, modules = true) {
-	return modules ? `export default ${content}` : `module.exports = ${content}`
+/**
+ * Get the export statement text
+ * @returns an ESM export if `isESM` is truthy, otherwise a CJS export if `isESM` is falsey
+ */
+export function exportOrExports(content, isESM = true) {
+	return isESM ? `export default ${content}` : `module.exports = ${content}`
 }
 
-export function useStrict(modules = true) {
-	return modules ? '' : "'use strict'\n"
+/** Get the `use strict` header text, but only if it is needed. */
+export function useStrict(isESM = true) {
+	return isESM ? '' : "'use strict'\n"
 }
 
+/** Get packages from both `dependencies` and `devDependencies` */
 export function getAllDepNames(packageData) {
 	if (!packageData.dependencies) packageData.dependencies = {}
 	if (!packageData.devDependencies) packageData.devDependencies = {}
@@ -65,6 +119,7 @@ export function getAllDepNames(packageData) {
 	return depNames.concat(devDepNames)
 }
 
+/** Get packages that exist in both `dependencies` and `devDependencies` */
 export function getDuplicateDeps(packageData) {
 	const allDepNames = new Set(getAllDepNames(packageData))
 	const duplicateDepNames = []
@@ -76,6 +131,7 @@ export function getDuplicateDeps(packageData) {
 	return duplicateDepNames
 }
 
+/** Decrement the version number by the specified arguments */
 export function getPreviousVersion(version, major = 0, minor = 1) {
 	const parts = String(version)
 		.split('.')
@@ -91,7 +147,7 @@ export function getPreviousVersion(version, major = 0, minor = 1) {
 	return parts.join('.')
 }
 
-// fix typescript embedding the source directory inside the output
+/** Fix typescript embedding the source directory inside the output */
 export function fixTsc(editionDirectory, sourceDirectory) {
 	return [
 		'&&',
@@ -123,53 +179,65 @@ export function fixBalupton(person) {
 		)
 }
 
+/** Trim the organisation/scope name from the package name */
 export function trimOrgName(str) {
 	if (str[0] === '@') return str.split('/').slice(1).join('/')
 	return str
 }
 
-export function strip(o, ...a) {
-	for (const i of a) {
-		delete o[i]
+/** Strip the object of the keys */
+export function strip(obj, ...keys) {
+	for (const key of keys) {
+		delete obj[key]
 	}
-	return o
+	return obj
 }
 
 export function addExtension(file, extension) {
 	return file ? `${file}.${extension}` : file
 }
 
+/** Trim the string */
 export function trim(input) {
 	return input.trim()
 }
+
 export function slugit(input) {
 	return (
 		(input && input !== 'undefined' && input.replace(/[^a-zA-Z0-9.-]+/g, '')) ||
 		''
 	)
 }
+
 export function isSpecified(input) {
 	return slugit(Array.isArray(input) ? input.join(' ') : input).length !== 0
 }
+
+/** Is the string representing a positive number? */
 export function isNumber(input) {
 	return /^[0-9.]+$/.test(input)
 }
+
 export function isGitUrl(input) {
 	return /\.git$/.test(input)
 }
+
 export function repoToWebsite(input = '') {
 	return input
 		.replace(/\.git$/, '')
 		.replace(/^(ssh[:/]+)?git@github\.com[:/]*/, 'https://github.com/')
 }
+
 export function repoToSlug(input = '') {
 	return (
 		(input && input.replace(/\.git$/, '').replace(/^.+?\.com[:/]*/, '')) || ''
 	)
 }
+
 export function repoToOrganisation(input = '') {
 	return (input && repoToSlug(input).split('/')[0]) || ''
 }
+
 export function repoToProject(input = '') {
 	return (input && repoToSlug(input).split('/')[1]) || ''
 }
@@ -182,6 +250,7 @@ export const defaultDeploy =
 export function hasScript(scripts, name) {
 	return scripts && scripts[name] && scripts[name] !== defaultScript
 }
+
 export function ensureScript(scripts, name) {
 	if (scripts && !scripts[name]) scripts[name] = defaultScript
 }
