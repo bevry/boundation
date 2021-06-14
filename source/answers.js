@@ -1,8 +1,6 @@
 // external
 import inquirer from 'inquirer'
 import * as ansi from '@bevry/ansi'
-
-// external
 import Errlop from 'errlop'
 import getarg from 'get-cli-arg'
 
