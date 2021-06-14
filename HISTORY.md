@@ -1,5 +1,9 @@
 # History
 
+## v1.71.0 2021 June 14
+
+-   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
+
 ## v1.70.0 2021 June 14
 
 -   Moved from TravisCI to GitHub Actions, as TravisCI nuked our ability to use their free tier which is the only one we can afford

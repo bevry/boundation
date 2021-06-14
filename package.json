@@ -1,6 +1,6 @@
 {
   "name": "boundation",
-  "version": "1.70.0",
+  "version": "1.71.0",
   "description": "Automatic scaffolding and upgrading of your JavaScript ecosystem projects using Bevry's best practices",
   "homepage": "https://github.com/bevry/boundation",
   "license": "MIT",
@@ -19,6 +19,7 @@
   ],
   "badges": {
     "list": [
+      "githubworkflow",
       "npmversion",
       "npmdownloads",
       "daviddm",
@@ -35,6 +36,7 @@
       "wishlist"
     ],
     "config": {
+      "githubWorkflow": "bevry",
       "githubSponsorsUsername": "balupton",
       "buymeacoffeeUsername": "balupton",
       "cryptoURL": "https://bevry.me/crypto",
@@ -50,9 +52,7 @@
       "npmPackageName": "boundation"
     }
   },
-  "funding": {
-    "url": "https://bevry.me/fund"
-  },
+  "funding": "https://bevry.me/fund",
   "author": "2017+ Bevry <us@bevry.me> (http://bevry.me)",
   "maintainers": [
     "Benjamin Lupton <b@lupton.cc> (https://github.com/balupton)"
@@ -82,13 +82,11 @@
         "import"
       ],
       "engines": {
-        "node": "12 || 14 || 15"
+        "node": "12 || 14"
       }
     }
   ],
-  "bin": {
-    "boundation": "bin.mjs"
-  },
+  "bin": "bin.mjs",
   "type": "module",
   "main": "source/index.js",
   "exports": {
