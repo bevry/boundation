@@ -551,7 +551,6 @@ export async function updateRuntime(state) {
 			packages['@typescript-eslint/eslint-plugin'] =
 			packages['@typescript-eslint/parser'] =
 				'dev'
-		versions.typescript = '4.2' // work around typedoc not supporting 4.3 yet
 	}
 	// not typescript
 	else {
@@ -589,6 +588,8 @@ export async function updateRuntime(state) {
 		// typescript
 		if (answers.languages.includes('typescript')) {
 			tools.push('typedoc')
+			// https://github.com/TypeStrong/typedoc/releases/tag/v0.21.0 now supports typescript 4.3
+			versions.typescript = '4.3'
 		}
 		// coffeescript
 		if (answers.languages.includes('coffescript')) {
