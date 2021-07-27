@@ -4,11 +4,11 @@ import * as pathUtil from 'path'
 // external
 import { unique, last, first } from '@bevry/list'
 import {
-	fetchAndFilterNodeVersions,
 	filterNodeVersions,
+	filterSignificantNodeVersions,
 	isNodeVersionActiveOrCurrent,
-	getESVersionsForNodeVersions,
-} from '@bevry/node-versions'
+} from '@bevry/nodejs-versions'
+import { fetchExclusiveCompatibleESVersionsForNodeVersions } from '@bevry/nodejs-ecmascript-compatibility'
 
 // local
 import _getAnswers from './answers.js'
@@ -614,14 +614,14 @@ export async function getQuestions(state) {
 			choices({ vercelWebsite, targetModules }) {
 				// use released flag just in case something ever changes
 				if (vercelWebsite)
-					return fetchAndFilterNodeVersions({ released: true, vercel: true })
+					return filterSignificantNodeVersions({ released: true, vercel: true })
 				if (targetModules.join('') === 'import')
-					return fetchAndFilterNodeVersions({
+					return filterSignificantNodeVersions({
 						released: true,
 						maintainedOrLTS: true,
 						esm: true,
 					})
-				return fetchAndFilterNodeVersions({
+				return filterSignificantNodeVersions({
 					released: true,
 					maintainedOrLTS: true,
 				})
@@ -780,7 +780,7 @@ export async function getQuestions(state) {
 			type: 'checkbox',
 			message: 'Which compile targets should be generated?',
 			validate: isSpecified,
-			choices({
+			async choices({
 				compilerNode,
 				desiredNodeVersion,
 				nodeVersionSupportedMinimum,
@@ -797,7 +797,9 @@ export async function getQuestions(state) {
 								nodeVersionSupportedMaximum,
 						  ]).sort(versionCompare)
 						: compilerNode === 'typescript'
-						? getESVersionsForNodeVersions(nodeVersionsSupported)
+						? await fetchExclusiveCompatibleESVersionsForNodeVersions(
+								nodeVersionsSupported
+						  )
 						: []
 				).reverse()
 			},

@@ -4,7 +4,7 @@ import { join } from 'path'
 // external
 import testen from '@bevry/testen'
 import { complement, intersect } from '@bevry/list'
-import { filterNodeVersions } from '@bevry/node-versions'
+import { filterNodeVersions } from '@bevry/nodejs-versions'
 
 // local
 const { Versions } = testen

@@ -3,10 +3,10 @@ import { cwd } from 'process'
 
 // external
 import {
-	getAllESVersions,
-	getESVersion,
+	getESVersionsByNow,
+	getESVersionByDate,
 	getDateWithYearOffset,
-} from 'es-versions'
+} from '@bevry/ecmascript-versions'
 
 export const pwd = cwd()
 
@@ -29,13 +29,18 @@ export const allLanguages = [
 	'css',
 ]
 
-// @todo document why we reverse
-export const allTypescriptTargets = ['ESNext', ...getAllESVersions().reverse()]
+// we reverse, to make sure it is newest first
+export const allTypescriptTargets = [
+	'ESNext',
+	...getESVersionsByNow().reverse(),
+]
 
 export const defaultCoffeeTarget = 'ESNext'
 
 // previous year
-export const defaultBrowserTarget = getESVersion(getDateWithYearOffset(-1))
+export const defaultBrowserTarget = getESVersionByDate(
+	getDateWithYearOffset(-1)
+)
 
 export const languageNames = {
 	typescript: 'TypeScript',

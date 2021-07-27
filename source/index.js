@@ -8,8 +8,11 @@ import { updateBaseFiles } from './base.js'
 import { generateEditions } from './editions.js'
 import { readWebsite, updateWebsite } from './website.js'
 import { updateRuntime } from './runtime.js'
+import { preloadNodeVersions } from '@bevry/nodejs-versions'
 
 export default async function init(state) {
+	await preloadNodeVersions()
+
 	await readPackage(state)
 
 	await readWebsite(state)
