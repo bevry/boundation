@@ -389,7 +389,7 @@ export async function updateRuntime(state) {
 		]
 			.map((i) => i.join(' '))
 			.join(' && '),
-		'our:release:push': 'git push origin master && git push origin --tags',
+		'our:release:push': 'git push origin && git push origin --tags',
 		'our:release': [...run, 'our:release:push'].join(' '),
 	}
 
@@ -406,7 +406,7 @@ export async function updateRuntime(state) {
 			'our:release:check-dirty': 'git diff --exit-code',
 			'our:release:tag':
 				'export MESSAGE=$(cat ./HISTORY.md | sed -n "/## v$npm_package_version/,/##/p" | sed \'s/## //\' | awk \'NR>1{print buf}{buf = $0}\') && test "$MESSAGE" || (echo \'proper changelog entry not found\' && exit -1) && git tag v$npm_package_version -am "$MESSAGE"',
-			'our:release:push': 'git push origin master && git push origin --tags',
+			'our:release:push': 'git push origin && git push origin --tags',
 			'our:release': [
 				[...run, 'our:release:prepare'],
 				[...run, 'our:release:check-changelog'],
