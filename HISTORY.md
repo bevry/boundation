@@ -1,5 +1,13 @@
 # History
 
+## v1.72.0 2021 July 28
+
+-   ECMAScript versions and Node.js versions are now accurately determined
+-   ECMAScript compatibility targets are now accurately determined for the requirements before we even start testing on them
+    -   This solves the issue where ECMAScript 2015 was ratified by Node.js v4's release date, but Node.js v4 only supports ES5
+-   TypeDoc and TypeScript integration updates
+-   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
+
 ## v1.71.0 2021 June 14
 
 -   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
