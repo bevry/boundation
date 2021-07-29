@@ -188,8 +188,8 @@ export async function updateBaseFiles({ answers, packageData }) {
 						answers.organisation
 				  }.surge.sh/`
 		const newDocumentationSuffix = `docs/${
-			answers.language === 'typescript' ? 'globals.html' : 'index.html'
-		}`
+			answers.deploymentStrategy === 'bevry' ? 'index.html' : ''
+		}` // don't use globals.html, it may not always be present
 		const newDocumentationURL = newDocumentationPrefix + newDocumentationSuffix
 		newDocumentationLink = `[Complete API Documentation.](${newDocumentationURL})`
 	}

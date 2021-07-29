@@ -1,5 +1,10 @@
 # History
 
+## v1.73.0 2021 July 30
+
+-   Fix TypeScript documentation link
+-   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
+
 ## v1.72.0 2021 July 28
 
 -   ECMAScript versions and Node.js versions are now accurately determined
