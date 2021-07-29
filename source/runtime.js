@@ -14,7 +14,7 @@ import {
 } from './data.js'
 import { parse, exec, exists, spawn, unlink, write } from './fs.js'
 import { fixTsc, getPreviousVersion, getDuplicateDeps } from './util.js'
-import { readPackage, writePackage } from './package.js'
+import { getPackageBinEntry, readPackage, writePackage } from './package.js'
 import {
 	scaffoldEditions,
 	updateEditionEntries,
@@ -377,7 +377,9 @@ export async function updateRuntime(state) {
 		'our:setup:install': commands[answers.packageManager].install.join(' '),
 		'our:clean': 'rm -Rf ./docs ./edition* ./es2015 ./es5 ./out ./.next',
 		'our:meta:projectz':
-			packageData.name === 'projectz' ? 'npx . compile' : 'projectz compile',
+			packageData.name === 'projectz'
+				? 'npm run our:bin -- compile'
+				: 'projectz compile',
 		'our:test': [[...run, 'our:verify'], test]
 			.map((i) => i.join(' '))
 			.join(' && '),
@@ -391,6 +393,11 @@ export async function updateRuntime(state) {
 			.join(' && '),
 		'our:release:push': 'git push origin && git push origin --tags',
 		'our:release': [...run, 'our:release:push'].join(' '),
+	}
+
+	// add bin script
+	if (packageData.bin) {
+		state.scripts['our:bin'] = `node ./${packageData.bin}`
 	}
 
 	// add test script
@@ -522,7 +529,7 @@ export async function updateRuntime(state) {
 				// @todo, once make-deno-edition API is used, this can be fixzed
 				// it is currently disabled because it cannot call itself during the compile step
 				// as it has not finished compiling
-				// state.scripts['our:compile:deno'] = 'npx . --attempt'
+				// state.scripts['our:compile:deno'] = 'npm run our:bin -- --attempt'
 			} else {
 				state.scripts['our:compile:deno'] = 'make-deno-edition --attempt'
 				packages['make-deno-edition'] = 'dev'
@@ -748,7 +755,7 @@ export async function updateRuntime(state) {
 			packages['@bevry/update-contributors'] = 'dev'
 			state.scripts['our:meta:contributors'] = 'update-contributors'
 		} else {
-			state.scripts['our:meta:directory'] = 'npx .'
+			state.scripts['our:meta:directory'] = 'npm run our:bin'
 		}
 		if (answers.name !== 'valid-directory') {
 			packages['valid-directory'] = 'dev'
@@ -757,14 +764,14 @@ export async function updateRuntime(state) {
 			// do not valid-directory, the valid-directory package
 			// as it deliberately has invalid files in it
 			// such that it tests can detect that it works
-			// state.scripts['our:verify:directory'] = 'npx .'
+			// state.scripts['our:verify:directory'] = 'npm run our:bin'
 		}
 		if (packageData.module) {
 			if (answers.name !== 'valid-module') {
 				packages['valid-module'] = 'dev'
 				state.scripts['our:verify:module'] = 'valid-module'
 			} else {
-				state.scripts['our:verify:module'] = 'npx .'
+				state.scripts['our:verify:module'] = 'npm run our:bin'
 			}
 		}
 	}
@@ -879,12 +886,15 @@ export async function updateRuntime(state) {
 		// Only enable isolatedModules on TypeScript projects, as for JavaScript projects it will be incompatible with 'use strict'
 		// resolveJsonModule seems to cause too many issues, so is disabled unless needed
 		const lib = new Set()
+		const exclude = new Set()
 		try {
 			const data = await parse(answers.tsconfig)
 			const list =
 				(data && data.compilerOptions && data.compilerOptions.lib) || []
 			// add any lib that has a dot back to lib
 			list.filter((i) => i.includes('.')).forEach((i) => lib.add(i))
+			// add back excludes
+			data.exclude.forEach((i) => exclude.add(i))
 		} catch (e) {
 			// ignore
 		}
@@ -892,6 +902,7 @@ export async function updateRuntime(state) {
 		if (answers.keywords.has('webworker')) lib.add('WebWorker')
 		if (answers.keywords.has('dom')) lib.add('DOM').add('DOM.Iterable')
 		if (answers.keywords.has('esnext')) lib.add('ESNext')
+		if (answers.website) exclude.add('node_modules')
 		const typescriptTarget = answers.targets.find((i) =>
 			allTypescriptTargets.includes(i)
 		)
@@ -923,7 +934,6 @@ export async function updateRuntime(state) {
 						'lib',
 						answers.staticDirectory,
 					]),
-					exclude: ['node_modules'],
 			  }
 			: {
 					compilerOptions: Object.assign(
@@ -942,6 +952,7 @@ export async function updateRuntime(state) {
 					include: [answers.sourceDirectory],
 			  }
 		if (lib.size === 0) delete tsconfig.compilerOptions.lib
+		if (exclude.size !== 0) tsconfig.exclude = Array.from(exclude)
 		await write('tsconfig.json', JSON.stringify(tsconfig, null, '  ') + '\n')
 		status('...wrote tsconfig file')
 	} else {

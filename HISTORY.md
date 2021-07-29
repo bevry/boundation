@@ -1,5 +1,10 @@
 # History
 
+## v1.74.0 2021 July 30
+
+-   Maintain `tsconfig.json:exclude` between boundation runs
+-   Don't use `npx` anymore, it keeps diverging from what we actually want.
+
 ## v1.73.0 2021 July 30
 
 -   Fix TypeScript documentation link
