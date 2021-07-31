@@ -1,5 +1,12 @@
 # History
 
+## v1.75.0 2021 August 1
+
+-   Maintain `tsconfig.json:compilerOptions:outDir` between boundation runs
+    -   Works around https://github.com/TypeStrong/typedoc/issues/1639
+-   If there is a `tsconfig.json` parsing error, it is now reported
+-   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
+
 ## v1.74.0 2021 July 30
 
 -   Maintain `tsconfig.json:exclude` between boundation runs

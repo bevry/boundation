@@ -887,16 +887,30 @@ export async function updateRuntime(state) {
 		// resolveJsonModule seems to cause too many issues, so is disabled unless needed
 		const lib = new Set()
 		const exclude = new Set()
-		try {
-			const data = await parse(answers.tsconfig)
-			const list =
-				(data && data.compilerOptions && data.compilerOptions.lib) || []
-			// add any lib that has a dot back to lib
-			list.filter((i) => i.includes('.')).forEach((i) => lib.add(i))
-			// add back excludes
-			data.exclude.forEach((i) => exclude.add(i))
-		} catch (e) {
-			// ignore
+		let customCompilerOutDir = ''
+		if (await exists(answers.tsconfig)) {
+			try {
+				// parse
+				const data = (await parse(answers.tsconfig)) || {}
+
+				// ensure necessary properties exist so we don't crash
+				if (data.compilerOptions == null) data.compilerOptions = {}
+				if (data.compilerOptions.lib == null) data.compilerOptions.lib = []
+				if (data.exclude == null) data.exclude = []
+
+				// add any lib that has a dot back to lib
+				data.compilerOptions.lib
+					.filter((i) => i.includes('.'))
+					.forEach((i) => lib.add(i))
+
+				// add back excludes
+				data.exclude.forEach((i) => exclude.add(i))
+
+				// is there a custom out dir?
+				customCompilerOutDir = data.compilerOptions.outDir
+			} catch (e) {
+				console.error(`Failed to parse ${answers.tsconfig}:`, e)
+			}
 		}
 		status('writing tsconfig file...')
 		if (answers.keywords.has('webworker')) lib.add('WebWorker')
@@ -912,7 +926,6 @@ export async function updateRuntime(state) {
 						allowJs: true,
 						allowSyntheticDefaultImports: true,
 						jsx: 'preserve',
-						lib: Array.from(lib),
 						maxNodeModuleJsDepth: 5,
 						module: 'ESNext',
 						moduleResolution: 'Node',
@@ -945,14 +958,19 @@ export async function updateRuntime(state) {
 							moduleResolution: 'Node',
 							strict: true,
 							target: typescriptTarget,
-							lib: Array.from(lib),
 						},
 						answers.sourceModule ? { module: 'ESNext' } : {}
 					),
 					include: [answers.sourceDirectory],
 			  }
-		if (lib.size === 0) delete tsconfig.compilerOptions.lib
-		if (exclude.size !== 0) tsconfig.exclude = Array.from(exclude)
+
+		// re-adjust custom properties
+		if (lib.size) tsconfig.compilerOptions.lib = Array.from(lib)
+		if (exclude.size) tsconfig.exclude = Array.from(exclude)
+		if (customCompilerOutDir)
+			tsconfig.compilerOptions.outDir = customCompilerOutDir
+
+		// write
 		await write('tsconfig.json', JSON.stringify(tsconfig, null, '  ') + '\n')
 		status('...wrote tsconfig file')
 	} else {
