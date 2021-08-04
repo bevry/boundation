@@ -1,5 +1,9 @@
 # History
 
+## v1.76.0 2021 August 4
+
+-   Can now specify `package.json:boundation.githubActionTestEnv` to set `env` configuration for the test steps in the GitHub Actions runner
+
 ## v1.75.0 2021 August 1
 
 -   Maintain `tsconfig.json:compilerOptions:outDir` between boundation runs

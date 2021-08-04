@@ -8,7 +8,7 @@ import { allLanguages } from './data.js'
 // generate the json file
 function generateGitHubActionsJSON(state) {
 	// extract
-	const { answers } = state
+	const { packageData, answers } = state
 
 	// prepare vars
 	const os = answers.npm
@@ -59,6 +59,13 @@ function generateGitHubActionsJSON(state) {
 			run: 'npm run our:meta',
 		},
 	]
+
+	// inject custom conf into test steps
+	if (packageData.boundation && packageData.boundation.githubActionTestEnv) {
+		for (const step of testSteps) {
+			step.env = packageData.boundation.githubActionTestEnv
+		}
+	}
 
 	// bevry actions
 	const npmPublishSteps = [
