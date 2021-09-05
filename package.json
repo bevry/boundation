@@ -123,7 +123,7 @@
     "eslint": "^7.32.0",
     "eslint-config-bevry": "^3.27.0",
     "eslint-config-prettier": "^8.3.0",
-    "eslint-plugin-prettier": "^3.4.0",
+    "eslint-plugin-prettier": "^4.0.0",
     "kava": "^5.15.0",
     "prettier": "^2.3.2",
     "projectz": "^2.22.0",
