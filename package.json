@@ -118,7 +118,7 @@
   },
   "devDependencies": {
     "@bevry/update-contributors": "^1.20.0",
-    "@types/node-fetch": "^2.5.12",
+    "@types/node-fetch": "^3.0.3",
     "assert-helpers": "^8.4.0",
     "eslint": "^7.32.0",
     "eslint-config-bevry": "^3.27.0",
