@@ -1,5 +1,17 @@
 # History
 
+## v1.77.0 2023 March 24
+
+-   Ecosystem upgrades around typescript types
+    -   Add `@types/node` if typescript+node
+    -   Update typescript to v5 now that typedoc supports it
+    -   Improve deprecated package upgrades, add cloudflare worker types
+-   Add [ThanksDev](https://thanks.dev) badge
+-   Removed DavidDM badges (it is now defunct)
+-   Use [`.prettierignore` base file](https://github.com/bevry/base/blob/master/.prettierignore)
+-   Updated license from [`MIT`](http://spdx.org/licenses/MIT.html) to [`Artistic-2.0`](http://spdx.org/licenses/Artistic-2.0.html)
+-   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
+
 ## v1.76.0 2021 August 4
 
 -   Can now specify `package.json:boundation.githubActionTestEnv` to set `env` configuration for the test steps in the GitHub Actions runner
