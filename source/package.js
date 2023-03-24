@@ -572,7 +572,7 @@ export async function updatePackageData(state) {
 	const packageData = Object.assign(
 		{
 			version: '1.0.0',
-			license: 'MIT',
+			license: 'Artistic-2.0',
 			author: answers.author,
 			engines: {},
 			dependencies: {},
@@ -649,17 +649,19 @@ export async function updatePackageData(state) {
 	delete packageData.vercel
 
 	// badges
-	const removeBadges = ['gratipay']
+	const removeBadges = ['gratipay', 'daviddm', 'daviddmdev']
 	if (isBevryOrganisation(answers.organisation)) {
+		if (packageData.license === 'MIT') {
+			packageData.license = 'Artistic-2.0'
+		}
 		packageData.badges = {
 			list: [
 				'githubworkflow',
 				'npmversion',
 				'npmdownloads',
-				'daviddm',
-				'daviddmdev',
 				'---',
 				'githubsponsors',
+				'thanksdev',
 				'patreon',
 				'flattr',
 				'liberapay',
@@ -672,6 +674,7 @@ export async function updatePackageData(state) {
 			config: {
 				githubWorkflow: state.githubWorkflow,
 				githubSponsorsUsername: 'balupton',
+				thanksdevGithubUsername: 'balupton',
 				buymeacoffeeUsername: 'balupton',
 				cryptoURL: 'https://bevry.me/crypto',
 				flattrUsername: 'balupton',
@@ -692,13 +695,13 @@ export async function updatePackageData(state) {
 		!packageData.badges.list.length
 	) {
 		packageData.badges = {
-			list: ['npmversion', 'npmdownloads', 'daviddm', 'daviddmdev'],
+			list: ['npmversion', 'npmdownloads'],
 		}
 	}
 
 	// remove badges relating to private
 	if (!answers.npm) {
-		removeBadges.push('npmversion', 'npmdownloads', 'daviddm', 'daviddmdev')
+		removeBadges.push('npmversion', 'npmdownloads')
 	}
 
 	// apply badge removals
