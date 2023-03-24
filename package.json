@@ -3,7 +3,7 @@
   "version": "1.76.0",
   "description": "Automatic scaffolding and upgrading of your JavaScript ecosystem projects using Bevry's best practices",
   "homepage": "https://github.com/bevry/boundation",
-  "license": "MIT",
+  "license": "Artistic-2.0",
   "keywords": [
     ".travis.yml",
     "esnext",
@@ -22,10 +22,9 @@
       "githubworkflow",
       "npmversion",
       "npmdownloads",
-      "daviddm",
-      "daviddmdev",
       "---",
       "githubsponsors",
+      "thanksdev",
       "patreon",
       "flattr",
       "liberapay",
@@ -38,6 +37,7 @@
     "config": {
       "githubWorkflow": "bevry",
       "githubSponsorsUsername": "balupton",
+      "thanksdevGithubUsername": "balupton",
       "buymeacoffeeUsername": "balupton",
       "cryptoURL": "https://bevry.me/crypto",
       "flattrUsername": "balupton",
@@ -68,7 +68,7 @@
     "url": "https://github.com/bevry/boundation.git"
   },
   "engines": {
-    "node": ">=12"
+    "node": ">=18"
   },
   "editions": [
     {
@@ -82,7 +82,7 @@
         "import"
       ],
       "engines": {
-        "node": "12 || 14 || 16"
+        "node": "18"
       }
     }
   ],
@@ -98,7 +98,7 @@
     "@bevry/ansi": "^3.3.0",
     "@bevry/ecmascript-versions": "^3.5.0",
     "@bevry/github-orgs": "^1.4.0",
-    "@bevry/list": "^1.5.0",
+    "@bevry/list": "^1.7.0",
     "@bevry/nodejs-ecmascript-compatibility": "^4.5.0",
     "@bevry/nodejs-versions": "^2.3.0",
     "@bevry/testen": "^3.7.1",
@@ -107,26 +107,26 @@
     "errlop": "^4.5.0",
     "filedirname": "^2.7.0",
     "get-cli-arg": "^7.3.0",
-    "inquirer": "^8.1.2",
+    "inquirer": "^9.1.5",
     "js-yaml": "^4.1.0",
-    "node-fetch": "^2.6.1",
+    "node-fetch": "^3.3.1",
     "safeps": "^10.17.0",
-    "semver": "^7.3.5",
+    "semver": "^7.3.8",
     "typechecker": "^7.18.0",
     "version-compare": "^1.4.0",
     "version-range": "^1.4.0"
   },
   "devDependencies": {
-    "@bevry/update-contributors": "^1.20.0",
-    "@types/node-fetch": "^2.5.12",
+    "@bevry/update-contributors": "^1.21.0",
+    "@types/node-fetch": "^2.6.2",
     "assert-helpers": "^8.4.0",
-    "eslint": "^7.32.0",
+    "eslint": "^8.36.0",
     "eslint-config-bevry": "^3.27.0",
-    "eslint-config-prettier": "^8.3.0",
-    "eslint-plugin-prettier": "^3.4.0",
+    "eslint-config-prettier": "^8.8.0",
+    "eslint-plugin-prettier": "^4.2.1",
     "kava": "^5.15.0",
-    "prettier": "^2.3.2",
-    "projectz": "^2.22.0",
+    "prettier": "^2.8.6",
+    "projectz": "^2.23.0",
     "valid-directory": "^3.9.0"
   },
   "scripts": {
