@@ -143,6 +143,10 @@ export async function updateBaseFiles({ answers, packageData }) {
 			url: 'https://raw.githubusercontent.com/bevry/base/master/.gitignore',
 			custom: true,
 		},
+		{
+			url: 'https://raw.githubusercontent.com/bevry/base/master/.prettierignore',
+			custom: true,
+		},
 		'https://raw.githubusercontent.com/bevry/base/master/LICENSE.md',
 		'https://raw.githubusercontent.com/bevry/base/master/CONTRIBUTING.md',
 	]
@@ -286,10 +290,5 @@ export async function updateBaseFiles({ answers, packageData }) {
 				"custom: ['https://bevry.me/fund']",
 			].join('\n')
 		)
-	}
-
-	// docpad plugin
-	if (answers.docpadPlugin && answers.languages.includes('esnext')) {
-		await write('.prettierignore', ['test/'].join('\n'))
 	}
 }
