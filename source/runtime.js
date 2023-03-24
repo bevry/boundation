@@ -558,6 +558,8 @@ export async function updateRuntime(state) {
 			packages['@typescript-eslint/eslint-plugin'] =
 			packages['@typescript-eslint/parser'] =
 				'dev'
+		if (answers.keywords.has('node') && !packages['@types/node'])
+			packages['@types/node'] = 'dev'
 	}
 	// not typescript
 	else {
@@ -595,8 +597,8 @@ export async function updateRuntime(state) {
 		// typescript
 		if (answers.languages.includes('typescript')) {
 			tools.push('typedoc')
-			// https://github.com/TypeStrong/typedoc/releases/tag/v0.21.0 now supports typescript 4.3
-			versions.typescript = '4.3'
+			// https://github.com/TypeStrong/typedoc/releases
+			versions.typescript = '5.0'
 		}
 		// coffeescript
 		if (answers.languages.includes('coffescript')) {
@@ -814,24 +816,9 @@ export async function updateRuntime(state) {
 			packages['@babel/preset-env'] =
 			packages['@babel/preset-react'] =
 				true
-		packages['babel-core'] =
-			packages['babel-preset-env'] =
-			packages['babel-preset-react'] =
-				false
 	}
 
-	// if an old package name exists, change it to its new version
-	const packageRewrites = {
-		githubauthquerystring: 'githubauthreq',
-	}
-	for (const [from, to] of Object.entries(packageRewrites)) {
-		if (packageData.dependencies[from]) {
-			packages[from] = false
-			packages[to] = true
-		}
-	}
-
-	// joe to kava
+	// deprecation: joe to kava
 	if (
 		sourcePath !== '.' &&
 		answers.type === 'package' &&
@@ -843,6 +830,21 @@ export async function updateRuntime(state) {
 			`bash -O nullglob -O globstar -c "sed -i '' -e 's/joe/kava/g' ${sourcePath}/**/*.*"`
 		)
 		status('...renamed joe to kava')
+	}
+
+	// simple deprecations: if an old package name exists, change it to its new version
+	const packageRewrites = {
+		githubauthquerystring: 'githubauthreq',
+		'types-cloudflare-worker': '@cloudflare/workers-types',
+		'babel-core': '@babel/core',
+		'babel-preset-env': '@babel/preset-env',
+		'babel-preset-react': '@babel/preset-react',
+	}
+	for (const [from, to] of Object.entries(packageRewrites)) {
+		if (packageData.dependencies[from]) {
+			packages[to] = packages[from]
+			packages[from] = false
+		}
 	}
 
 	// remove self
