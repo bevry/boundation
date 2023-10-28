@@ -1,5 +1,28 @@
 # History
 
+## v1.80.0 2023 November 2
+
+-   Improved core:
+    -   No longer uses `node-fetch`, instead uses the Node.js fetch builtin
+-   Improved questions:
+    -   New `maintainedNodeVersions`, `expandNodeVersions`, `shrinkNodeVersions` questions
+        -   These replace the oldschool `lts` question, that was removed ages ago.
+    -   TypeScript no longer has targets it doesn't support
+    -   Ensure that `nodeVersionsSupported` and `nodeVersionsTested` are constrained to their minimum and maximum
+    -   Corrected the description of `nodeVersionsTested` as it is not (by default) an automated property
+-   Improved CI:
+    -   Don't test Node.js versions before 16 on GitHub Actions, as they will be ignored as [they are no longer supported on GitHub Actions](https://github.blog/changelog/2023-06-13-github-actions-all-actions-will-run-on-node16-instead-of-node12-by-default/)
+    -   Verify the Node.js and NPM versions on GitHub Actions
+    -   Update the versions of the GitHub Actions
+    -   Resolved `make-deno-edition` failing on GitHub ACtions
+        -   Deno is setup on GitHub Actions if the project uses Deno (determined by `deno` keyword)
+-   Improved runtime:
+    -   Resolved an issue with aggressive Node.js engine changes:
+        -   The `package.json:engines:node` is no longer always updated to the supported or desired version beforehand, now it is only updated once we know what Node.js versions we target
+    -   `package.json:scripts:our:compile:deno` is only added if the project uses Deno (determined by `deno` keyword)
+-   Improved versions:
+    -   Boundation is much more intelligent and helpful when it comes to expanding or shrinking the editions and Node.js engine support as necessary.
+
 ## v1.79.0 2023 October 30
 
 -   Made the generated npm scripts compatible with Windows by use `printf` instead of `echo`

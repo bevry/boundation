@@ -3,7 +3,7 @@ import { cwd } from 'process'
 
 // external
 import {
-	getESVersionsByNow,
+	getESVersionsByDate,
 	getESVersionByDate,
 	getDateWithYearOffset,
 } from '@bevry/ecmascript-versions'
@@ -29,18 +29,20 @@ export const allLanguages = [
 	'css',
 ]
 
+// both browsers and typescript lag behind
+// as it is 2023-11-01 and ES2023 isn't available to typescript, even though it has been ratified (they get ratified in the middle of year)
+const aYearAgo = getDateWithYearOffset(-1)
+
 // we reverse, to make sure it is newest first
 export const allTypescriptTargets = [
 	'ESNext',
-	...getESVersionsByNow().reverse(),
+	...getESVersionsByDate(aYearAgo).reverse(),
 ]
 
 export const defaultCoffeeTarget = 'ESNext'
 
 // previous year
-export const defaultBrowserTarget = getESVersionByDate(
-	getDateWithYearOffset(-1),
-)
+export const defaultBrowserTarget = getESVersionByDate(aYearAgo)
 
 export const languageNames = {
 	typescript: 'TypeScript',

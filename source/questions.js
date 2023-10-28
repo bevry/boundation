@@ -2,7 +2,7 @@
 import * as pathUtil from 'path'
 
 // external
-import { unique, last, first } from '@bevry/list'
+import { unique, last, first, intersect } from '@bevry/list'
 import {
 	filterNodeVersions,
 	filterSignificantNodeVersions,
@@ -12,7 +12,7 @@ import { fetchExclusiveCompatibleESVersionsForNodeVersions } from '@bevry/nodejs
 
 // local
 import _getAnswers from './answers.js'
-import { pwd, allLanguages } from './data.js'
+import { pwd, allLanguages, allTypescriptTargets } from './data.js'
 import {
 	isNumber,
 	isGitUrl,
@@ -598,17 +598,9 @@ export async function getQuestions(state) {
 			},
 		},
 		{
-			name: 'desiredNodeOnly',
-			message: `Should we only support the most desired node version?`,
-			type: 'confirm',
-			default({ website }) {
-				return Boolean(website)
-			},
-		},
-		{
 			name: 'nodeVersions',
 			message:
-				'Automated property to provide node versions for the upcoming questions',
+				'Automated property to provide Node.js versions for the upcoming questions',
 			type: 'checkbox',
 			validate: isSpecified,
 			choices({ vercelWebsite, targetModules }) {
@@ -634,7 +626,7 @@ export async function getQuestions(state) {
 		},
 		{
 			name: 'desiredNodeVersion',
-			message: 'What is the desired node version?',
+			message: 'What is the desired Node.js version?',
 			type: 'list',
 			validate: isNumber,
 			choices({ nodeVersions }) {
@@ -651,13 +643,71 @@ export async function getQuestions(state) {
 			},
 		},
 		{
+			name: 'desiredNodeOnly',
+			message: `Should we only support the desired Node.js version?`,
+			type: 'confirm',
+			default({ website }) {
+				return Boolean(website)
+			},
+		},
+		{
+			name: 'maintainedNodeVersions',
+			message:
+				'Should unmaintained Node.js versions be trimmed from our support?',
+			type: 'confirm',
+			default({ desiredNodeOnly }) {
+				if (desiredNodeOnly) return false
+				return false
+			},
+			skip({ desiredNodeOnly }) {
+				return Boolean(desiredNodeOnly)
+			},
+		},
+		{
+			name: 'expandNodeVersions',
+			message:
+				'Should unsupported Node.js versions be supported if they pass the tests?',
+			type: 'confirm',
+			default({ desiredNodeOnly }) {
+				if (desiredNodeOnly) return false
+				return false
+			},
+			skip({ desiredNodeOnly }) {
+				return Boolean(desiredNodeOnly)
+			},
+		},
+		{
+			name: 'shrinkNodeVersions',
+			message:
+				'Should unsupported Node.js versions be trimmed if they fail the tests?',
+			type: 'confirm',
+			default({ desiredNodeOnly }) {
+				if (desiredNodeOnly) return false
+				return false
+			},
+			skip({ desiredNodeOnly }) {
+				return Boolean(desiredNodeOnly)
+			},
+		},
+		{
 			name: 'nodeVersionsSupported',
 			message: 'Which Node.js versions must your package support?',
 			type: 'checkbox',
 			validate: isSpecified,
-			choices({ nodeVersions, desiredNodeOnly, desiredNodeVersion }) {
-				if (desiredNodeOnly) return [desiredNodeVersion]
-				if (
+			choices({
+				nodeVersions,
+				desiredNodeOnly,
+				desiredNodeVersion,
+				maintainedNodeVersions,
+			}) {
+				if (desiredNodeOnly) {
+					return [desiredNodeVersion]
+				} else if (maintainedNodeVersions) {
+					return filterNodeVersions(nodeVersions, {
+						maintained: true,
+						gte: nodeEngineVersion,
+					})
+				} else if (
 					nodeEngineVersion &&
 					isNodeVersionActiveOrCurrent(nodeEngineVersion)
 				) {
@@ -682,7 +732,7 @@ export async function getQuestions(state) {
 		{
 			name: 'nodeVersionSupportedMinimum',
 			message:
-				'Automated property for the minimum node version to be supported',
+				'Automated property for constraining the minimum Node.js version to be supported',
 			type: 'list',
 			validate: isNumber,
 			choices({ nodeVersionsSupported }) {
@@ -696,7 +746,7 @@ export async function getQuestions(state) {
 		{
 			name: 'nodeVersionSupportedMaximum',
 			message:
-				'Automated property for the maximum node version to be supported support',
+				'Automated property for constraining the maximum Node.js version to be supported support',
 			type: 'list',
 			validate: isNumber,
 			choices({ nodeVersionsSupported }) {
@@ -708,37 +758,22 @@ export async function getQuestions(state) {
 			skip: true,
 		},
 		{
-			name: 'nodeVersionsTestedRange',
-			message:
-				'Is there a semver range that you want to constrain test versions to?',
-			filter: trim,
-			skip({ desiredNodeOnly }) {
-				return Boolean(desiredNodeOnly)
-			},
-		},
-		{
 			name: 'nodeVersionsTested',
-			message: 'Automated property for providing the tested node versions',
+			message: 'Which Node.js versions must your package test against?',
 			type: 'checkbox',
 			validate: isSpecified,
-			choices({
-				nodeVersions,
-				desiredNodeOnly,
-				desiredNodeVersion,
-				nodeVersionsTestedRange,
-			}) {
-				if (desiredNodeOnly) return [desiredNodeVersion]
-				if (
+			choices({ nodeVersions, desiredNodeOnly, desiredNodeVersion }) {
+				if (desiredNodeOnly) {
+					return [desiredNodeVersion]
+				} else if (
 					!nodeEngineVersion ||
 					isNodeVersionActiveOrCurrent(nodeEngineVersion)
 				) {
 					return filterNodeVersions(nodeVersions, {
 						maintained: true,
-						range: nodeVersionsTestedRange,
 					})
 				} else {
 					return filterNodeVersions(nodeVersions, {
-						range: nodeVersionsTestedRange,
 						gte: nodeEngineVersion,
 					})
 				}
@@ -746,10 +781,14 @@ export async function getQuestions(state) {
 			default(opts) {
 				return this.choices(opts)
 			},
+			skip({ desiredNodeOnly }) {
+				return Boolean(desiredNodeOnly)
+			},
 		},
 		{
 			name: 'nodeVersionTestedMinimum',
-			message: 'Automated property for the minimum node version for testing',
+			message:
+				'Automated property for constraining the minimum Node.js version for testing',
 			type: 'list',
 			validate: isNumber,
 			choices({ language, desiredNodeVersion, nodeVersionsTested }) {
@@ -763,7 +802,8 @@ export async function getQuestions(state) {
 		},
 		{
 			name: 'nodeVersionTestedMaximum',
-			message: 'Automated property for the maximum node version for testing',
+			message:
+				'Automated property for constraining the maximum Node.js version for testing',
 			type: 'list',
 			validate: isNumber,
 			choices({ language, desiredNodeVersion, nodeVersionsTested }) {
@@ -789,19 +829,21 @@ export async function getQuestions(state) {
 			}) {
 				// ensure versions are in order of most preferred to least preferred
 				// otherwise edition trimming will not work as expected
-				return (
-					compilerNode === 'babel'
-						? unique([
-								desiredNodeVersion,
-								nodeVersionSupportedMinimum,
-								nodeVersionSupportedMaximum,
-						  ]).sort(versionCompare)
-						: compilerNode === 'typescript'
-						? await fetchExclusiveCompatibleESVersionsForNodeVersions(
+				return compilerNode === 'babel'
+					? unique([
+							desiredNodeVersion,
+							nodeVersionSupportedMinimum,
+							nodeVersionSupportedMaximum,
+					  ])
+							.sort(versionCompare)
+							.reverse()
+					: compilerNode === 'typescript'
+					? intersect(allTypescriptTargets, [
+							...(await fetchExclusiveCompatibleESVersionsForNodeVersions(
 								nodeVersionsSupported,
-						  )
-						: []
-				).reverse()
+							)),
+					  ]) // don't add ESNext as it is ephemeral
+					: []
 			},
 			default(opts) {
 				return this.choices(opts)
@@ -859,9 +901,27 @@ export async function getAnswers(state) {
 	answers.targets = answers.targets || []
 	answers.keywords = new Set((answers.keywords || '').split(/,\s*/))
 
+	// constrain versions
+	answers.nodeVersionsSupported = filterNodeVersions(
+		answers.nodeVersionsSupported,
+		{
+			gte: answers.nodeVersionSupportedMinimum,
+			lte: answers.nodeVersionSupportedMaximum,
+		},
+	)
+	answers.nodeVersionsTested = filterNodeVersions(answers.nodeVersionsTested, {
+		gte: answers.nodeVersionTestedMinimum,
+		lte: answers.nodeVersionTestedMaximum,
+	})
+
 	// ensure we don't have a situation where node 14 is about to be released, but we only support node 13 and up
 	if (answers.desiredNodeVersion && answers.nodeVersionSupportedMaximum) {
-		if (answers.desiredNodeVersion > answers.nodeVersionSupportedMaximum) {
+		if (
+			versionCompare(
+				answers.desiredNodeVersion,
+				answers.nodeVersionSupportedMaximum,
+			) === 1
+		) {
 			console.log(
 				'constrained desiredNodeVersion to the nodeVersionSupportedMaximum of',
 				answers.nodeVersionSupportedMaximum,

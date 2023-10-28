@@ -6,7 +6,6 @@ import * as urlUtil from 'url'
 
 // external
 import Errlop from 'errlop'
-import fetch from 'node-fetch'
 import { is as isBevryOrganisation } from '@bevry/github-orgs'
 
 // local

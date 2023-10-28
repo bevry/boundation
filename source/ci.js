@@ -4,6 +4,13 @@ import { readYAML, unlink, exists, writeYAML, spawn } from './fs.js'
 import { trimEmpty } from './util.js'
 import { intersect } from '@bevry/list'
 import { allLanguages } from './data.js'
+import { filterNodeVersions } from '@bevry/nodejs-versions'
+
+// github actions no longer supports node versions prior to 16
+// https://github.blog/changelog/2023-06-13-github-actions-all-actions-will-run-on-node16-instead-of-node12-by-default/
+function filterSetupNodeVersions(nodeVersions) {
+	return filterNodeVersions(nodeVersions, { gte: 16 })
+}
 
 // generate the json file
 function generateGitHubActionsJSON(state) {
@@ -11,18 +18,28 @@ function generateGitHubActionsJSON(state) {
 	const { packageData, answers } = state
 
 	// prepare vars
-	const os = answers.npm
+	const actionsOperatingSystems = answers.npm
 		? ['ubuntu-latest', 'macos-latest', 'windows-latest']
 		: ['ubuntu-latest']
-	const osExperimental = intersect(os, ['macos-latest', 'windows-latest'])
-	const node = answers.nodeVersionsTested
+	const actionsOperatingSystemsExperimental = intersect(
+		actionsOperatingSystems,
+		['macos-latest', 'windows-latest'],
+	)
 	const { desiredNodeVersion } = answers
+	const actionsNodeVersions = filterSetupNodeVersions(
+		answers.nodeVersionsTested,
+	)
+	const actionsNodeVersionsOptional = filterSetupNodeVersions(
+		state.nodeVersionsOptional,
+	)
 	const continueOnErrors = [
-		state.nodeVersionsOptional.length
-			? `contains('${state.nodeVersionsOptional.join(' ')}', matrix.node)`
+		actionsNodeVersionsOptional.length
+			? `contains('${actionsNodeVersionsOptional.join(' ')}', matrix.node)`
 			: '',
-		osExperimental.length
-			? `contains('${osExperimental.join(' ')}', matrix.os)`
+		actionsOperatingSystemsExperimental.length
+			? `contains('${actionsOperatingSystemsExperimental.join(
+					' ',
+			  )}', matrix.os)`
 			: '',
 	]
 		.filter((i) => i)
@@ -41,6 +58,12 @@ function generateGitHubActionsJSON(state) {
 		},
 		{
 			run: 'npm run our:verify',
+		},
+	]
+	const verifyNodeVersionSteps = [
+		{
+			name: 'Verify Node.js Versions',
+			run: "printf '%s' 'node: ' && node --version && printf '%s' 'npm: ' && npm --version && node -e 'console.log(process.versions)'",
 		},
 	]
 	const testSteps = [
@@ -109,28 +132,46 @@ function generateGitHubActionsJSON(state) {
 	// github actions
 	const setupSteps = [
 		{
-			uses: 'actions/checkout@v2',
+			uses: 'actions/checkout@v4',
 		},
 	]
 	const desiredNodeSteps = [
 		{
 			name: 'Install desired Node.js version',
-			uses: 'actions/setup-node@v2',
+			uses: 'actions/setup-node@v4',
+			// uses: 'dcodeIO/setup-node-nvm@master',
 			with: {
 				'node-version': desiredNodeVersion,
 			},
 		},
+		...verifyNodeVersionSteps,
 	]
 	const targetNodeSteps = [
 		{
 			name: 'Install targeted Node.js',
 			if: `\${{ matrix.node != ${desiredNodeVersion} }}`,
-			uses: 'actions/setup-node@v2',
+			uses: 'actions/setup-node@v4',
+			// uses: 'dcodeIO/setup-node-nvm@master',
 			with: {
 				'node-version': '${{ matrix.node }}',
 			},
 		},
+		...verifyNodeVersionSteps,
 	]
+	const setupDenoSteps = [
+		{
+			name: 'Install Deno',
+			uses: 'denoland/setup-deno@v1',
+			with: {
+				'deno-version': 'vx.x.x',
+			},
+		},
+	]
+
+	// add deno steps if needed
+	if (answers.keywords.has('deno')) {
+		setupSteps.push(...setupDenoSteps)
+	}
 
 	// merge
 	return trimEmpty({
@@ -140,8 +181,8 @@ function generateGitHubActionsJSON(state) {
 			test: {
 				strategy: {
 					matrix: {
-						os,
-						node,
+						os: actionsOperatingSystems,
+						node: actionsNodeVersions,
 					},
 				},
 				'runs-on': '${{ matrix.os }}',
@@ -217,7 +258,7 @@ export async function updateCI(state) {
 			automerge: {
 				'runs-on': 'ubuntu-latest',
 				steps: [
-					{ uses: 'actions/checkout@v2' },
+					{ uses: 'actions/checkout@v4' },
 					{
 						uses: 'ahmadnassri/action-dependabot-auto-merge@v2',
 						with: {

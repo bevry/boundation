@@ -2,6 +2,7 @@
 import * as pathUtil from 'path'
 
 // external
+import versionCompare from 'version-compare'
 import { unique, toggle } from '@bevry/list'
 
 // local
@@ -346,12 +347,12 @@ export async function updateRuntime(state) {
 	const devDependencyCompat = {
 		kava: 3,
 	}
-	if (answers.nodeVersionSupportedMinimum < 8) {
+	if (versionCompare(answers.nodeVersionSupportedMinimum, 8) === -1) {
 		for (const [key, value] of Object.entries(dependencyCompat)) {
 			versions[key] = value
 		}
 	}
-	if (answers.nodeVersionTestedMinimum < 8) {
+	if (versionCompare(answers.nodeVersionTestedMinimum, 8) === -1) {
 		for (const [key, value] of Object.entries(devDependencyCompat)) {
 			versions[key] = value
 		}
@@ -520,11 +521,11 @@ export async function updateRuntime(state) {
 	// typescript
 	// primarily typescript
 	if (answers.language === 'typescript') {
-		// @todo import make-deno-edition and use the api instead of the bin
-		// deno compat layer
-		if (answers.sourceModule && answers.npm) {
-			if (packageData.name === 'make-deno-edition') {
-				// @todo, once make-deno-edition API is used, this can be fixzed
+		// @todo import make-deno-edition and use the api instead of the bin, so we can add/remove the keywords and script based on compatibility
+		// @todo fix windows support for make-deno-edition
+		if (answers.sourceModule && answers.npm && answers.keywords.has('deno')) {
+			if (['make-deno-edition', '@bevry/figures'].includes(packageData.name)) {
+				// @todo, once make-deno-edition API is used, this can be fixed
 				// it is currently disabled because it cannot call itself during the compile step
 				// as it has not finished compiling
 				// state.scripts['our:compile:deno'] = 'npm run our:bin -- --attempt'
