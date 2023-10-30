@@ -1,5 +1,9 @@
 # History
 
+## v1.79.0 2023 October 30
+
+-   Made the generated npm scripts compatible with Windows by use `printf` instead of `echo`
+
 ## v1.78.0 2023 October 30
 
 -   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)

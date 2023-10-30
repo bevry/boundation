@@ -408,11 +408,9 @@ export async function updateRuntime(state) {
 	// add our package scripts
 	if (answers.npm)
 		Object.assign(state.scripts, {
-			'our:release:check-changelog':
-				'cat ./HISTORY.md | grep v$npm_package_version || (echo add a changelog entry for v$npm_package_version && exit -1)',
+			'our:release:check-changelog': `cat ./HISTORY.md | grep "v$npm_package_version" || (printf '%s\n' "add a changelog entry for v$npm_package_version" && exit -1)`,
 			'our:release:check-dirty': 'git diff --exit-code',
-			'our:release:tag':
-				'export MESSAGE=$(cat ./HISTORY.md | sed -n "/## v$npm_package_version/,/##/p" | sed \'s/## //\' | awk \'NR>1{print buf}{buf = $0}\') && test "$MESSAGE" || (echo \'proper changelog entry not found\' && exit -1) && git tag v$npm_package_version -am "$MESSAGE"',
+			'our:release:tag': `export MESSAGE=$(cat ./HISTORY.md | sed -n "/## v$npm_package_version/,/##/p" | sed 's/## //' | awk 'NR>1{print buf}{buf = $0}') && test "$MESSAGE" || (printf '%s\n' 'proper changelog entry not found' && exit -1) && git tag "v$npm_package_version" -am "$MESSAGE"`,
 			'our:release:push': 'git push origin && git push origin --tags',
 			'our:release': [
 				[...run, 'our:release:prepare'],
@@ -448,7 +446,7 @@ export async function updateRuntime(state) {
 	if (answers.languages.includes('css')) {
 		if (answers.vercelWebsite) {
 			state.scripts['our:verify:stylelint'] =
-				"echo 'disabled due to https://spectrum.chat/zeit/general/resolved-deployments-fail-with-enospc-no-space-left-on-device-write~d1b9f61a-65e8-42a3-9042-f9c6a6fae6fd'"
+				"printf '%s\n' 'disabled due to https://spectrum.chat/zeit/general/resolved-deployments-fail-with-enospc-no-space-left-on-device-write~d1b9f61a-65e8-42a3-9042-f9c6a6fae6fd'"
 		} else {
 			packages.stylelint = 'dev'
 			packages['stylelint-config-prettier'] = packages[

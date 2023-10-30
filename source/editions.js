@@ -607,7 +607,7 @@ export function updateEditionFields(state) {
 			const packageType = has(edition.tags, 'require') ? 'commonjs' : 'module'
 			edition.scripts[
 				compileScriptName
-			] += ` && echo '{"type": "${packageType}"}' > ${edition.directory}/package.json`
+			] += ` && printf '%s' '{"type": "${packageType}"}' > ${edition.directory}/package.json`
 		}
 
 		// ensure description exists
@@ -745,7 +745,7 @@ export async function scaffoldEditions(state) {
 	answers.keywords.delete('export-default')
 	if (answers.sourceModule) {
 		try {
-			await exec(`cat ${sourceEdition.indexPath} | grep "export default"`)
+			await exec(`cat ${sourceEdition.indexPath} | grep 'export default'`)
 			exportDefault = true
 			answers.keywords.add('export-default')
 		} catch (err) {}

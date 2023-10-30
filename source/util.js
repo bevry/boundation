@@ -242,7 +242,7 @@ export function repoToProject(input = '') {
 	return (input && repoToSlug(input).split('/')[1]) || ''
 }
 
-export const defaultScript = 'echo no need for this project'
+export const defaultScript = "printf '%s\n' 'no need for this project'"
 
 export const defaultDeploy =
 	'npm run our:compile && npm run our:test && npm run our:deploy'
