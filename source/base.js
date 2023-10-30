@@ -37,12 +37,12 @@ export async function download(opts) {
 			const localData = (await read(file)).toString()
 			const localLines = localData.split('\n')
 			const localCustomIndex = localLines.findIndex((line) =>
-				/^# CUSTOM/i.test(line)
+				/^# CUSTOM/i.test(line),
 			)
 			if (localCustomIndex !== -1) {
 				const remoteLines = data.split('\n')
 				const remoteCustomIndex = remoteLines.findIndex((line) =>
-					/^# CUSTOM/i.test(line)
+					/^# CUSTOM/i.test(line),
 				)
 				data = remoteLines
 					.slice(0, remoteCustomIndex)
@@ -108,7 +108,7 @@ export async function updateBaseFiles({ answers, packageData }) {
 		if (await exists(`./source/${docpadMainEntry}.coffee`)) {
 			await rename(
 				`./source/${docpadMainEntry}.coffee`,
-				'./source/index.coffee'
+				'./source/index.coffee',
 			)
 		} else if (await exists(`./source/${docpadMainEntry}.js`)) {
 			await rename(`./source/${docpadMainEntry}.js`, './source/index.js')
@@ -127,7 +127,7 @@ export async function updateBaseFiles({ answers, packageData }) {
 		if (await exists(`./source/${docpadTesterEntry}.coffee`)) {
 			await rename(
 				`./source/${docpadTesterEntry}.coffee`,
-				'./source/tester.coffee'
+				'./source/tester.coffee',
 			)
 		} else if (await exists(`./source/${docpadTesterEntry}.js`)) {
 			await rename(`./source/${docpadTesterEntry}.js`, './source/tester.js')
@@ -166,14 +166,14 @@ export async function updateBaseFiles({ answers, packageData }) {
 	}
 	if (answers.flowtype) {
 		downloads.push(
-			'https://raw.githubusercontent.com/bevry/base/master/.flowconfig'
+			'https://raw.githubusercontent.com/bevry/base/master/.flowconfig',
 		)
 	} else {
 		await unlink('.flowconfig')
 	}
 	if (answers.languages.includes('coffeescript')) {
 		downloads.push(
-			'https://raw.githubusercontent.com/bevry/base/34fc820c8d87f1f21706ce7e26882b6cd5437368/coffeelint.json'
+			'https://raw.githubusercontent.com/bevry/base/34fc820c8d87f1f21706ce7e26882b6cd5437368/coffeelint.json',
 		)
 	} else {
 		await unlink('coffeelint.json')
@@ -214,7 +214,7 @@ export async function updateBaseFiles({ answers, packageData }) {
 				'<!--LICENSE -->',
 			]
 				.filter((i) => i)
-				.join('\n\n')
+				.join('\n\n'),
 		)
 		status('...wrote readme file')
 	} else {
@@ -227,7 +227,7 @@ export async function updateBaseFiles({ answers, packageData }) {
 		if (newDocumentationLink) {
 			content = content.replace(
 				/\[(Complete )?(Technical )?(API )?Documentation\.?\]\([^)]+\)/g,
-				''
+				'',
 			)
 		}
 		// update old documentation names
@@ -235,7 +235,7 @@ export async function updateBaseFiles({ answers, packageData }) {
 			.replace(/\[Web Demonstration\.?\]/g, '[Web Browser Demonstration.]')
 			.replace(
 				/\[(Tutorials & Guides|Documentation)\.?\]/g,
-				'[Tutorials & Guides.]'
+				'[Tutorials & Guides.]',
 			)
 		// insert new documentaiton under usage
 		if (newDocumentationLink) {
@@ -250,7 +250,7 @@ export async function updateBaseFiles({ answers, packageData }) {
 			function (found) {
 				install = found
 				return ''
-			}
+			},
 		)
 		content = content.replace('<!-- HISTORY/ -->', function (found) {
 			return install + '\n\n' + found
@@ -270,7 +270,7 @@ export async function updateBaseFiles({ answers, packageData }) {
 		}
 		historyContent = historyContent.replace(
 			/^(## v\d+\.\d+\.\d+) ([a-z]+ \d+), (\d+)$/gim,
-			'$1 $3 $2'
+			'$1 $3 $2',
 		)
 		await write('HISTORY.md', historyContent)
 		status('...updated history file')
@@ -288,7 +288,7 @@ export async function updateBaseFiles({ answers, packageData }) {
 				'ko_fi: balupton',
 				'liberapay: bevry',
 				"custom: ['https://bevry.me/fund']",
-			].join('\n')
+			].join('\n'),
 		)
 	}
 }

@@ -42,7 +42,7 @@ export default async function getAnswers(questions, user) {
 
 				// fetch values
 				const value = await Promise.resolve(
-					fetch(question, question.default, answers)
+					fetch(question, question.default, answers),
 				)
 				const values = Object.assign({ [name]: value }, defaults, answers)
 
@@ -119,8 +119,8 @@ export default async function getAnswers(questions, user) {
 									? '[hidden]'
 									: typeof value === 'string'
 									? value
-									: JSON.stringify(value)
-							)
+									: JSON.stringify(value),
+							),
 						),
 					]
 						.map((v) => color(v))

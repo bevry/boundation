@@ -61,7 +61,7 @@ export async function unlinkIfContains(file, what) {
 			console.log(
 				path,
 				'will not be removed because it does not contain:',
-				what
+				what,
 			)
 		}
 	}

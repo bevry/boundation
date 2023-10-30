@@ -1,5 +1,9 @@
 # History
 
+## v1.78.0 2023 October 30
+
+-   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
+
 ## v1.77.0 2023 March 24
 
 -   Ecosystem upgrades around typescript types

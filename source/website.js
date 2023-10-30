@@ -27,7 +27,7 @@ export async function readWebsite(state) {
 		packageData.now || {},
 		packageData.vercel || {},
 		(await parse(pathUtil.resolve(pwd, 'now.json'))) || {},
-		(await parse(pathUtil.resolve(pwd, 'vercel.json'))) || {}
+		(await parse(pathUtil.resolve(pwd, 'vercel.json'))) || {},
 	)
 }
 
@@ -58,7 +58,7 @@ export async function updateWebsite(state) {
 			if (vercelConfig.routes)
 				vercelConfig.routes = vercelConfig.routes.filter(
 					(route) =>
-						['/favicon.ico', '/robots.txt'].includes(route.src) === false
+						['/favicon.ico', '/robots.txt'].includes(route.src) === false,
 				)
 			// delete old format
 			delete vercelConfig.build

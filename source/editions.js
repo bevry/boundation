@@ -49,11 +49,11 @@ async function writeLoader({
 		lines.push(`/** @type {typeof import("${cojoin('.', typesPath)}") } */`)
 		if (targetEntry) {
 			lines.push(
-				`module.exports = require('editions').requirePackage(__dirname, require, '${targetEntry}')`
+				`module.exports = require('editions').requirePackage(__dirname, require, '${targetEntry}')`,
 			)
 		} else {
 			lines.push(
-				`module.exports = require('editions').requirePackage(__dirname, require)`
+				`module.exports = require('editions').requirePackage(__dirname, require)`,
 			)
 		}
 	} else {
@@ -62,7 +62,7 @@ async function writeLoader({
 			lines.push(
 				`import d from './${targetPath}'`,
 				// cjs exports {default} instead of default
-				'export default ' + (cjs ? 'd.default || d' : 'd')
+				'export default ' + (cjs ? 'd.default || d' : 'd'),
 			)
 		if (cjs) lines.push(`module.exports = require('./${targetPath}')`)
 	}
@@ -342,7 +342,7 @@ export async function generateEditions(state) {
 					bin: addExtension(answers.binEntry, `js`),
 					tags: ['source', 'typescript', 'import'],
 					engines: false,
-				})
+				}),
 			)
 		} else if (answers.language === 'coffeescript') {
 			editions.set(
@@ -356,7 +356,7 @@ export async function generateEditions(state) {
 					bin: addExtension(answers.binEntry, `coffee`),
 					tags: ['source', 'coffeescript', 'require'],
 					engines: false,
-				})
+				}),
 			)
 		} else if (answers.language === 'json') {
 			editions.set(
@@ -374,7 +374,7 @@ export async function generateEditions(state) {
 						node: true,
 						browsers: answers.browsers && !answers.compilerBrowser,
 					},
-				})
+				}),
 			)
 		} else {
 			throw new Error('language should have been defined, but it was missing')
@@ -406,7 +406,7 @@ export async function generateEditions(state) {
 						node: false,
 						browsers: answers.browsers,
 					},
-				})
+				}),
 			)
 		}
 
@@ -429,7 +429,7 @@ export async function generateEditions(state) {
 						node: true,
 						browsers: answers.browsers,
 					},
-				})
+				}),
 			)
 		}
 
@@ -459,7 +459,7 @@ export async function generateEditions(state) {
 								node: true,
 								browsers: false,
 							},
-						})
+						}),
 					)
 				} else if (answers.compilerNode === 'typescript') {
 					const version = targetVersion.toLocaleLowerCase()
@@ -483,7 +483,7 @@ export async function generateEditions(state) {
 								node: true,
 								browsers: false,
 							},
-						})
+						}),
 					)
 				} else {
 					throw new Error(`invalid target for the compiler`)
@@ -498,7 +498,7 @@ export async function generateEditions(state) {
 	// log
 	console.log(
 		'editions:',
-		state.editions.map((edition) => edition.directory).join(', ')
+		state.editions.map((edition) => edition.directory).join(', '),
 	)
 	status('...updated editions')
 }
@@ -581,7 +581,7 @@ export function updateEditionFields(state) {
 				'@babel/core',
 				'@babel/cli',
 				'@babel/preset-env',
-				'@babel/plugin-proposal-object-rest-spread'
+				'@babel/plugin-proposal-object-rest-spread',
 			)
 
 			if (answers.language === 'typescript') {
@@ -589,7 +589,7 @@ export function updateEditionFields(state) {
 				add(
 					edition.babel.plugins,
 					'@babel/plugin-proposal-optional-chaining',
-					'@babel/proposal-class-properties'
+					'@babel/proposal-class-properties',
 				)
 				add(
 					edition.devDependencies,
@@ -597,7 +597,7 @@ export function updateEditionFields(state) {
 					'@babel/preset-typescript',
 					'@babel/plugin-proposal-class-properties',
 					'@babel/plugin-proposal-object-rest-spread',
-					'@babel/plugin-proposal-optional-chaining'
+					'@babel/plugin-proposal-optional-chaining',
 				)
 			}
 		}
@@ -664,15 +664,15 @@ export function updateEditionEntries(state) {
 	// prepare
 	const autoloaderPath = cojoin(
 		'.',
-		state.useEditionAutoloader && packageData.main
+		state.useEditionAutoloader && packageData.main,
 	)
 	const nodeImportPath = cojoin(
 		'.',
-		nodeEditionImport && nodeEditionImport.indexPath
+		nodeEditionImport && nodeEditionImport.indexPath,
 	)
 	const nodeRequirePath = cojoin(
 		'.',
-		nodeEditionRequire && nodeEditionRequire.indexPath
+		nodeEditionRequire && nodeEditionRequire.indexPath,
 	)
 	const browserPath = cojoin('.', browserEdition && browserEdition.indexPath)
 	const browserImportPath =
@@ -737,7 +737,7 @@ export async function scaffoldEditions(state) {
 			'test.cjs',
 			'test.mjs',
 		],
-		"'editions'"
+		"'editions'",
 	)
 
 	// export default
@@ -759,8 +759,8 @@ export async function scaffoldEditions(state) {
 		// scaffold edition directories
 		await spawn(
 			['mkdir', '-p'].concat(
-				activeEditions.map((edition) => edition.directory || '.')
-			)
+				activeEditions.map((edition) => edition.directory || '.'),
+			),
 		)
 
 		// move or scaffold edition main path if needed
@@ -774,13 +774,13 @@ export async function scaffoldEditions(state) {
 							useStrict(answers.sourceModule),
 							exportOrExports(
 								"class MyPlugin extends require('docpad-baseplugin') {",
-								answers.sourceModule
+								answers.sourceModule,
 							),
 							"\tget name () { return 'myplugin' }",
 							'\tget initialConfig () { return {} }',
 							'}',
 							'',
-						].join('\n')
+						].join('\n'),
 					)
 				}
 				// edition index entry doesn't exist, so create an empty file
@@ -791,7 +791,7 @@ export async function scaffoldEditions(state) {
 							useStrict(answers.sourceModule),
 							exportOrExports("'@todo'", answers.sourceModule),
 							'',
-						].join('\n')
+						].join('\n'),
 					)
 			}
 		}
@@ -809,7 +809,7 @@ export async function scaffoldEditions(state) {
 								importOrRequire(
 									'{equal}',
 									'assert-helpers',
-									answers.sourceModule
+									answers.sourceModule,
 								),
 								importOrRequire('kava', 'kava', answers.sourceModule),
 								'',
@@ -819,7 +819,7 @@ export async function scaffoldEditions(state) {
 								'\t})',
 								'})',
 								'',
-							].join('\n')
+							].join('\n'),
 						)
 					} else {
 						await write(
@@ -828,7 +828,7 @@ export async function scaffoldEditions(state) {
 								useStrict(answers.sourceModule),
 								exportOrExports("'@todo'", answers.sourceModule),
 								'',
-							].join('\n')
+							].join('\n'),
 						)
 					}
 				}
@@ -860,7 +860,7 @@ export async function scaffoldEditions(state) {
 						sourceEdition,
 						nodeEditionRequire,
 						nodeEditionImport,
-					})
+					}),
 				)
 			}
 

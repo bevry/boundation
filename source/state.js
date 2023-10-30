@@ -19,12 +19,12 @@ export const state = {
 	get compiledEditions() {
 		return this.activeEditions.filter(
 			(edition) =>
-				edition.engines && (edition.engines.node || edition.engines.browsers)
+				edition.engines && (edition.engines.node || edition.engines.browsers),
 		)
 	},
 	get nodeEditions() {
 		return this.activeEditions.filter(
-			(edition) => edition.engines && edition.engines.node
+			(edition) => edition.engines && edition.engines.node,
 		)
 	},
 	get nodeEdition() {
@@ -44,7 +44,7 @@ export const state = {
 	},
 	get browserEditions() {
 		return this.activeEditions.filter(
-			(edition) => edition.engines && edition.engines.browsers
+			(edition) => edition.engines && edition.engines.browsers,
 		)
 	},
 	get useEditionAutoloader() {
@@ -55,7 +55,7 @@ export const state = {
 		if (browserEditions.length > 1) {
 			console.error(browserEditions)
 			throw new Error(
-				'there is more than one edition catered towards browsers, not sure what to do here...'
+				'there is more than one edition catered towards browsers, not sure what to do here...',
 			)
 		}
 		return browserEditions[0]

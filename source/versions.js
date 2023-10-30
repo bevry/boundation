@@ -41,8 +41,8 @@ export async function updateEngines(state) {
 			console.error(versions.messages.join('\n\n'))
 			throw new Error(
 				`There were no node versions [${numbers.join(
-					', '
-				)}] which the project's tests passed`
+					', ',
+				)}] which the project's tests passed`,
 			)
 		} else {
 			packageData.engines.node = nodeMajorVersions(passed).join(' || ')
@@ -50,14 +50,14 @@ export async function updateEngines(state) {
 
 		// add the versions to the list
 		passed.forEach((version) =>
-			allPassedVersions.add(nodeMajorVersion(version))
+			allPassedVersions.add(nodeMajorVersion(version)),
 		)
 
 		// log
 		status(
 			`...determined engines for project as [${
 				packageData.engines.node
-			}] against [${numbers.join(', ')}]`
+			}] against [${numbers.join(', ')}]`,
 		)
 	} else {
 		let recompile = false
@@ -89,7 +89,7 @@ export async function updateEngines(state) {
 			for (const edition of list) {
 				if (skip) {
 					console.log(
-						`The edition [${edition.directory}] will be trimmed, as a previous edition already passes all targets`
+						`The edition [${edition.directory}] will be trimmed, as a previous edition already passes all targets`,
 					)
 					edition.active = false
 					recompile = true
@@ -120,11 +120,11 @@ export async function updateEngines(state) {
 				// update the sets
 				const passedUnique = passed.filter(
 					(version) =>
-						listPassedVersions.has(nodeMajorVersion(version)) === false
+						listPassedVersions.has(nodeMajorVersion(version)) === false,
 				)
 				const failedUnique = failed.filter(
 					(version) =>
-						listPassedVersions.has(nodeMajorVersion(version)) === false
+						listPassedVersions.has(nodeMajorVersion(version)) === false,
 				)
 				const range = nodeMajorVersions(passed).join(' || ')
 				skip = failed.length === 0
@@ -139,7 +139,7 @@ export async function updateEngines(state) {
 						`failed:      ${failed.join(', ')}`,
 						`.unique:     ${failedUnique.join(', ')}`,
 						`range:       ${range}`,
-					].join('\n')
+					].join('\n'),
 				)
 
 				// trim
@@ -147,7 +147,7 @@ export async function updateEngines(state) {
 					// is this one redundant
 					if (passedUnique.length === 0) {
 						console.log(
-							`The edition [${edition.directory}] will be trimmed, as it has no unique passing versions`
+							`The edition [${edition.directory}] will be trimmed, as it has no unique passing versions`,
 						)
 						edition.active = false
 						recompile = true
@@ -160,7 +160,7 @@ export async function updateEngines(state) {
 						for (const priorEdition of list) {
 							if (priorEdition === edition) break
 							console.log(
-								`The prior edition [${priorEdition.directory}] will be trimmed, as a latter edition supports its versions`
+								`The prior edition [${priorEdition.directory}] will be trimmed, as a latter edition supports its versions`,
 							)
 							priorEdition.active = false
 							recompile = true
@@ -174,20 +174,20 @@ export async function updateEngines(state) {
 
 				// add the unique versions to the list
 				passedUnique.forEach((version) =>
-					listPassedVersions.add(nodeMajorVersion(version))
+					listPassedVersions.add(nodeMajorVersion(version)),
 				)
 
 				// log
 				status(
 					`...determined engines for edition [${edition.directory}] as [${
 						edition.engines.node
-					}] against [${numbers.join(', ')}]`
+					}] against [${numbers.join(', ')}]`,
 				)
 			}
 
 			// fetch the editions we've kept
 			const keptEditions = Array.from(list.values()).filter(
-				(edition) => edition.active
+				(edition) => edition.active,
 			)
 
 			// if we only want one edition, verify we only have one edition
@@ -196,7 +196,7 @@ export async function updateEngines(state) {
 				throw new Error(
 					`Multiple editions were kept [${keptEditions
 						.map((edition) => edition.directory)
-						.join(', ')}] when only one should have been.`
+						.join(', ')}] when only one should have been.`,
 				)
 			}
 
@@ -208,8 +208,8 @@ export async function updateEngines(state) {
 						`The kept editions [${keptEditions
 							.map((edition) => edition.directory)
 							.join(
-								', '
-							)}] still did not pass for the required node version [${version}]`
+								', ',
+							)}] still did not pass for the required node version [${version}]`,
 					)
 				}
 			}
@@ -230,7 +230,7 @@ export async function updateEngines(state) {
 	const supported = answers.nodeVersionsSupported
 	const tested = answers.nodeVersionsTested
 	const testedAndPassed = Array.from(allPassedVersions.values()).sort(
-		versionCompare
+		versionCompare,
 	)
 	const testedAndFailed = complement(tested, testedAndPassed)
 	const testedAndSupported = intersect(tested, supported)
@@ -241,16 +241,16 @@ export async function updateEngines(state) {
 	if (failedAndSupported.length) {
 		throw new Error(
 			`The project does not support the required versions: ${failedAndSupported.join(
-				', '
-			)}`
+				', ',
+			)}`,
 		)
 	}
 
 	if (passedAndUnsupported.length) {
 		console.log(
 			`The project supports the extra versions: ${passedAndUnsupported.join(
-				', '
-			)}`
+				', ',
+			)}`,
 		)
 	}
 

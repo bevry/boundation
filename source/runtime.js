@@ -59,7 +59,7 @@ function uninstallRaw({ packageManager, packageData, dependencies }) {
 	dependencies = dependencies.filter(
 		(dependency) =>
 			packageData.dependencies[dependency] ||
-			packageData.devDependencies[dependency]
+			packageData.devDependencies[dependency],
 	)
 	if (!dependencies.length) return
 	// continue
@@ -282,7 +282,7 @@ export async function updateRuntime(state) {
 	if (duplicateDepNames.length) {
 		console.log(
 			`the following dependencies existed in both deps and devDeps:`,
-			duplicateDepNames
+			duplicateDepNames,
 		)
 		// continue backtracking until we find a version that doesn't have the issue
 		let cmd,
@@ -294,8 +294,8 @@ export async function updateRuntime(state) {
 			if (version === nextVersion) {
 				throw new Error(
 					`unable to rever to a previous version that did not have duplicate packages, please fix the duplication of the following packages manually: ${duplicateDepNames.join(
-						', '
-					)}`
+						', ',
+					)}`,
 				)
 			}
 			version = nextVersion
@@ -363,7 +363,7 @@ export async function updateRuntime(state) {
 		(packageData &&
 			packageData.boundation &&
 			packageData.boundation.versions) ||
-			{}
+			{},
 	)
 
 	// write the updated package.json file
@@ -474,7 +474,7 @@ export async function updateRuntime(state) {
 	if (answers.languages.includes('coffeescript')) {
 		packages.coffeelint = 'dev'
 		state.scripts['our:verify:coffeelint'] = ['coffeelint', sourcePath].join(
-			' '
+			' ',
 		)
 	}
 
@@ -577,7 +577,7 @@ export async function updateRuntime(state) {
 		].filter((v) => v)
 		// fetch their existing status and convert back into the original location
 		const typePathsExisting = await Promise.all(
-			typePaths.map((v) => exists(v).then((e) => e && v))
+			typePaths.map((v) => exists(v).then((e) => e && v)),
 		)
 		// find the first location that exists
 		const typePath = typePathsExisting.find((v) => v)
@@ -598,7 +598,7 @@ export async function updateRuntime(state) {
 		if (answers.languages.includes('typescript')) {
 			tools.push('typedoc')
 			// https://github.com/TypeStrong/typedoc/releases
-			versions.typescript = '5.0'
+			versions.typescript = '~5.2'
 		}
 		// coffeescript
 		if (answers.languages.includes('coffescript')) {
@@ -629,7 +629,7 @@ export async function updateRuntime(state) {
 						"--exclude '**/+(*test*|node_modules)'",
 						'--excludeExternals',
 						`--out ${out}`,
-						sourcePath
+						sourcePath,
 					)
 					break
 				case 'jsdoc':
@@ -646,7 +646,7 @@ export async function updateRuntime(state) {
 						'&&',
 						`mv ${out}/$npm_package_name/$npm_package_version/* ${out}/`,
 						'&&',
-						`rm -Rf ${out}/$npm_package_name/$npm_package_version`
+						`rm -Rf ${out}/$npm_package_name/$npm_package_version`,
 					)
 					break
 				case 'yuidoc':
@@ -656,7 +656,7 @@ export async function updateRuntime(state) {
 						`-o ${out}`,
 						'--syntaxtype coffee',
 						'-e .coffee',
-						sourcePath
+						sourcePath,
 					)
 					break
 				case 'biscotto':
@@ -668,7 +668,7 @@ export async function updateRuntime(state) {
 						'--readme README.md',
 						`--output-dir ${out}`,
 						sourcePath,
-						'- LICENSE.md HISTORY.md'
+						'- LICENSE.md HISTORY.md',
 					)
 					break
 				default:
@@ -730,7 +730,7 @@ export async function updateRuntime(state) {
 	if (answers.languages.includes('react')) {
 		packages.react = packages['react-dom'] = peerDepInstallLocation(
 			packageData,
-			'react'
+			'react',
 		)
 		packages['eslint-plugin-react-hooks'] = packages['eslint-plugin-react'] =
 			'dev'
@@ -780,13 +780,13 @@ export async function updateRuntime(state) {
 
 	// targets
 	const allTargets = unique([...allTypescriptTargets, ...allLanguages]).map(
-		(i) => i.toLowerCase()
+		(i) => i.toLowerCase(),
 	)
 	const usedTargets = unique([
 		...answers.languages.map((i) => i.toLowerCase()),
 		...state.activeEditions
 			.map((e) =>
-				Array.from(e.tags).find((t) => allTargets.includes(t.toLowerCase()))
+				Array.from(e.tags).find((t) => allTargets.includes(t.toLowerCase())),
 			)
 			.filter((i) => i)
 			.map((i) => i.toLowerCase()),
@@ -799,7 +799,7 @@ export async function updateRuntime(state) {
 	toggle(
 		answers.keywords,
 		'node',
-		!answers.website && answers.npm && Boolean(answers.desiredNodeVersion)
+		!answers.website && answers.npm && Boolean(answers.desiredNodeVersion),
 	)
 	toggle(answers.keywords, 'dom', answers.dom)
 	toggle(answers.keywords, 'browser', answers.browser)
@@ -807,7 +807,7 @@ export async function updateRuntime(state) {
 	toggle(
 		answers.keywords,
 		['types', 'typed'],
-		packageData.types || packages.jsdoc
+		packageData.types || packages.jsdoc,
 	)
 
 	// special cases
@@ -827,7 +827,7 @@ export async function updateRuntime(state) {
 	) {
 		status('renaming joe to kava...')
 		await exec(
-			`bash -O nullglob -O globstar -c "sed -i '' -e 's/joe/kava/g' ${sourcePath}/**/*.*"`
+			`bash -O nullglob -O globstar -c "sed -i '' -e 's/joe/kava/g' ${sourcePath}/**/*.*"`,
 		)
 		status('...renamed joe to kava')
 	}
@@ -868,15 +868,15 @@ export async function updateRuntime(state) {
 
 	// handle the dependencies
 	const addDependencies = Object.keys(packages).filter(
-		(key) => packages[key] === true
+		(key) => packages[key] === true,
 	)
 	const addDevDependencies = Object.keys(packages).filter(
-		(key) => packages[key] === 'dev'
+		(key) => packages[key] === 'dev',
 	)
 	const removeDependencies = Object.keys(packages).filter(
 		(key) =>
 			packages[key] === false &&
-			(packageData.dependencies[key] || packageData.devDependencies[key])
+			(packageData.dependencies[key] || packageData.devDependencies[key]),
 	)
 
 	// tsconfig
@@ -920,7 +920,7 @@ export async function updateRuntime(state) {
 		if (answers.keywords.has('esnext')) lib.add('ESNext')
 		if (answers.website) exclude.add('node_modules')
 		const typescriptTarget = answers.targets.find((i) =>
-			allTypescriptTargets.includes(i)
+			allTypescriptTargets.includes(i),
 		)
 		const tsconfig = answers.website
 			? {
@@ -961,7 +961,7 @@ export async function updateRuntime(state) {
 							strict: true,
 							target: typescriptTarget,
 						},
-						answers.sourceModule ? { module: 'ESNext' } : {}
+						answers.sourceModule ? { module: 'ESNext' } : {},
 					),
 					include: [answers.sourceDirectory],
 			  }

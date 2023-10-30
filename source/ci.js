@@ -204,7 +204,7 @@ export async function updateCI(state) {
 	} else {
 		await writeYAML(
 			'.github/workflows/bevry.yml',
-			generateGitHubActionsJSON(state)
+			generateGitHubActionsJSON(state),
 		)
 	}
 

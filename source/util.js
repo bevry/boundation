@@ -167,15 +167,15 @@ export function fixBalupton(person) {
 	return person
 		.replace(
 			/^Benjamin Lupton( <b@lupton.cc>)?$/,
-			'Benjamin Lupton <b@lupton.cc> (https://github.com/balupton)'
+			'Benjamin Lupton <b@lupton.cc> (https://github.com/balupton)',
 		)
 		.replace(
 			/^Benjamin Lupton( <b@lupton.cc>)? \(https?:\/\/github.com\/balupton\)$/,
-			'Benjamin Lupton <b@lupton.cc> (https://github.com/balupton)'
+			'Benjamin Lupton <b@lupton.cc> (https://github.com/balupton)',
 		)
 		.replace(
 			/^Benjamin Lupton( <b@lupton.cc>)? \(https?:\/\/balupton.com\/?\)$/,
-			'Benjamin Lupton <b@lupton.cc> (https://github.com/balupton)'
+			'Benjamin Lupton <b@lupton.cc> (https://github.com/balupton)',
 		)
 }
 

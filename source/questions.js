@@ -67,7 +67,7 @@ export async function getQuestions(state) {
 	const { packageData, vercelConfig } = state
 	const browsers = getPackageProperty(packageData, 'browsers')
 	const browser = Boolean(
-		browsers || getPackageProperty(packageData, 'browser')
+		browsers || getPackageProperty(packageData, 'browser'),
 	)
 	const browsersList = typeof browsers === 'string' ? browsers : 'defaults'
 	const editioned = hasEditions(packageData)
@@ -173,7 +173,7 @@ export async function getQuestions(state) {
 			message: 'Will it be a static website?',
 			default({ website }) {
 				return Boolean(
-					website && (website.includes('static') || website === 'surge')
+					website && (website.includes('static') || website === 'surge'),
 				)
 			},
 			skip: true,
@@ -335,7 +335,7 @@ export async function getQuestions(state) {
 			message: 'Will the source code use ESM (import instead of require)?',
 			default({ languages }) {
 				return Boolean(
-					languages.includes('typescript') ? true : isSourceModule(packageData)
+					languages.includes('typescript') ? true : isSourceModule(packageData),
 				)
 			},
 			skip({ language }) {
@@ -348,7 +348,7 @@ export async function getQuestions(state) {
 			message: 'Will it use flow type for strong type checking?',
 			default({ language }) {
 				return Boolean(
-					language === 'esnext' && getPackageFlowtypeDependency(packageData)
+					language === 'esnext' && getPackageFlowtypeDependency(packageData),
 				)
 			},
 			skip({ language }) {
@@ -643,7 +643,7 @@ export async function getQuestions(state) {
 			default({ nodeVersions }) {
 				// prefer the active LTS
 				const preference = last(
-					filterNodeVersions(nodeVersions, { active: true })
+					filterNodeVersions(nodeVersions, { active: true }),
 				)
 				if (preference) return preference
 				// otherwise fallback to the latest preselected
@@ -798,7 +798,7 @@ export async function getQuestions(state) {
 						  ]).sort(versionCompare)
 						: compilerNode === 'typescript'
 						? await fetchExclusiveCompatibleESVersionsForNodeVersions(
-								nodeVersionsSupported
+								nodeVersionsSupported,
 						  )
 						: []
 				).reverse()
@@ -851,7 +851,7 @@ export async function getAnswers(state) {
 	// Fetch
 	const answers = await _getAnswers(
 		await getQuestions(state),
-		state.packageData && state.packageData.boundation
+		state.packageData && state.packageData.boundation,
 	)
 
 	// Apply
@@ -864,7 +864,7 @@ export async function getAnswers(state) {
 		if (answers.desiredNodeVersion > answers.nodeVersionSupportedMaximum) {
 			console.log(
 				'constrained desiredNodeVersion to the nodeVersionSupportedMaximum of',
-				answers.nodeVersionSupportedMaximum
+				answers.nodeVersionSupportedMaximum,
 			)
 			answers.desiredNodeVersion = answers.nodeVersionSupportedMaximum
 		}

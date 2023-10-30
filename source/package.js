@@ -27,7 +27,7 @@ import { getVercelName } from './website.js'
 // Prepare
 const mandatoryScriptsList =
 	'our:setup our:compile our:meta our:verify our:deploy our:release test'.split(
-		' '
+		' ',
 	)
 
 // ====================================
@@ -143,8 +143,8 @@ export function hasPackageScript(packageData, key) {
 export function hasPackageScriptPrefix(packageData, key) {
 	return Boolean(
 		Object.keys(packageData.scripts || {}).find((value) =>
-			value.startsWith(key)
-		)
+			value.startsWith(key),
+		),
 	)
 }
 
@@ -246,7 +246,7 @@ export function getPackageTestEntry(packageData) {
 			return 'test'
 		} else if (packageData.scripts && packageData.scripts.test) {
 			const result = packageData.scripts.test.match(
-				/^node(?: --[a-zA-Z0-9_]+)* (?:[^/]+\/)*([^.]+)\.js/
+				/^node(?: --[a-zA-Z0-9_]+)* (?:[^/]+\/)*([^.]+)\.js/,
 			) /* fetches filename without ext */
 			return (result && result[1]) || null
 		}
@@ -287,7 +287,7 @@ export async function getPackageNodeEntry(packageData) {
 		(await echoExists('source/node.ts')) ||
 			(await echoExists('source/node.coffee')) ||
 			(await echoExists('source/node.mjs')) ||
-			(await echoExists('source/node.js'))
+			(await echoExists('source/node.js')),
 	)
 	// don't use packageData.node
 	// have them set it via package.json:boundation:nodeEntry
@@ -296,7 +296,7 @@ export async function getPackageNodeEntry(packageData) {
 
 export async function getPackageDenoEntry(packageData) {
 	return getBasename(
-		(await echoExists('source/deno.ts')) || (packageData && packageData.deno)
+		(await echoExists('source/deno.ts')) || (packageData && packageData.deno),
 	)
 	// don't use packageData.deno
 	// have them set it via package.json:boundation:denoEntry
@@ -308,7 +308,7 @@ export async function getPackageBrowserEntry() {
 		(await echoExists('source/browser.ts')) ||
 			(await echoExists('source/browser.coffee')) ||
 			(await echoExists('source/browser.mjs')) ||
-			(await echoExists('source/browser.js'))
+			(await echoExists('source/browser.js')),
 	)
 	// don't use packageData.browser
 	// have them set it via package.json:boundation:browserEntry
@@ -377,7 +377,7 @@ export function arrangePackage(state) {
 		packageData.editions = activeEditions.map(function (edition) {
 			const result = arrangekeys(
 				edition,
-				'description directory entry tags engines'
+				'description directory entry tags engines',
 			)
 			if (result.tags) result.tags = Array.from(result.tags.values())
 			return result
@@ -404,7 +404,7 @@ export function arrangePackage(state) {
 	// merge in editions[].scripts
 	Object.assign(
 		scripts,
-		...activeEditions.map((edition) => edition.scripts || {})
+		...activeEditions.map((edition) => edition.scripts || {}),
 	)
 
 	// inject empty mandatory scripts if they don't exist
@@ -591,7 +591,7 @@ export async function updatePackageData(state) {
 				url: repoToWebsite(answers.repoUrl) + '.git',
 			},
 			scripts: {},
-		}
+		},
 	)
 
 	// engines

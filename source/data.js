@@ -39,7 +39,7 @@ export const defaultCoffeeTarget = 'ESNext'
 
 // previous year
 export const defaultBrowserTarget = getESVersionByDate(
-	getDateWithYearOffset(-1)
+	getDateWithYearOffset(-1),
 )
 
 export const languageNames = {
