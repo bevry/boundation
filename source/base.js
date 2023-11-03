@@ -186,8 +186,10 @@ export async function updateBaseFiles({ answers, packageData }) {
 	if (answers.docs && ['bevry', 'surge'].includes(answers.deploymentStrategy)) {
 		const newDocumentationPrefix =
 			answers.deploymentStrategy === 'bevry'
-				? `https://cdn.bevry.me/${trimOrgName(answers.name)}/master/`
-				: `http://master.${trimOrgName(answers.name)}.${
+				? `https://cdn.bevry.me/${trimOrgName(answers.name)}/${
+						answers.defaultBranch
+				  }/`
+				: `http://${answers.defaultBranch}.${trimOrgName(answers.name)}.${
 						answers.organisation
 				  }.surge.sh/`
 		const newDocumentationSuffix = `docs/${

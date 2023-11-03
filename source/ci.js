@@ -139,7 +139,6 @@ function generateGitHubActionsJSON(state) {
 		{
 			name: 'Install desired Node.js version',
 			uses: 'actions/setup-node@v4',
-			// uses: 'dcodeIO/setup-node-nvm@master',
 			with: {
 				'node-version': desiredNodeVersion,
 			},
@@ -151,7 +150,6 @@ function generateGitHubActionsJSON(state) {
 			name: 'Install targeted Node.js',
 			if: `\${{ matrix.node != ${desiredNodeVersion} }}`,
 			uses: 'actions/setup-node@v4',
-			// uses: 'dcodeIO/setup-node-nvm@master',
 			with: {
 				'node-version': '${{ matrix.node }}',
 			},

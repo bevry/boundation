@@ -46,16 +46,55 @@ export async function getGitUsername(cwd = pwd) {
 	}
 }
 
-export async function getGitBranch(cwd = pwd) {
-	const detail = (details[cwd] = details[cwd] || {})
-	if (detail.branch) return detail.branch
+async function getGitGlobalConfigDefaultBranch(cwd = pwd) {
+	try {
+		const stdout = await exec('git config --global init.defaultBranch', {
+			cwd,
+			stdio: ['ignore', 'pipe', 'ignore'],
+		})
+		const result = (stdout && stdout.toString().trim()) || null
+		return result
+	} catch (error) {
+		return null
+	}
+}
+
+async function getGitLocalConfigDefaultBranch(cwd = pwd) {
+	try {
+		const stdout = await exec('git config init.defaultBranch', {
+			cwd,
+			stdio: ['ignore', 'pipe', 'ignore'],
+		})
+		const result = (stdout && stdout.toString().trim()) || null
+		return result
+	} catch (error) {
+		return null
+	}
+}
+
+async function getGitActiveDefaultBranch(cwd = pwd) {
 	try {
 		const stdout = await exec('git rev-parse --abbrev-ref HEAD', {
 			cwd,
 			stdio: ['ignore', 'pipe', 'ignore'],
 		})
 		const result = (stdout && stdout.toString().trim()) || null
-		result.branch = result
+		return result
+	} catch (error) {
+		return null
+	}
+}
+
+export async function getGitDefaultBranch(cwd = pwd) {
+	const detail = (details[cwd] = details[cwd] || {})
+	if (detail.branch) return detail.branch
+	try {
+		const result =
+			(await getGitActiveDefaultBranch()) ||
+			(await getGitLocalConfigDefaultBranch()) ||
+			(await getGitGlobalConfigDefaultBranch()) ||
+			'main'
+		detail.branch = result
 		return result
 	} catch (error) {
 		return null

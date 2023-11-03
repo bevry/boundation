@@ -1,5 +1,9 @@
 # History
 
+## v1.81.0 2023 November 3
+
+-   Boundation now uses the default branch where appropriate instead of always using `master`, if could not be determined, fallbacks to the git config, then the global git config, then `main`
+
 ## v1.80.0 2023 November 2
 
 -   Improved core:

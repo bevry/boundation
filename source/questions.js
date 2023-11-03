@@ -23,6 +23,7 @@ import {
 } from './util.js'
 import {
 	getGitEmail,
+	getGitDefaultBranch,
 	getGitOrganisation,
 	getGitOriginUrl,
 	getGitProject,
@@ -94,7 +95,7 @@ export async function getQuestions(state) {
 			filter: trim,
 			default: getPackageKeywords(packageData),
 			skip({ keywords }) {
-				return keywords
+				return Boolean(keywords)
 			},
 		},
 		{
@@ -103,6 +104,16 @@ export async function getQuestions(state) {
 			validate: isGitUrl,
 			filter: trim,
 			default: (await getGitOriginUrl()) || getPackageRepoUrl(packageData),
+		},
+		{
+			name: 'defaultBranch',
+			message: 'What is the default branch for the repository?',
+			validate: isSpecified,
+			filter: trim,
+			default: (await getGitDefaultBranch()) || 'main',
+			async skip() {
+				return Boolean(await getGitDefaultBranch()) // not an issue due to caching
+			},
 		},
 		{
 			name: 'githubSlug',
