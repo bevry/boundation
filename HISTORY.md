@@ -1,5 +1,12 @@
 # History
 
+## v1.82.0 2023 November 4
+
+-   Support empty directories (fixed missing engines error)
+-   Fix engines not being updated for websites and `desiredNodeOnly` projects
+-   Repeat spawns that failed due to connection errors
+-   Skip `organisation` property if it could be defaulted (it is inferred from github slug, which is inferred from git url)
+
 ## v1.81.0 2023 November 3
 
 -   Boundation now uses the default branch where appropriate instead of always using `master`, if could not be determined, fallbacks to the git config, then the global git config, then `main`

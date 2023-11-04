@@ -9,7 +9,11 @@ import { filterNodeVersions } from '@bevry/nodejs-versions'
 // local
 const { Versions } = testen
 import { status } from './log.js'
-import { writePackage } from './package.js'
+import {
+	writePackage,
+	getPackageNodeEngine,
+	setPackageNodeEngine,
+} from './package.js'
 import { updateRuntime } from './runtime.js'
 import versionCompare from 'version-compare'
 import { nodeMajorVersion, nodeMajorVersions } from './util.js'
@@ -56,9 +60,9 @@ export async function updateEngines(state) {
 
 		// log
 		status(
-			`...determined engines for project as [${
-				packageData.engines.node
-			}] against [${numbers.join(', ')}]`,
+			`...determined engines for project as [${getPackageNodeEngine(
+				packageData,
+			)}] against [${numbers.join(', ')}]`,
 		)
 	} else {
 		let recompile = false
@@ -281,9 +285,9 @@ export async function updateEngines(state) {
 			1
 	) {
 		// our tests revealed we support a lower version than originally supported so expand
-		const oldValue = packageData.engines.node
+		const oldValue = getPackageNodeEngine(packageData)
 		const newValue = '>=' + testedAndPassed[0]
-		packageData.engines.node = newValue
+		setPackageNodeEngine(packageData, newValue)
 		if (oldValue !== newValue) {
 			console.log(
 				`The project's Node.js engine has expanded from ${oldValue} to ${newValue}`,
@@ -292,12 +296,13 @@ export async function updateEngines(state) {
 			console.log(`The project's Node.js engine has stayed as ${oldValue}`)
 		}
 	} else {
-		const oldValue = packageData.engines.node
+		const oldValue = getPackageNodeEngine(packageData)
 		const newValue =
 			(useSpecificEngineVersions &&
 				nodeMajorVersions(testedAndPassed).join(' || ')) ||
 			(answers.website && `>=${answers.desiredNodeVersion}`) ||
 			`>=${answers.nodeVersionSupportedMinimum}`
+		setPackageNodeEngine(packageData, newValue)
 		if (oldValue !== newValue) {
 			console.log(
 				`The project's Node.js engine has changed from ${oldValue} to ${newValue}`,

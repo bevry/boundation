@@ -63,13 +63,19 @@ export function getPackageKeywords(packageData) {
 	return (packageData.keywords && packageData.keywords.join(', ')) || null
 }
 
+export function getPackageNodeEngine(packageData) {
+	return (packageData.engines && packageData.engines.node) || null
+}
+
 export function getPackageNodeEngineVersion(packageData) {
-	return (
-		(packageData.engines &&
-			packageData.engines.node &&
-			packageData.engines.node.replace(/[^0-9]+/, '')) ||
-		null
-	)
+	const nodeEngine = getPackageNodeEngine(packageData)
+	if (nodeEngine) return nodeEngine.replace(/[^0-9]+/, '') || null
+	return null
+}
+
+export function setPackageNodeEngine(packageData, nodeEngine) {
+	if (!packageData.engines) packageData.engines = {}
+	packageData.engines.node = nodeEngine
 }
 
 export function getPackageDocumentationDependency(packageData) {
@@ -573,7 +579,6 @@ export async function updatePackageData(state) {
 		{
 			version: '1.0.0',
 			license: 'Artistic-2.0',
-			author: answers.author,
 			engines: {},
 			dependencies: {},
 			devDependencies: {},
@@ -581,6 +586,7 @@ export async function updatePackageData(state) {
 		packageDataLocal || {},
 		{
 			name: answers.name,
+			author: answers.author,
 			description: answers.description,
 			homepage: repoToWebsite(answers.repoUrl),
 			bugs: {

@@ -141,9 +141,21 @@ export function spawn(command, opts = {}) {
 	opts.cwd = opts.cwd || pwd
 	opts.stdio = opts.stdio == null ? 'inherit' : opts.stdio
 	return new Promise(function (resolve, reject) {
-		safeps.spawn(command, opts, function (err, stdout) {
-			if (err)
-				return reject(new Errlop(`spawn failed: ${command.join(' ')}`, err))
+		safeps.spawn(command, opts, function (err, stdout = '', stderr = '') {
+			if (err) {
+				const message = `spawn failed: ${command.join(' ')}`
+				if (stderr) {
+					const errorMessage = stderr.toLowerCase()
+					if (
+						errorMessage.includes('timeout') ||
+						errorMessage.includes('econn')
+					) {
+						console.log('trying again due to poor internet connection')
+						return spawn(command, opts).then(resolve).catch(reject)
+					}
+				}
+				return reject(new Errlop(message, err))
+			}
 			return resolve(stdout)
 		})
 	})

@@ -14,16 +14,17 @@ import { fetchExclusiveCompatibleESVersionsForNodeVersions } from '@bevry/nodejs
 import _getAnswers from './answers.js'
 import { pwd, allLanguages, allTypescriptTargets } from './data.js'
 import {
-	isNumber,
-	isGitUrl,
-	isSpecified,
-	trim,
-	repoToSlug,
 	hasScript,
+	isGitUrl,
+	isNumber,
+	isSpecified,
+	repoToOrganisation,
+	repoToSlug,
+	trim,
 } from './util.js'
 import {
-	getGitEmail,
 	getGitDefaultBranch,
+	getGitEmail,
 	getGitOrganisation,
 	getGitOriginUrl,
 	getGitProject,
@@ -33,14 +34,14 @@ import {
 	getPackageAuthor,
 	getPackageBinEntry,
 	getPackageBinExecutable,
-	getPackageNodeEntry,
 	getPackageBrowserEntry,
 	getPackageDescription,
 	getPackageFlowtypeDependency,
-	getPackageKeywords,
 	getPackageIndexEntry,
+	getPackageKeywords,
 	getPackageName,
 	getPackageNodeEngineVersion,
+	getPackageNodeEntry,
 	getPackageOrganisation,
 	getPackageProperty,
 	getPackageRepoUrl,
@@ -118,9 +119,23 @@ export async function getQuestions(state) {
 		{
 			name: 'githubSlug',
 			message: 'What is the github repository slug?',
+			validate: isSpecified,
+			filter: trim,
 			skip: true,
 			default({ repoUrl }) {
 				return repoUrl && repoUrl.includes('github') ? repoToSlug(repoUrl) : ''
+			},
+		},
+		{
+			name: 'organisation',
+			message: 'What is the organisation username for the package?',
+			validate: isSpecified,
+			filter: trim,
+			skip({ organisation }) {
+				return Boolean(organisation)
+			},
+			default({ repoUrl }) {
+				return repoToOrganisation(repoUrl)
 			},
 		},
 		{
@@ -133,12 +148,6 @@ export async function getQuestions(state) {
 				`${new Date().getFullYear()}+ ${(await getGitUsername()) || 'name'} <${
 					(await getGitEmail()) || 'email'
 				}>`,
-		},
-		{
-			name: 'organisation',
-			message: 'What is the organisation username for the package?',
-			default:
-				(await getGitOrganisation()) || getPackageOrganisation(packageData),
 		},
 		{
 			name: 'type',

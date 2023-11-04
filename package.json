@@ -1,6 +1,6 @@
 {
   "name": "boundation",
-  "version": "1.81.0",
+  "version": "1.82.0",
   "description": "Automatic scaffolding and upgrading of your JavaScript ecosystem projects using Bevry's best practices",
   "homepage": "https://github.com/bevry/boundation",
   "license": "Artistic-2.0",
@@ -95,37 +95,37 @@
     }
   },
   "dependencies": {
-    "@bevry/ansi": "^3.3.0",
+    "@bevry/ansi": "^3.5.0",
     "@bevry/ecmascript-versions": "^3.6.0",
     "@bevry/github-orgs": "^2.1.0",
-    "@bevry/list": "^1.7.0",
-    "@bevry/nodejs-ecmascript-compatibility": "^5.0.0",
-    "@bevry/nodejs-versions": "^2.3.0",
+    "@bevry/list": "^1.8.0",
+    "@bevry/nodejs-ecmascript-compatibility": "^5.1.0",
+    "@bevry/nodejs-versions": "^2.4.0",
     "@bevry/testen": "^5.0.2",
-    "arrange-package-json": "^2.4.0",
-    "arrangekeys": "^4.25.0",
+    "arrange-package-json": "^2.5.0",
+    "arrangekeys": "^4.26.0",
     "errlop": "^4.6.0",
     "filedirname": "^2.8.0",
     "get-cli-arg": "^7.4.0",
     "inquirer": "^9.2.11",
     "js-yaml": "^4.1.0",
-    "safeps": "^10.17.0",
+    "safeps": "^10.18.0",
     "semver": "^7.5.4",
     "typechecker": "^7.18.0",
-    "version-compare": "^1.4.0",
-    "version-range": "^1.4.0"
+    "version-compare": "^1.5.0",
+    "version-range": "^1.5.0"
   },
   "devDependencies": {
-    "@bevry/update-contributors": "^1.22.0",
+    "@bevry/update-contributors": "^1.23.0",
     "assert-helpers": "^8.4.0",
-    "eslint": "^8.52.0",
+    "eslint": "^8.53.0",
     "eslint-config-bevry": "^3.28.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.1",
-    "kava": "^5.15.0",
+    "kava": "^5.17.0",
     "prettier": "^3.0.3",
     "projectz": "^2.23.0",
-    "valid-directory": "^4.0.0"
+    "valid-directory": "^4.1.0"
   },
   "scripts": {
     "our:bin": "node ./bin.mjs",
