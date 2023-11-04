@@ -201,6 +201,9 @@ export async function updateEngines(state) {
 			// if we only want one edition, verify we only have one edition
 			if (mode === 'onlyAllSupported' && keptEditions.length !== 1) {
 				console.error(debug.trim())
+				if (keptEditions.length === 0) {
+					throw new Error(`No editions were kept, there should have been one.`)
+				}
 				throw new Error(
 					`Multiple editions were kept [${keptEditions
 						.map((edition) => edition.directory)

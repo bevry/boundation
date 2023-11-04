@@ -1,5 +1,9 @@
 # History
 
+## v1.82.1 2023 November 4
+
+-   Better error message when all ESM editions fail
+
 ## v1.82.0 2023 November 4
 
 -   Support empty directories (fixed missing engines error)
