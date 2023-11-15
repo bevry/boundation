@@ -1,7 +1,8 @@
 // builtin
-import * as pathUtil from 'path'
+import * as pathUtil from 'node:path'
 
 // external
+import versionCompare from 'version-compare'
 import { unique, last, first, intersect } from '@bevry/list'
 import {
 	filterNodeVersions,
@@ -60,7 +61,6 @@ import {
 	isSourceModule,
 } from './package.js'
 import { getVercelAliases, getVercelName } from './website.js'
-import versionCompare from 'version-compare'
 
 // ====================================
 // Questions
@@ -636,6 +636,7 @@ export async function getQuestions(state) {
 				return filterSignificantNodeVersions({
 					released: true,
 					maintainedOrLTS: true,
+					gte: '4', // minimum supported editions and assert-helpers version
 				})
 			},
 			async default(opts) {
@@ -782,15 +783,23 @@ export async function getQuestions(state) {
 			message: 'Which Node.js versions must your package test against?',
 			type: 'checkbox',
 			validate: isSpecified,
-			choices({ nodeVersions, desiredNodeOnly, desiredNodeVersion }) {
+			choices({
+				nodeVersions,
+				desiredNodeOnly,
+				desiredNodeVersion,
+				expandNodeVersions,
+			}) {
 				if (desiredNodeOnly) {
 					return [desiredNodeVersion]
+				} else if (expandNodeVersions) {
+					return nodeVersions
 				} else if (
 					!nodeEngineVersion ||
 					isNodeVersionActiveOrCurrent(nodeEngineVersion)
 				) {
 					return filterNodeVersions(nodeVersions, {
 						maintained: true,
+						gte: nodeEngineVersion,
 					})
 				} else {
 					return filterNodeVersions(nodeVersions, {
@@ -836,31 +845,82 @@ export async function getQuestions(state) {
 			skip: true,
 		},
 		{
+			name: 'nodeVersionsTargeted',
+			message:
+				'Which Node.js versions must your package target compilation against?',
+			type: 'checkbox',
+			validate: isSpecified,
+			choices({
+				language,
+				desiredNodeVersion,
+				nodeVersionsSupported,
+				nodeVersionsTested,
+			}) {
+				if (language === 'json') return [desiredNodeVersion]
+				return unique(nodeVersionsTested.concat(nodeVersionsSupported)).sort(
+					versionCompare,
+				)
+			},
+			default(opts) {
+				return this.choices(opts)
+			},
+			skip({ desiredNodeOnly }) {
+				return Boolean(desiredNodeOnly)
+			},
+		},
+		{
+			name: 'nodeVersionTargetMinimum',
+			message:
+				'Automated property for constraining the minimum Node.js version for targeting',
+			type: 'list',
+			validate: isNumber,
+			choices({ language, desiredNodeVersion, nodeVersionsTargeted }) {
+				if (language === 'json') return [desiredNodeVersion]
+				return nodeVersionsTargeted
+			},
+			default(opts) {
+				return first(this.choices(opts))
+			},
+			skip: true,
+		},
+		{
+			name: 'nodeVersionTargetMaximum',
+			message:
+				'Automated property for constraining the maximum Node.js version for targeting',
+			type: 'list',
+			validate: isNumber,
+			choices({ language, desiredNodeVersion, nodeVersionsTargeted }) {
+				if (language === 'json') return [desiredNodeVersion]
+				return nodeVersionsTargeted
+			},
+			default(opts) {
+				return last(this.choices(opts))
+			},
+			skip: true,
+		},
+		{
 			name: 'targets',
 			type: 'checkbox',
 			message: 'Which compile targets should be generated?',
 			validate: isSpecified,
 			async choices({
 				compilerNode,
-				desiredNodeVersion,
-				nodeVersionSupportedMinimum,
-				nodeVersionSupportedMaximum,
-				nodeVersionsSupported,
+				nodeVersions,
+				nodeVersionTargetMinimum,
+				nodeVersionTargetMaximum,
 			}) {
 				// ensure versions are in order of most preferred to least preferred
 				// otherwise edition trimming will not work as expected
+				const nodeVersionsTargeted = filterNodeVersions(nodeVersions, {
+					gte: nodeVersionTargetMinimum,
+					lte: nodeVersionTargetMaximum,
+				}).reverse()
 				return compilerNode === 'babel'
-					? unique([
-							desiredNodeVersion,
-							nodeVersionSupportedMinimum,
-							nodeVersionSupportedMaximum,
-					  ])
-							.sort(versionCompare)
-							.reverse()
+					? nodeVersionsTargeted
 					: compilerNode === 'typescript'
 					? intersect(allTypescriptTargets, [
 							...(await fetchExclusiveCompatibleESVersionsForNodeVersions(
-								nodeVersionsSupported,
+								nodeVersionsTargeted,
 							)),
 					  ]) // don't add ESNext as it is ephemeral
 					: []

@@ -1,5 +1,33 @@
 # History
 
+## v1.83.0 2023 November 16
+
+-   use `node:` prefix on builtins as our min supported node version supports it
+-   consistently order imports
+-   base:
+    -   for fetching, instead of `master` use `HEAD` (evolutes to the default branch)
+    -   if a bevry organisation:
+        -   output `SECURITY.md`
+        -   add tidelift to `FUNDING.yml` if publishing to npm
+-   ci:
+    -   remove macos and windows ci tests for now, was causing too much overload with dependabot
+    -   update `bevry-actions/npm` version
+    -   include automerge into `bevry.yml` as per github recommendation, rather than as its own third party workflow
+    -   have dependabot also update github action packages
+    -   have dependabot only update on sunday on midnight in perth time (so it doesn't overload @balupton's work schedule)
+    -   only allow security dependabot requests, as boundation handles the dep updates, and the dep updates overwhelm github
+-   fs:
+    -   instead of exec'ing `rm -rf`, use builtin recursive remove now that our min supported node supports it
+    -   better handling of poor internet connection and invalid caching
+-   git:
+    -   correctly name `getGitActiveDefaultBranch` to `getGitActiveBranch`
+-   questions/runtime:
+    -   **introduced target versions, instead of using supported/test versions, to ensure that `expandNodeVersions`` works correctly**
+-   runtime:
+    -   update legacy version compat table (needs to be adjusted for semver as coerce isn't available on older semver versions, or rather needs to be dep and node version specific rather than clumped together)
+    -   have npm scripts use `rm -rf` instead of `rm -Rf` for greater compat
+    -   **if targeting old node versions, have prettier enforce es5 comma mode, otherwise native javascript editions and the editions autoload will break compat**
+
 ## v1.82.1 2023 November 4
 
 -   Better error message when all ESM editions fail

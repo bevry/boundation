@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // builtin
-import { resolve, join } from 'path'
+import { resolve, join } from 'node:path'
 
 // get root with imports
 import filedirname from 'filedirname'

@@ -1,13 +1,13 @@
 // builtin
-import { join } from 'path'
+import { join } from 'node:path'
 
 // external
-import testen from '@bevry/testen'
+import testen, { Versions } from '@bevry/testen'
 import { complement, intersect } from '@bevry/list'
 import { filterNodeVersions } from '@bevry/nodejs-versions'
+import versionCompare from 'version-compare'
 
 // local
-const { Versions } = testen
 import { status } from './log.js'
 import {
 	writePackage,
@@ -15,7 +15,6 @@ import {
 	setPackageNodeEngine,
 } from './package.js'
 import { updateRuntime } from './runtime.js'
-import versionCompare from 'version-compare'
 import { nodeMajorVersion, nodeMajorVersions } from './util.js'
 
 // Update engines

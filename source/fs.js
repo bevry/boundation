@@ -1,6 +1,6 @@
 // builtin
-import * as pathUtil from 'path'
-import * as fsUtil from 'fs'
+import * as pathUtil from 'node:path'
+import * as fsUtil from 'node:fs'
 
 // external
 import yaml from 'js-yaml'
@@ -39,7 +39,7 @@ export function unlink(file) {
 	return new Promise(function (resolve, reject) {
 		fsUtil.unlink(path, function (error) {
 			if (error) {
-				if (error.message && error.message.includes('ENOENT')) return resolve()
+				if (error.code === 'ENOENT') return resolve()
 				return reject(error)
 			}
 			console.log(path, 'has been removed')
@@ -67,20 +67,23 @@ export async function unlinkIfContains(file, what) {
 	}
 }
 
-export function rmrf(files) {
-	return exec(`rm -Rf ${files.join(' ')}`)
-}
-
-export function rmdir(file) {
+export function remove(file) {
+	if (Array.isArray(file)) {
+		return Promise.all(file.map((i) => remove(i)))
+	}
 	const path = pathUtil.resolve(pwd, file)
 	return new Promise(function (resolve, reject) {
-		fsUtil.rmdir(path, { recursive: true }, function (error) {
-			if (error) {
-				if (error.message && error.message.includes('ENOENT')) return resolve()
-				return reject(error)
-			}
-			return resolve()
-		})
+		fsUtil.rm(
+			path,
+			{ recursive: true, force: true, maxRetries: 10 },
+			function (error) {
+				if (error) {
+					if (error.code === 'ENOENT') return resolve()
+					return reject(error)
+				}
+				return resolve()
+			},
+		)
 	})
 }
 
@@ -147,10 +150,14 @@ export function spawn(command, opts = {}) {
 				if (stderr) {
 					const errorMessage = stderr.toLowerCase()
 					if (
+						errorMessage.includes('enoent') ||
+						errorMessage.includes('etarget') ||
 						errorMessage.includes('timeout') ||
 						errorMessage.includes('econn')
 					) {
-						console.log('trying again due to poor internet connection')
+						console.log(
+							'trying again due to poor internet connection or caching',
+						)
 						return spawn(command, opts).then(resolve).catch(reject)
 					}
 				}

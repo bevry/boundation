@@ -1,8 +1,8 @@
 /* eslint-disable camelcase */
 
 // builtin
-import * as pathUtil from 'path'
-import * as urlUtil from 'url'
+import * as pathUtil from 'node:path'
+import * as urlUtil from 'node:url'
 
 // external
 import Errlop from 'errlop'
@@ -19,7 +19,7 @@ import {
 	unlink,
 	spawn,
 	writeYAML,
-	rmrf,
+	remove,
 } from './fs.js'
 
 export async function download(opts) {
@@ -87,7 +87,7 @@ export async function updateBaseFiles({ answers, packageData }) {
 	].filter((i) => i)
 	if (answers.packageManager !== 'yarn')
 		purgeList.push('./.yarnrc', './.yarnrc.yml', './.yarn/')
-	await rmrf(purgeList.filter((i) => `./${i}`))
+	await remove(purgeList.filter((i) => `./${i}`))
 	status('...removed old files')
 
 	// rename old files
@@ -137,27 +137,27 @@ export async function updateBaseFiles({ answers, packageData }) {
 	status('downloading files...')
 	/** @type {Array<string | Object<string, any>} */
 	const downloads = [
-		'https://raw.githubusercontent.com/bevry/base/master/.editorconfig',
+		'https://raw.githubusercontent.com/bevry/base/HEAD/.editorconfig',
 		{
-			url: 'https://raw.githubusercontent.com/bevry/base/master/.gitignore',
+			url: 'https://raw.githubusercontent.com/bevry/base/HEAD/.gitignore',
 			custom: true,
 		},
 		{
-			url: 'https://raw.githubusercontent.com/bevry/base/master/.prettierignore',
+			url: 'https://raw.githubusercontent.com/bevry/base/HEAD/.prettierignore',
 			custom: true,
 		},
-		'https://raw.githubusercontent.com/bevry/base/master/LICENSE.md',
-		'https://raw.githubusercontent.com/bevry/base/master/CONTRIBUTING.md',
+		'https://raw.githubusercontent.com/bevry/base/HEAD/LICENSE.md',
+		'https://raw.githubusercontent.com/bevry/base/HEAD/CONTRIBUTING.md',
 	]
 	if (answers.type === 'package') {
 		downloads.push({
-			url: 'https://raw.githubusercontent.com/bevry/base/master/HISTORY.md',
+			url: 'https://raw.githubusercontent.com/bevry/base/HEAD/HISTORY.md',
 			overwrite: false,
 		})
 	}
 	if (answers.npm) {
 		downloads.push({
-			url: 'https://raw.githubusercontent.com/bevry/base/master/.npmignore',
+			url: 'https://raw.githubusercontent.com/bevry/base/HEAD/.npmignore',
 			custom: true,
 		})
 	} else {
@@ -165,7 +165,7 @@ export async function updateBaseFiles({ answers, packageData }) {
 	}
 	if (answers.flowtype) {
 		downloads.push(
-			'https://raw.githubusercontent.com/bevry/base/master/.flowconfig',
+			'https://raw.githubusercontent.com/bevry/base/HEAD/.flowconfig',
 		)
 	} else {
 		await unlink('.flowconfig')
@@ -203,16 +203,16 @@ export async function updateBaseFiles({ answers, packageData }) {
 		await write(
 			'README.md',
 			[
-				'<!--TITLE -->',
-				'<!--BADGES -->',
-				'<!--DESCRIPTION -->',
+				'<!-- TITLE -->',
+				'<!-- BADGES -->',
+				'<!-- DESCRIPTION -->',
 				'## Usage',
 				answers.docs && newDocumentationLink,
-				'<!--INSTALL -->',
-				'<!--HISTORY -->',
-				'<!--CONTRIBUTE -->',
-				'<!--BACKERS -->',
-				'<!--LICENSE -->',
+				'<!-- INSTALL -->',
+				'<!-- HISTORY -->',
+				'<!-- CONTRIBUTE -->',
+				'<!-- BACKERS -->',
+				'<!-- LICENSE -->',
 			]
 				.filter((i) => i)
 				.join('\n\n'),
@@ -238,7 +238,7 @@ export async function updateBaseFiles({ answers, packageData }) {
 				/\[(Tutorials & Guides|Documentation)\.?\]/g,
 				'[Tutorials & Guides.]',
 			)
-		// insert new documentaiton under usage
+		// insert new documentation under usage
 		if (newDocumentationLink) {
 			content = content.replace('## Usage', function (found) {
 				return found + '\n\n' + newDocumentationLink
@@ -277,8 +277,44 @@ export async function updateBaseFiles({ answers, packageData }) {
 		status('...updated history file')
 	}
 
-	// write the funding file
+	// write bevry specific files
 	if (isBevryOrganisation(answers.organisation)) {
+		// security
+		if (answers.npm) {
+			status('writing security file...')
+			await write(
+				'SECURITY.md',
+				[
+					'# Security Policy',
+					'',
+					'## Security Practices',
+					'',
+					`This project meets standardized secure software development practices, including 2FA for all members, password managers with monitoring, secure secret retrieval instead of storage. [Learn about our practices.](https://tidelift.com/funding/github/npm/${answers.name})`,
+					'',
+					'## Supported Versions',
+					'',
+					`This project uses [Bevry's automated tooling](https://github.com/bevry/boundation) to deliver the latest updates, fixes, and improvements inside the latest release while still maintaining widespread ecosystem compatibility.`,
+					'',
+					`[Refer to supported ecosystem versions: \`Editions\` section in \`README.md\`](https://github.com/${answers.githubSlug}/blob/${answers.defaultBranch}/README.md#Editions)`,
+					'',
+					`[Refer to automated support of ecosystem versions: \`boundation\` entries in \`HISTORY.md\`](https://github.com/${answers.githubSlug}/blob/${answers.defaultBranch}/HISTORY.md)`,
+					'',
+					`Besides testing and verification, out CI also [auto-merges](https://docs.github.com/en/code-security/dependabot/working-with-dependabot/automating-dependabot-with-github-actions) [Dependabot security updates](https://docs.github.com/en/code-security/dependabot/dependabot-security-updates/about-dependabot-security-updates) and [auto-publishes](https://github.com/bevry-actions/npm) successful builds of the [\`${answers.defaultBranch}\` branch](https://github.com/bevry/wait/actions?query=branch%3A${answers.defaultBranch}) to the [\`next\` version tag](https://www.npmjs.com/package/${answers.name}?activeTab=versions), offering immediate resolutions before scheduled maintenance releases.`,
+					'',
+					'## Reporting a Vulnerability',
+					'',
+					`[Report the vulnerability to the project owners.](https://github.com/${answers.githubSlug}/security/advisories)`,
+					'',
+					'[Report the vulnerability to Tidelift.](https://tidelift.com/security)',
+				]
+					.filter((i) => i)
+					.join('\n\n'),
+			)
+			status('...wrote security file')
+		}
+
+		// fuunding
+		// https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/displaying-a-sponsor-button-in-your-repository
 		await spawn(['mkdir', '-p', '.github'])
 		await write(
 			'.github/FUNDING.yml',
@@ -288,8 +324,11 @@ export async function updateBaseFiles({ answers, packageData }) {
 				'open_collective: bevry',
 				'ko_fi: balupton',
 				'liberapay: bevry',
+				answers.npm ? `tidelift: npm/${answers.name}` : '',
 				"custom: ['https://bevry.me/fund']",
-			].join('\n'),
+			]
+				.filter(Boolean)
+				.join('\n'),
 		)
 	}
 }

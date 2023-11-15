@@ -1,12 +1,10 @@
 // builtin
-import * as pathUtil from 'path'
+import * as pathUtil from 'node:path'
 
 // external
 import * as typeChecker from 'typechecker'
 import { is as isBevryOrganisation } from '@bevry/github-orgs'
 import { complement, has } from '@bevry/list'
-
-// esm workarounds
 import arrangekeys from 'arrangekeys'
 import arrangePackageProperties from 'arrange-package-json'
 

@@ -72,7 +72,7 @@ async function getGitLocalConfigDefaultBranch(cwd = pwd) {
 	}
 }
 
-async function getGitActiveDefaultBranch(cwd = pwd) {
+async function getGitActiveBranch(cwd = pwd) {
 	try {
 		const stdout = await exec('git rev-parse --abbrev-ref HEAD', {
 			cwd,
@@ -90,7 +90,7 @@ export async function getGitDefaultBranch(cwd = pwd) {
 	if (detail.branch) return detail.branch
 	try {
 		const result =
-			(await getGitActiveDefaultBranch()) ||
+			(await getGitActiveBranch()) ||
 			(await getGitLocalConfigDefaultBranch()) ||
 			(await getGitGlobalConfigDefaultBranch()) ||
 			'main'

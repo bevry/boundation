@@ -1,10 +1,12 @@
+// external
+import { intersect } from '@bevry/list'
+import { filterNodeVersions } from '@bevry/nodejs-versions'
+
 // local
 import { status, warn } from './log.js'
 import { readYAML, unlink, exists, writeYAML, spawn } from './fs.js'
 import { trimEmpty } from './util.js'
-import { intersect } from '@bevry/list'
 import { allLanguages } from './data.js'
-import { filterNodeVersions } from '@bevry/nodejs-versions'
 
 // github actions no longer supports node versions prior to 16
 // https://github.blog/changelog/2023-06-13-github-actions-all-actions-will-run-on-node16-instead-of-node12-by-default/
@@ -19,7 +21,7 @@ function generateGitHubActionsJSON(state) {
 
 	// prepare vars
 	const actionsOperatingSystems = answers.npm
-		? ['ubuntu-latest', 'macos-latest', 'windows-latest']
+		? ['ubuntu-latest'] // , 'macos-latest', 'windows-latest']
 		: ['ubuntu-latest']
 	const actionsOperatingSystemsExperimental = intersect(
 		actionsOperatingSystems,
@@ -94,7 +96,7 @@ function generateGitHubActionsJSON(state) {
 	const npmPublishSteps = [
 		{
 			name: 'publish to npm',
-			uses: 'bevry-actions/npm@v1.1.0',
+			uses: 'bevry-actions/npm@v1.1.1',
 			with: {
 				npmAuthToken: '${{ secrets.NPM_AUTH_TOKEN }}',
 				npmBranchTag: answers.npm ? ':next' : null,
@@ -206,6 +208,24 @@ function generateGitHubActionsJSON(state) {
 						],
 				  }
 				: null,
+			automerge: {
+				permissions: {
+					contents: 'write',
+					'pull-requests': 'write',
+				},
+				'runs-on': 'ubuntu-latest',
+				if: "github.actor == 'dependabot[bot]'",
+				steps: [
+					{
+						name: 'Enable auto-merge for Dependabot PRs',
+						run: 'gh pr merge --auto --merge "$PR_URL"',
+						env: {
+							PR_URL: '${{github.event.pull_request.html_url}}',
+							GITHUB_TOKEN: '${{secrets.GITHUB_TOKEN}}',
+						},
+					},
+				],
+			},
 		},
 	})
 }
@@ -219,19 +239,38 @@ export async function updateCI(state) {
 		unlink('.travis.yml'),
 		unlink('.mergify.yml'),
 		unlink('.dependabot/config.yml'),
+		unlink('.github/workflows/automerge.yml'),
 		spawn(['mkdir', '-p', '.github/workflows']),
 	])
 
 	// dependabot v2 file
-	// https://docs.github.com/en/github/administering-a-repository/enabling-and-disabling-version-updates#enabling-github-dependabot-version-updates
-	// https://docs.github.com/en/github/administering-a-repository/configuration-options-for-dependency-updates#ignore
+	// https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
 	await writeYAML('.github/dependabot.yml', {
 		version: 2,
 		updates: [
 			{
+				'package-ecosystem': 'github-actions',
+				directory: '/',
+				schedule: {
+					interval: 'weekly',
+					day: 'sunday',
+					time: '00:00',
+					timezone: 'Australia/Perth',
+				},
+			},
+			{
 				'package-ecosystem': 'npm',
 				directory: '/',
-				schedule: { interval: 'weekly', day: 'sunday' },
+				schedule: {
+					interval: 'weekly',
+					day: 'sunday',
+					time: '00:00',
+					timezone: 'Australia/Perth',
+				},
+				// only allow security updates
+				// this is because of the lag it causes on the bevry org
+				// as well as that github only supports the maintained node.js versions so dependabot could merge a dependency that breaks unmaintained node.js versions that are still supported by our package
+				'open-pull-requests-limit': 0,
 			},
 		],
 	})
@@ -246,28 +285,6 @@ export async function updateCI(state) {
 			generateGitHubActionsJSON(state),
 		)
 	}
-
-	// dependabot automerge
-	// https://github.com/ahmadnassri/action-dependabot-auto-merge
-	await writeYAML('.github/workflows/automerge.yml', {
-		name: 'automerge',
-		on: ['pull_request'],
-		jobs: {
-			automerge: {
-				'runs-on': 'ubuntu-latest',
-				steps: [
-					{ uses: 'actions/checkout@v4' },
-					{
-						uses: 'ahmadnassri/action-dependabot-auto-merge@v2',
-						with: {
-							'github-token':
-								'${{ secrets.DEPENDABOT_AUTOMERGE_GITHUB_TOKEN }}',
-						},
-					},
-				],
-			},
-		},
-	})
 
 	// log
 	status('...customised ci')

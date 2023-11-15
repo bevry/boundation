@@ -156,7 +156,7 @@ export function fixTsc(editionDirectory, sourceDirectory) {
 		'||',
 		'(', // begin move
 		`mv ${editionDirectory}/${sourceDirectory} edition-temp`,
-		`&& rm -Rf ${editionDirectory}`,
+		`&& rm -rf ${editionDirectory}`,
 		`&& mv edition-temp ${editionDirectory}`,
 		`)`, // end move
 		')', // end fix

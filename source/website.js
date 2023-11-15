@@ -1,5 +1,5 @@
 // builtin
-import * as pathUtil from 'path'
+import * as pathUtil from 'node:path'
 
 // local
 import { pwd } from './data.js'

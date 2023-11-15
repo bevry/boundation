@@ -1,5 +1,5 @@
 // builtin
-import * as pathUtil from 'path'
+import * as pathUtil from 'node:path'
 
 // external
 import versionCompare from 'version-compare'
@@ -336,23 +336,29 @@ export async function updateRuntime(state) {
 
 	// dependency compatibility for legacy node versions
 	const dependencyCompat = {
-		cson: 5,
-		rimraf: 2,
-		safefs: 4,
-		safeps: 7,
-		taskgroup: 5,
 		'cli-spinners': 1,
-		'lazy-require': 2,
+		'lazy-require': 2, // 4 is node 10, 3 is node 8, 2 is node 0.10, extract-opts, safeps dep ... only docpad uses it
+		// safefs: 4, // 8 is node 4, 5 is node 8, 4 is 0.12, graceful-fs as only dep
+		// safeps: 7, // 11 is node 4, 9 is 8, 8 is 0.12, 7 is 0.8, extract-opts dep, safefs dep
+		// taskgroup: 5, // 6 is node 8, 5 is 0.8
+		cson: 5, // 6 is node 8, 5 is 0.14, has many deps
+		rimraf: 2,
+		semver: 4, // 5 is node 10, 4 is 4 -- should use version-range or version-compare instead
 	}
+	// editions v4 was last to support node <4
+	// https://github.com/bevry/editions/blob/master/HISTORY.md#v500-2020-october-27
 	const devDependencyCompat = {
-		kava: 3,
+		// kava: 3, // 7 is node 4, 4 is 8, 3 is 0.12
+		// '@bevry/ansi': 2, // 6 is node 4
+		// errlop: 4, // 7 is node 4
+		// assert-helpers needs 'process' module, which is node 4 and up
 	}
-	if (versionCompare(answers.nodeVersionSupportedMinimum, 8) === -1) {
+	if (versionCompare(answers.nodeVersionSupportedMinimum, 10) === -1) {
 		for (const [key, value] of Object.entries(dependencyCompat)) {
 			versions[key] = value
 		}
 	}
-	if (versionCompare(answers.nodeVersionTestedMinimum, 8) === -1) {
+	if (versionCompare(answers.nodeVersionTestedMinimum, 10) === -1) {
 		for (const [key, value] of Object.entries(devDependencyCompat)) {
 			versions[key] = value
 		}
@@ -376,7 +382,7 @@ export async function updateRuntime(state) {
 	// add our default scripts
 	state.scripts = {
 		'our:setup:install': commands[answers.packageManager].install.join(' '),
-		'our:clean': 'rm -Rf ./docs ./edition* ./es2015 ./es5 ./out ./.next',
+		'our:clean': 'rm -rf ./docs ./edition* ./es2015 ./es5 ./out ./.next',
 		'our:meta:projectz':
 			packageData.name === 'projectz'
 				? 'npm run our:bin -- compile'
@@ -501,6 +507,10 @@ export async function updateRuntime(state) {
 		packageData.prettier = {
 			semi: false,
 			singleQuote: true,
+			trailingComma:
+				versionCompare(answers.nodeVersionTargetMinimum, '8') < 0
+					? 'es5'
+					: 'all',
 		}
 		state.scripts['our:verify:eslint'] = [
 			'eslint',
@@ -619,7 +629,7 @@ export async function updateRuntime(state) {
 		tools.forEach(function (tool) {
 			const out = tools.length === 1 ? './docs' : `./docs/${tool}`
 			packages[tool] = 'dev'
-			const parts = [`rm -Rf ${out}`, '&&']
+			const parts = [`rm -rf ${out}`, '&&']
 			switch (tool) {
 				case 'typedoc':
 					packages.typedoc = 'dev'
@@ -645,7 +655,7 @@ export async function updateRuntime(state) {
 						'&&',
 						`mv ${out}/$npm_package_name/$npm_package_version/* ${out}/`,
 						'&&',
-						`rm -Rf ${out}/$npm_package_name/$npm_package_version`,
+						`rm -rf ${out}/$npm_package_name/$npm_package_version`,
 					)
 					break
 				case 'yuidoc':

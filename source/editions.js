@@ -1,5 +1,5 @@
 // builtin
-import * as pathUtil from 'path'
+import * as pathUtil from 'node:path'
 
 // external
 import { add, has } from '@bevry/list'

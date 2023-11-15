@@ -1,3 +1,6 @@
+// external
+import { preloadNodeVersions } from '@bevry/nodejs-versions'
+
 // local
 import { status, success } from './log.js'
 import { spawn } from './fs.js'
@@ -8,7 +11,6 @@ import { updateBaseFiles } from './base.js'
 import { generateEditions } from './editions.js'
 import { readWebsite, updateWebsite } from './website.js'
 import { updateRuntime } from './runtime.js'
-import { preloadNodeVersions } from '@bevry/nodejs-versions'
 
 export default async function init(state) {
 	await preloadNodeVersions()
