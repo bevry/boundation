@@ -4,6 +4,9 @@ import * as pathUtil from 'node:path'
 // external
 import versionCompare from 'version-compare'
 import { unique, toggle } from '@bevry/list'
+import { isAccessible } from '@bevry/fs-accessible'
+import unlink from '@bevry/fs-unlink'
+import write from '@bevry/fs-write'
 
 // local
 import { status } from './log.js'
@@ -13,9 +16,9 @@ import {
 	allLanguages,
 	allTypescriptTargets,
 } from './data.js'
-import { parse, exec, exists, spawn, unlink, write } from './fs.js'
+import { parse, exec, spawn } from './fs.js'
 import { fixTsc, getPreviousVersion, getDuplicateDeps } from './util.js'
-import { getPackageBinEntry, readPackage, writePackage } from './package.js'
+import { readPackage, writePackage } from './package.js'
 import {
 	scaffoldEditions,
 	updateEditionEntries,
@@ -259,11 +262,11 @@ export async function updateRuntime(state) {
 			packageData.devDependencies['coffee-script']
 				? 'dev'
 				: packageData.dependencies.coffeescript ||
-				  packageData.dependencies['coffee-script']
-				? true
-				: answers.languages === 'coffeescript'
-				? 'dev'
-				: false,
+				    packageData.dependencies['coffee-script']
+				  ? true
+				  : answers.languages === 'coffeescript'
+				    ? 'dev'
+				    : false,
 	}
 
 	// =================================
@@ -586,7 +589,7 @@ export async function updateRuntime(state) {
 		].filter((v) => v)
 		// fetch their existing status and convert back into the original location
 		const typePathsExisting = await Promise.all(
-			typePaths.map((v) => exists(v).then((e) => e && v)),
+			typePaths.map((v) => isAccessible(v).then((e) => e && v)),
 		)
 		// find the first location that exists
 		const typePath = typePathsExisting.find((v) => v)
@@ -708,9 +711,8 @@ export async function updateRuntime(state) {
 		// surge
 		if (answers.website === 'surge') {
 			packages.surge = 'dev'
-			state.scripts[
-				'my:deploy'
-			] = `surge ./${answers.staticDirectory} ${answers.deployTarget}`
+			state.scripts['my:deploy'] =
+				`surge ./${answers.staticDirectory} ${answers.deployTarget}`
 		}
 		// vercel
 		else if (answers.vercelWebsite) {
@@ -899,7 +901,7 @@ export async function updateRuntime(state) {
 		const lib = new Set()
 		const exclude = new Set()
 		let customCompilerOutDir = ''
-		if (await exists(answers.tsconfig)) {
+		if (await isAccessible(answers.tsconfig)) {
 			try {
 				// parse
 				const data = (await parse(answers.tsconfig)) || {}
@@ -994,7 +996,7 @@ export async function updateRuntime(state) {
 		// add directories
 		await spawn(['mkdir', '-p', 'components', 'pages/api', 'public', 'lib'])
 		// add next.config.js
-		if (!(await exists('next.config.js'))) {
+		if (!(await isAccessible('next.config.js'))) {
 			const nextConfigContent =
 				[
 					mdx ? `const withMDX = require('@zeit/next-mdx')` : '',
@@ -1007,7 +1009,7 @@ export async function updateRuntime(state) {
 			await write('next.config.js', nextConfigContent)
 		}
 		// add index page
-		if (!(await exists(`pages/index${extension}`))) {
+		if (!(await isAccessible(`pages/index${extension}`))) {
 			const indexPageContent =
 				[
 					`import React from 'react'`,

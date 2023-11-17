@@ -1,5 +1,10 @@
 # History
 
+## v1.84.0 2023 November 17
+
+-   Use the new `@bevry/fs-*` dependencies
+-   Rename `browsers` question to `browsersTargeted` to not conflate it with the `browser` option
+
 ## v1.83.0 2023 November 16
 
 -   use `node:` prefix on builtins as our min supported node version supports it

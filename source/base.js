@@ -7,20 +7,17 @@ import * as urlUtil from 'node:url'
 // external
 import Errlop from 'errlop'
 import { is as isBevryOrganisation } from '@bevry/github-orgs'
+import { isAccessible } from '@bevry/fs-accessible'
+import write from '@bevry/fs-write'
+import read from '@bevry/fs-read'
+import unlink from '@bevry/fs-unlink'
+import remove from '@bevry/fs-remove'
+import mkdirp from '@bevry/fs-mkdirp'
 
 // local
 import { trimOrgName } from './util.js'
 import { status } from './log.js'
-import {
-	exists,
-	write,
-	read,
-	rename,
-	unlink,
-	spawn,
-	writeYAML,
-	remove,
-} from './fs.js'
+import { rename } from './fs.js'
 
 export async function download(opts) {
 	try {
@@ -29,7 +26,7 @@ export async function download(opts) {
 		let data = await response.text()
 		const file =
 			opts.file || pathUtil.basename(urlUtil.parse(opts.url).pathname)
-		if (await exists(file)) {
+		if (await isAccessible(file)) {
 			if (opts.overwrite === false) {
 				return Promise.resolve()
 			}
@@ -93,42 +90,42 @@ export async function updateBaseFiles({ answers, packageData }) {
 	// rename old files
 	status('renaming old files...')
 
-	if (await exists('src')) {
+	if (await isAccessible('src')) {
 		await rename('src', 'source')
 	}
 
-	if (await exists('history.md')) {
+	if (await isAccessible('history.md')) {
 		await rename('history.md', 'HISTORY.md')
 	}
 
 	if (answers.docpadPlugin) {
 		const docpadMainEntry =
 			packageData.name.replace(/^docpad-plugin-/, '') + '.plugin'
-		if (await exists(`./source/${docpadMainEntry}.coffee`)) {
+		if (await isAccessible(`./source/${docpadMainEntry}.coffee`)) {
 			await rename(
 				`./source/${docpadMainEntry}.coffee`,
 				'./source/index.coffee',
 			)
-		} else if (await exists(`./source/${docpadMainEntry}.js`)) {
+		} else if (await isAccessible(`./source/${docpadMainEntry}.js`)) {
 			await rename(`./source/${docpadMainEntry}.js`, './source/index.js')
 		}
 
 		const docpadTestEntry =
 			packageData.name.replace(/^docpad-plugin-/, '') + '.test'
-		if (await exists(`./source/${docpadTestEntry}.coffee`)) {
+		if (await isAccessible(`./source/${docpadTestEntry}.coffee`)) {
 			await rename(`./source/${docpadTestEntry}.coffee`, './source/test.coffee')
-		} else if (await exists(`./source/${docpadTestEntry}.js`)) {
+		} else if (await isAccessible(`./source/${docpadTestEntry}.js`)) {
 			await rename(`./source/${docpadTestEntry}.js`, './source/test.js')
 		}
 
 		const docpadTesterEntry =
 			packageData.name.replace(/^docpad-plugin-/, '') + '.tester'
-		if (await exists(`./source/${docpadTesterEntry}.coffee`)) {
+		if (await isAccessible(`./source/${docpadTesterEntry}.coffee`)) {
 			await rename(
 				`./source/${docpadTesterEntry}.coffee`,
 				'./source/tester.coffee',
 			)
-		} else if (await exists(`./source/${docpadTesterEntry}.js`)) {
+		} else if (await isAccessible(`./source/${docpadTesterEntry}.js`)) {
 			await rename(`./source/${docpadTesterEntry}.js`, './source/tester.js')
 		}
 	}
@@ -198,7 +195,7 @@ export async function updateBaseFiles({ answers, packageData }) {
 		const newDocumentationURL = newDocumentationPrefix + newDocumentationSuffix
 		newDocumentationLink = `[Complete API Documentation.](${newDocumentationURL})`
 	}
-	if ((await exists('README.md')) === false) {
+	if ((await isAccessible('README.md')) === false) {
 		status('writing readme file...')
 		await write(
 			'README.md',
@@ -262,7 +259,7 @@ export async function updateBaseFiles({ answers, packageData }) {
 	}
 
 	// convert the history file
-	if (await exists('HISTORY.md')) {
+	if (await isAccessible('HISTORY.md')) {
 		status('updating history file...')
 		let historyContent = await read('HISTORY.md')
 		historyContent = historyContent.toString()
@@ -315,7 +312,7 @@ export async function updateBaseFiles({ answers, packageData }) {
 
 		// fuunding
 		// https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/displaying-a-sponsor-button-in-your-repository
-		await spawn(['mkdir', '-p', '.github'])
+		await mkdirp('.github')
 		await write(
 			'.github/FUNDING.yml',
 			[

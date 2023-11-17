@@ -7,6 +7,8 @@ import { is as isBevryOrganisation } from '@bevry/github-orgs'
 import { complement, has } from '@bevry/list'
 import arrangekeys from 'arrangekeys'
 import arrangePackageProperties from 'arrange-package-json'
+import { isAccessible } from '@bevry/fs-accessible'
+import write from '@bevry/fs-write'
 
 // local
 import {
@@ -19,7 +21,7 @@ import {
 } from './util.js'
 import { pwd } from './data.js'
 import { status } from './log.js'
-import { echoExists, exists, write, parse } from './fs.js'
+import { echoExists, parse } from './fs.js'
 import { getVercelName } from './website.js'
 
 // Prepare
@@ -32,19 +34,19 @@ const mandatoryScriptsList =
 // Fetchers
 
 export async function isNPM() {
-	const npmlock = await exists(`./package-lock.json`)
+	const npmlock = await isAccessible(`./package-lock.json`)
 	return npmlock
 }
 
 export async function isPNPM() {
-	const pnpm = await exists(`./pnpm-lock.yaml`)
+	const pnpm = await isAccessible(`./pnpm-lock.yaml`)
 	return pnpm
 }
 
 export async function isYARN() {
-	const pnpjs = await exists(`./.pnp.js`)
-	const pnp = await exists(`./.pnp`)
-	const yarnlock = await exists(`./yarn.lock`)
+	const pnpjs = await isAccessible(`./.pnp.js`)
+	const pnp = await isAccessible(`./.pnp`)
+	const yarnlock = await isAccessible(`./yarn.lock`)
 	const yarn = yarnlock || pnp || pnpjs
 	return yarn
 }
@@ -425,7 +427,7 @@ export function arrangePackage(state) {
 		const value = scripts[key]
 		const parts = key.split(':')
 		if (parts.length >= 2) {
-			// if a my: script exists with the same name as an our: script
+			// if a my: script accessible with the same name as an our: script
 			// then tell the our: script to use the my: script instead
 			// this is a way to accomplish custom (non alphabetical) sort orders
 			// while accomplishing the ability to override
@@ -515,7 +517,7 @@ export async function readPackage(state) {
 	// read
 	let packageData = {}
 	try {
-		if (await exists(path)) packageData = (await parse(path)) || {}
+		if (await isAccessible(path)) packageData = (await parse(path)) || {}
 	} catch (err) {}
 
 	// adjust

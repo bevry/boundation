@@ -3,6 +3,8 @@ import * as pathUtil from 'node:path'
 
 // external
 import { add, has } from '@bevry/list'
+import { isAccessible } from '@bevry/fs-accessible'
+import write from '@bevry/fs-write'
 
 // local
 import { status } from './log.js'
@@ -23,7 +25,7 @@ import {
 	defaultBrowserTarget,
 	defaultCoffeeTarget,
 } from './data.js'
-import { spawn, exists, write, exec, unlinkIfContains } from './fs.js'
+import { spawn, exec, unlinkIfContains } from './fs.js'
 
 async function writeLoader({
 	entry = 'index',
@@ -296,7 +298,7 @@ export async function generateEditions(state) {
 				],
 				engines: {
 					node: true,
-					browsers: answers.browsers,
+					browsers: answers.browsersTargeted,
 				},
 			})
 
@@ -321,7 +323,7 @@ export async function generateEditions(state) {
 				],
 				engines: {
 					node: true,
-					browsers: answers.browsers && !answers.compilerBrowser,
+					browsers: answers.browsersTargeted && !answers.compilerBrowser,
 				},
 			})
 
@@ -372,7 +374,7 @@ export async function generateEditions(state) {
 					tags: ['source', 'json'],
 					engines: {
 						node: true,
-						browsers: answers.browsers && !answers.compilerBrowser,
+						browsers: answers.browsersTargeted && !answers.compilerBrowser,
 					},
 				}),
 			)
@@ -400,11 +402,11 @@ export async function generateEditions(state) {
 					targets: {
 						es: defaultBrowserTarget,
 						esmodules: answers.sourceModule,
-						browsers: answers.browsers,
+						browsers: answers.browsersTargeted,
 					},
 					engines: {
 						node: false,
-						browsers: answers.browsers,
+						browsers: answers.browsersTargeted,
 					},
 				}),
 			)
@@ -427,7 +429,7 @@ export async function generateEditions(state) {
 					tags: ['compiled', 'javascript', syntax, 'require'],
 					engines: {
 						node: true,
-						browsers: answers.browsers,
+						browsers: answers.browsersTargeted,
 					},
 				}),
 			)
@@ -518,9 +520,8 @@ export function updateEditionFields(state) {
 
 		// add compilation details
 		if (edition.compiler === 'coffeescript') {
-			edition.scripts[
-				compileScriptName
-			] = `coffee -bco ./${edition.directory} ./${answers.sourceDirectory}`
+			edition.scripts[compileScriptName] =
+				`coffee -bco ./${edition.directory} ./${answers.sourceDirectory}`
 		} else if (edition.compiler === 'typescript') {
 			edition.scripts[compileScriptName] = [
 				'tsc',
@@ -605,9 +606,8 @@ export function updateEditionFields(state) {
 		// add the package.json type information to the edition
 		if (edition.engines.node && edition.scripts[compileScriptName]) {
 			const packageType = has(edition.tags, 'require') ? 'commonjs' : 'module'
-			edition.scripts[
-				compileScriptName
-			] += ` && printf '%s' '{"type": "${packageType}"}' > ${edition.directory}/package.json`
+			edition.scripts[compileScriptName] +=
+				` && printf '%s' '{"type": "${packageType}"}' > ${edition.directory}/package.json`
 		}
 
 		// ensure description exists
@@ -765,7 +765,7 @@ export async function scaffoldEditions(state) {
 
 		// move or scaffold edition main path if needed
 		if (sourceEdition.indexPath) {
-			if ((await exists(sourceEdition.indexPath)) === false) {
+			if ((await isAccessible(sourceEdition.indexPath)) === false) {
 				// edition index entry doesn't exist, but it is a docpad plugin
 				if (answers.docpadPlugin) {
 					await write(
@@ -799,7 +799,7 @@ export async function scaffoldEditions(state) {
 		// move or scaffold edition test path if needed
 		if (sourceEdition.testPath) {
 			if (answers.docpadPlugin === false) {
-				if ((await exists(sourceEdition.testPath)) === false) {
+				if ((await isAccessible(sourceEdition.testPath)) === false) {
 					// edition test entry doesn't exist, so create a basic test file
 					if (answers.kava) {
 						await write(

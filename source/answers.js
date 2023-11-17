@@ -118,8 +118,8 @@ export default async function getAnswers(questions, user) {
 								question.type === 'password'
 									? '[hidden]'
 									: typeof value === 'string'
-									? value
-									: JSON.stringify(value),
+									  ? value
+									  : JSON.stringify(value),
 							),
 						),
 					]

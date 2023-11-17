@@ -1,59 +1,31 @@
 // builtin
-import * as pathUtil from 'node:path'
-import * as fsUtil from 'node:fs'
+import { resolve, basename } from 'node:path'
+import { rename as _rename } from 'node:fs'
 
 // external
 import yaml from 'js-yaml'
 import safeps from 'safeps'
 import Errlop from 'errlop'
+import { isAccessible } from '@bevry/fs-accessible'
+import unlink from '@bevry/fs-unlink'
+import read from '@bevry/fs-read'
+import write from '@bevry/fs-write'
 
 // local
 import { status } from './log.js'
 import { pwd } from './data.js'
 
-export function exists(file) {
-	try {
-		const path = pathUtil.resolve(pwd, file)
-		return new Promise(function (resolve) {
-			fsUtil.exists(path, function (exists) {
-				// console.log(path, exists ? 'does' : 'does not', 'exist')
-				resolve(exists)
-			})
-		})
-	} catch (err) {
-		console.error({ err, pwd, file })
-		return Promise.resolve(false)
-	}
-}
-
 export async function echoExists(file) {
-	const e = await exists(file)
+	const e = await isAccessible(file)
 	return e ? file : ''
-}
-
-export function unlink(file) {
-	if (Array.isArray(file)) {
-		return Promise.all(file.map((i) => unlink(i)))
-	}
-	const path = pathUtil.resolve(pwd, file)
-	return new Promise(function (resolve, reject) {
-		fsUtil.unlink(path, function (error) {
-			if (error) {
-				if (error.code === 'ENOENT') return resolve()
-				return reject(error)
-			}
-			console.log(path, 'has been removed')
-			return resolve()
-		})
-	})
 }
 
 export async function unlinkIfContains(file, what) {
 	if (Array.isArray(file)) {
 		return Promise.all(file.map((i) => unlinkIfContains(i, what)))
 	}
-	const path = pathUtil.resolve(pwd, file)
-	if (await exists(path)) {
+	const path = resolve(pwd, file)
+	if (await isAccessible(path)) {
 		if (await contains(path, what)) {
 			console.log(path, 'will be removed because it contains:', what)
 			return unlink(path)
@@ -67,55 +39,15 @@ export async function unlinkIfContains(file, what) {
 	}
 }
 
-export function remove(file) {
-	if (Array.isArray(file)) {
-		return Promise.all(file.map((i) => remove(i)))
-	}
-	const path = pathUtil.resolve(pwd, file)
-	return new Promise(function (resolve, reject) {
-		fsUtil.rm(
-			path,
-			{ recursive: true, force: true, maxRetries: 10 },
-			function (error) {
-				if (error) {
-					if (error.code === 'ENOENT') return resolve()
-					return reject(error)
-				}
-				return resolve()
-			},
-		)
-	})
-}
-
-export function read(file) {
-	const path = pathUtil.resolve(pwd, file)
-	return new Promise(function (resolve, reject) {
-		fsUtil.readFile(path, function (error, data) {
-			if (error) return reject(error)
-			return resolve(data)
-		})
-	})
-}
-
 export async function contains(file, data) {
 	return (await read(file)).toString().includes(data)
 }
 
 export function rename(source, target) {
-	source = pathUtil.resolve(pwd, source)
-	target = pathUtil.resolve(pwd, target)
+	source = resolve(pwd, source)
+	target = resolve(pwd, target)
 	return new Promise(function (resolve, reject) {
-		fsUtil.rename(source, target, function (error) {
-			if (error) return reject(error)
-			return resolve()
-		})
-	})
-}
-
-export function write(file, data) {
-	const path = pathUtil.resolve(pwd, file)
-	return new Promise(function (resolve, reject) {
-		fsUtil.writeFile(path, data, function (error) {
+		_rename(source, target, function (error) {
 			if (error) return reject(error)
 			return resolve()
 		})
@@ -123,14 +55,14 @@ export function write(file, data) {
 }
 
 export async function readJSON(file) {
-	const exist = await exists(file)
+	const exist = await isAccessible(file)
 	if (!exist) return {}
 	const data = await read(file)
 	return JSON.parse(data)
 }
 
 export async function readYAML(file) {
-	const exist = await exists(file)
+	const exist = await isAccessible(file)
 	if (!exist) return {}
 	const data = await read(file)
 	return yaml.load(data)
@@ -179,19 +111,19 @@ export function exec(command, opts = {}) {
 }
 
 export async function parse(file) {
-	const path = pathUtil.resolve(pwd, file)
-	const basename = pathUtil.basename(path)
-	status(`reading the ${basename} file...`)
+	const path = resolve(pwd, file)
+	const filename = basename(path)
+	status(`reading the ${filename} file...`)
 	try {
-		if (await exists(path)) {
+		if (await isAccessible(path)) {
 			const data = JSON.parse(await read(path))
-			status(`...read the ${basename} file...`)
+			status(`...read the ${filename} file...`)
 			return data
 		} else {
 			status(`...missing the ${path} file...`)
 		}
 	} catch (err) {
-		status(`...skipped the ${basename} file`)
+		status(`...skipped the ${filename} file`)
 		return null
 	}
 }

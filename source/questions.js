@@ -131,11 +131,11 @@ export async function getQuestions(state) {
 			message: 'What is the organisation username for the package?',
 			validate: isSpecified,
 			filter: trim,
-			skip({ organisation }) {
-				return Boolean(organisation)
-			},
 			default({ repoUrl }) {
 				return repoToOrganisation(repoUrl)
+			},
+			skip({ organisation }) {
+				return Boolean(organisation)
 			},
 		},
 		{
@@ -405,8 +405,8 @@ export async function getQuestions(state) {
 			},
 		},
 		{
-			name: 'browsers',
-			message: 'Which web browsers will be supported?',
+			name: 'browsersTargeted',
+			message: 'Which web browsers will be supported/targeted?',
 			default: browsersList,
 			ignore({ browser }) {
 				return !browser
@@ -449,15 +449,15 @@ export async function getQuestions(state) {
 				return language === 'typescript'
 					? ['typescript', 'babel']
 					: language === 'coffeescript'
-					? ['babel', 'coffeescript']
-					: ['babel']
+					  ? ['babel', 'coffeescript']
+					  : ['babel']
 			},
 			default({ language }) {
 				return language === 'typescript'
 					? 'typescript'
 					: language === 'coffeescript'
-					? 'coffeescript'
-					: 'babel'
+					  ? 'coffeescript'
+					  : 'babel'
 			},
 			when({ compileNode }) {
 				return compileNode
@@ -486,8 +486,8 @@ export async function getQuestions(state) {
 				return language === 'typescript'
 					? ['typescript', 'babel']
 					: language === 'coffeescript'
-					? ['babel', 'coffeescript']
-					: ['babel']
+					  ? ['babel', 'coffeescript']
+					  : ['babel']
 			},
 			default({ language }) {
 				return language === 'typescript' ? 'typescript' : 'babel'
@@ -918,12 +918,12 @@ export async function getQuestions(state) {
 				return compilerNode === 'babel'
 					? nodeVersionsTargeted
 					: compilerNode === 'typescript'
-					? intersect(allTypescriptTargets, [
-							...(await fetchExclusiveCompatibleESVersionsForNodeVersions(
-								nodeVersionsTargeted,
-							)),
-					  ]) // don't add ESNext as it is ephemeral
-					: []
+					  ? intersect(allTypescriptTargets, [
+								...(await fetchExclusiveCompatibleESVersionsForNodeVersions(
+									nodeVersionsTargeted,
+								)),
+					    ]) // don't add ESNext as it is ephemeral
+					  : []
 			},
 			default(opts) {
 				return this.choices(opts)

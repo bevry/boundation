@@ -1,12 +1,14 @@
 // external
 import { intersect } from '@bevry/list'
 import { filterNodeVersions } from '@bevry/nodejs-versions'
+import unlink from '@bevry/fs-unlink'
+import { isAccessible } from '@bevry/fs-accessible'
+import mkdirp from '@bevry/fs-mkdirp'
 
 // local
-import { status, warn } from './log.js'
-import { readYAML, unlink, exists, writeYAML, spawn } from './fs.js'
+import { status } from './log.js'
+import { writeYAML } from './fs.js'
 import { trimEmpty } from './util.js'
-import { allLanguages } from './data.js'
 
 // github actions no longer supports node versions prior to 16
 // https://github.blog/changelog/2023-06-13-github-actions-all-actions-will-run-on-node16-instead-of-node12-by-default/
@@ -235,13 +237,13 @@ export async function updateCI(state) {
 	status('customising ci...')
 
 	// wiping old ci files and prep new ones
-	await Promise.all([
-		unlink('.travis.yml'),
-		unlink('.mergify.yml'),
-		unlink('.dependabot/config.yml'),
-		unlink('.github/workflows/automerge.yml'),
-		spawn(['mkdir', '-p', '.github/workflows']),
+	await unlink([
+		'.travis.yml',
+		'.mergify.yml',
+		'.dependabot/config.yml',
+		'.github/workflows/automerge.yml',
 	])
+	await mkdirp('.github/workflows')
 
 	// dependabot v2 file
 	// https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
@@ -276,7 +278,7 @@ export async function updateCI(state) {
 	})
 
 	// add github actions if a custom one is not present
-	if (await exists('.github/workflows/custom.yml')) {
+	if (await isAccessible('.github/workflows/custom.yml')) {
 		state.githubWorkflow = 'custom'
 		console.log('skipping writing github actions as a custom workflow exists')
 	} else {
