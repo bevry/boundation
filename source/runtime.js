@@ -344,7 +344,7 @@ export async function updateRuntime(state) {
 		// safefs: 4, // 8 is node 4, 5 is node 8, 4 is 0.12, graceful-fs as only dep
 		// safeps: 7, // 11 is node 4, 9 is 8, 8 is 0.12, 7 is 0.8, extract-opts dep, safefs dep
 		// taskgroup: 5, // 6 is node 8, 5 is 0.8
-		cson: 5, // 6 is node 8, 5 is 0.14, has many deps
+		// cson: 5, // 6 is node 8, 5 is 0.14, has many deps
 		rimraf: 2,
 		semver: 4, // 5 is node 10, 4 is 4 -- should use version-range or version-compare instead
 	}

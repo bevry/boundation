@@ -187,7 +187,7 @@ export async function updateBaseFiles({ answers, packageData }) {
 						answers.defaultBranch
 				  }/`
 				: `http://${answers.defaultBranch}.${trimOrgName(answers.name)}.${
-						answers.organisation
+						answers.githubOrganisation
 				  }.surge.sh/`
 		const newDocumentationSuffix = `docs/${
 			answers.deploymentStrategy === 'bevry' ? 'index.html' : ''
@@ -275,7 +275,7 @@ export async function updateBaseFiles({ answers, packageData }) {
 	}
 
 	// write bevry specific files
-	if (isBevryOrganisation(answers.organisation)) {
+	if (isBevryOrganisation(answers.githubOrganisation)) {
 		// security
 		if (answers.npm) {
 			status('writing security file...')

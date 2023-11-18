@@ -1,5 +1,12 @@
 # History
 
+## v1.85.0 2023 November 18
+
+-   Rename `organisation` to `githubOrganisation` and make it automatic
+-   If Bevry organisation, inject discord and twitch badges
+-   Remove CSON downgrade, as the new release supports everything again
+-   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
+
 ## v1.84.0 2023 November 17
 
 -   Use the new `@bevry/fs-*` dependencies

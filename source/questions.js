@@ -127,16 +127,14 @@ export async function getQuestions(state) {
 			},
 		},
 		{
-			name: 'organisation',
+			name: 'githubOrganisation',
 			message: 'What is the organisation username for the package?',
 			validate: isSpecified,
 			filter: trim,
 			default({ repoUrl }) {
 				return repoToOrganisation(repoUrl)
 			},
-			skip({ organisation }) {
-				return Boolean(organisation)
-			},
+			skip: true,
 		},
 		{
 			name: 'author',

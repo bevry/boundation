@@ -1,6 +1,6 @@
 {
   "name": "boundation",
-  "version": "1.84.0",
+  "version": "1.85.0",
   "description": "Automatic scaffolding and upgrading of your JavaScript ecosystem projects using Bevry's best practices",
   "homepage": "https://github.com/bevry/boundation",
   "license": "Artistic-2.0",
@@ -26,18 +26,19 @@
       "githubsponsors",
       "thanksdev",
       "patreon",
-      "flattr",
       "liberapay",
       "buymeacoffee",
       "opencollective",
       "crypto",
       "paypal",
-      "wishlist"
+      "---",
+      "discord",
+      "twitch"
     ],
     "config": {
       "githubWorkflow": "bevry",
       "githubSponsorsUsername": "balupton",
-      "thanksdevGithubUsername": "balupton",
+      "thanksdevGithubUsername": "bevry",
       "buymeacoffeeUsername": "balupton",
       "cryptoURL": "https://bevry.me/crypto",
       "flattrUsername": "balupton",
@@ -46,6 +47,9 @@
       "patreonUsername": "bevry",
       "paypalURL": "https://bevry.me/paypal",
       "wishlistURL": "https://bevry.me/wishlist",
+      "discordServerID": "1147436445783560193",
+      "discordServerInvite": "nQuXddV7VP",
+      "twitchUsername": "balupton",
       "githubUsername": "bevry",
       "githubRepository": "boundation",
       "githubSlug": "bevry/boundation",
@@ -129,7 +133,7 @@
     "eslint-plugin-prettier": "^5.0.1",
     "kava": "^7.2.0",
     "prettier": "^3.1.0",
-    "projectz": "^3.1.0",
+    "projectz": "^3.2.0",
     "valid-directory": "^4.4.0"
   },
   "scripts": {

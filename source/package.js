@@ -2,7 +2,6 @@
 import * as pathUtil from 'node:path'
 
 // external
-import * as typeChecker from 'typechecker'
 import { is as isBevryOrganisation } from '@bevry/github-orgs'
 import { complement, has } from '@bevry/list'
 import arrangekeys from 'arrangekeys'
@@ -651,7 +650,7 @@ export async function updatePackageData(state) {
 
 	// badges
 	const removeBadges = ['gratipay', 'daviddm', 'daviddmdev']
-	if (isBevryOrganisation(answers.organisation)) {
+	if (isBevryOrganisation(answers.githubOrganisation)) {
 		if (packageData.license === 'MIT') {
 			packageData.license = 'Artistic-2.0'
 		}
@@ -664,18 +663,19 @@ export async function updatePackageData(state) {
 				'githubsponsors',
 				'thanksdev',
 				'patreon',
-				'flattr',
 				'liberapay',
 				'buymeacoffee',
 				'opencollective',
 				'crypto',
 				'paypal',
-				'wishlist',
+				'---',
+				'discord',
+				'twitch',
 			],
 			config: {
 				githubWorkflow: state.githubWorkflow,
 				githubSponsorsUsername: 'balupton',
-				thanksdevGithubUsername: 'balupton',
+				thanksdevGithubUsername: answers.githubOrganisation,
 				buymeacoffeeUsername: 'balupton',
 				cryptoURL: 'https://bevry.me/crypto',
 				flattrUsername: 'balupton',
@@ -684,6 +684,9 @@ export async function updatePackageData(state) {
 				patreonUsername: 'bevry',
 				paypalURL: 'https://bevry.me/paypal',
 				wishlistURL: 'https://bevry.me/wishlist',
+				discordServerID: '1147436445783560193',
+				discordServerInvite: 'nQuXddV7VP',
+				twitchUsername: 'balupton',
 			},
 		}
 		packageData.funding = 'https://bevry.me/fund'
