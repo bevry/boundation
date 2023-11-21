@@ -2,7 +2,7 @@
 import { join } from 'node:path'
 
 // external
-import testen, { Versions } from '@bevry/testen'
+import { Versions } from '@bevry/testen'
 import { complement, intersect } from '@bevry/list'
 import { filterNodeVersions } from '@bevry/nodejs-versions'
 import versionCompare from 'version-compare'
@@ -38,7 +38,7 @@ export async function updateEngines(state) {
 		const versions = new Versions(answers.nodeVersionsTested)
 		await versions.load()
 		await versions.install() // @todo if this fails (so no internet), it continues, this should not be the case
-		const numbers = versions.map((version) => version.version)
+		const numbers = versions.array.map((version) => version.version)
 		await versions.test(`${answers.packageManager} test`, serial)
 		const passed = versions.json.passed || []
 		if (passed.length === 0) {
@@ -118,7 +118,7 @@ export async function updateEngines(state) {
 				// install and test the versions
 				await versions.load()
 				await versions.install()
-				const numbers = versions.map((version) => version.version)
+				const numbers = versions.array.map((version) => version.version)
 				await versions.test(test, serial)
 				const passed = versions.json.passed || []
 				const failed = versions.json.failed || []

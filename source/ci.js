@@ -98,7 +98,7 @@ function generateGitHubActionsJSON(state) {
 	const npmPublishSteps = [
 		{
 			name: 'publish to npm',
-			uses: 'bevry-actions/npm@v1.1.1',
+			uses: 'bevry-actions/npm@v1.1.2',
 			with: {
 				npmAuthToken: '${{ secrets.NPM_AUTH_TOKEN }}',
 				npmBranchTag: answers.npm ? ':next' : null,
@@ -220,7 +220,7 @@ function generateGitHubActionsJSON(state) {
 				steps: [
 					{
 						name: 'Enable auto-merge for Dependabot PRs',
-						run: 'gh pr merge --auto --merge "$PR_URL"',
+						run: 'gh pr merge --auto --squash "$PR_URL"',
 						env: {
 							PR_URL: '${{github.event.pull_request.html_url}}',
 							GITHUB_TOKEN: '${{secrets.GITHUB_TOKEN}}',

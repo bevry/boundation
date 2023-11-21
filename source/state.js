@@ -4,24 +4,49 @@ import { has } from '@bevry/list'
 // export
 export const state = {
 	githubWorkflow: 'bevry', // will change if custom was detected
-	typesDirectoryPath: null, // types directory with trailing slash and ./ prefix
 	answers: null,
 	nodeVersionsOptional: [],
 	packageData: {},
 	vercelConfig: {},
 	editions: [],
+	get useEditionAutoloader() {
+		return this.nodeEditionsRequire.length >= 2
+	},
+	// active is not loadable, active is only kept
 	get activeEditions() {
 		return this.editions.filter((edition) => edition.active !== false)
+	},
+	// get activeEdition() {
+	// 	return this.activeEditions[0]
+	// },
+	get typesEditions() {
+		return this.activeEditions.filter((edition) => has(edition.tags, 'types'))
+	},
+	get typesEdition() {
+		const typesEditions = this.typesEditions
+		if (typesEditions.length > 1) {
+			console.error(typesEditions)
+			throw new Error(
+				'there is more than one edition catered towards types, not sure what to do here...',
+			)
+		}
+		return typesEditions[0]
 	},
 	get babelEditions() {
 		return this.activeEditions.filter((edition) => edition.babel)
 	},
+	// get babelEdition() {
+	// 	return this.babelEditions[0]
+	// },
 	get compiledEditions() {
 		return this.activeEditions.filter(
 			(edition) =>
 				edition.engines && (edition.engines.node || edition.engines.browsers),
 		)
 	},
+	// get compiledEdition() {
+	// 	return this.compiledEditions[this.compiledEditions.length - 1]
+	// },
 	get nodeEditions() {
 		return this.activeEditions.filter(
 			(edition) => edition.engines && edition.engines.node,
@@ -47,9 +72,6 @@ export const state = {
 			(edition) => edition.engines && edition.engines.browsers,
 		)
 	},
-	get useEditionAutoloader() {
-		return this.nodeEditionsRequire.length >= 2
-	},
 	get browserEdition() {
 		const browserEditions = this.browserEditions
 		if (browserEditions.length > 1) {
@@ -59,9 +81,6 @@ export const state = {
 			)
 		}
 		return browserEditions[0]
-	},
-	get compiledEdition() {
-		return this.compiledEditions[this.compiledEditions.length - 1]
 	},
 	get sourceEdition() {
 		const sourceEdition = this.editions[0]

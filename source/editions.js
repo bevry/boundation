@@ -76,15 +76,12 @@ async function writeEntry({
 	autoloader = false,
 	always = false,
 	exportDefault = false,
-	typesDirectoryPath,
 	sourceEdition,
+	typesEdition,
 	nodeEditionRequire,
 	nodeEditionImport,
 }) {
 	let resolved
-	const typesPath = typesDirectoryPath
-		? typesDirectoryPath + sourceEdition[entry].replace(/.[a-z]+$/, '.d.ts')
-		: sourceEdition[entry + 'Path']
 
 	if (nodeEditionRequire) {
 		if (autoloader || always) {
@@ -92,7 +89,7 @@ async function writeEntry({
 			await writeLoader({
 				entry: entryWithExtension,
 				autoloader,
-				typesPath,
+				typesPath: typesEdition && typesEdition[entry + 'Path'],
 				targetEntry: nodeEditionRequire[entry],
 				targetPath: nodeEditionRequire[entry + 'Path'],
 			})
@@ -108,7 +105,7 @@ async function writeEntry({
 			await writeLoader({
 				entry: entryWithExtension,
 				autoloader,
-				typesPath,
+				typesPath: typesEdition && typesEdition[entry + 'Path'],
 				targetEntry: nodeEditionImport[entry],
 				targetPath: nodeEditionImport[entry + 'Path'],
 			})
@@ -493,6 +490,53 @@ export async function generateEditions(state) {
 			}
 		}
 
+		// add types
+		if (answers.language === 'typescript') {
+			editions.set(
+				'types',
+				new Edition({
+					compiler: 'types',
+					directory: 'edition-types',
+					index: addExtension(answers.indexEntry, `d.ts`),
+					node: addExtension(answers.nodeEntry, `d.ts`),
+					browser: addExtension(answers.browserEntry, `d.ts`),
+					test: addExtension(answers.testEntry, `d.ts`),
+					bin: addExtension(answers.binEntry, `d.ts`),
+					tags: ['compiled', 'types', 'import'],
+					engines: false,
+				}),
+			)
+		} else {
+			// define the possible locations
+			// do note that they must exist throughout boundation, which if it is a compiled dir, is sporadic
+			const sourceEdition = editions.get('source')
+			const typePaths = [
+				// e.g. index.d.ts
+				pathUtil.join(answers.indexEntry + '.d.ts'),
+				// e.g. source/index.d.ts
+				sourceEdition &&
+					pathUtil.join(sourceEdition.directory, answers.indexEntry + '.d.ts'),
+			].filter((i) => i)
+			// fetch their existing status and convert back into the original location
+			const typePathsExisting = await Promise.all(
+				typePaths.map((i) => isAccessible(i).then((e) => e && i)),
+			)
+			// find the first location that exists
+			const typePath = typePathsExisting.find((i) => i)
+			// and if exists, add our types edition
+			if (typePath) {
+				editions.set(
+					'types',
+					new Edition({
+						directory: '.',
+						index: typePath,
+						tags: ['types', answers.sourceModule ? 'import' : 'require'],
+						engines: false,
+					}),
+				)
+			}
+		}
+
 		// update state
 		state.editions = Array.from(editions.values())
 	}
@@ -522,6 +566,18 @@ export function updateEditionFields(state) {
 		if (edition.compiler === 'coffeescript') {
 			edition.scripts[compileScriptName] =
 				`coffee -bco ./${edition.directory} ./${answers.sourceDirectory}`
+		} else if (edition.compiler === 'types') {
+			edition.scripts[compileScriptName] = [
+				'tsc',
+				'--emitDeclarationOnly',
+				'--declaration',
+				'--declarationMap',
+				`--declarationDir ./${edition.directory}`,
+				`--project ${answers.tsconfig}`,
+				...fixTsc(edition.directory, answers.sourceDirectory),
+			]
+				.filter((part) => part)
+				.join(' ')
 		} else if (edition.compiler === 'typescript') {
 			edition.scripts[compileScriptName] = [
 				'tsc',
@@ -634,6 +690,9 @@ export function updateEditionFields(state) {
 				description.push(`${nodeVersion}`)
 			}
 		}
+		if (has(edition.tags, 'types')) {
+			description.push('Types')
+		}
 		if (has(edition.tags, 'require')) {
 			description.push('with Require for modules')
 		} else if (has(edition.tags, 'import')) {
@@ -646,7 +705,7 @@ export function updateEditionFields(state) {
 // Helpers
 export function updateEditionEntries(state) {
 	const {
-		activeEdition,
+		typesEdition,
 		nodeEditionRequire,
 		nodeEditionImport,
 		browserEdition,
@@ -659,9 +718,21 @@ export function updateEditionEntries(state) {
 	delete packageData.cjs
 
 	// https://nodejs.org/api/esm.html#esm_conditional_exports
+	// https://devblogs.microsoft.com/typescript/announcing-typescript-4-7/#package-json-exports-imports-and-self-referencing
+	// https://nodejs.org/api/packages.html#packages_exports
+	// https://nodejs.org/api/packages.html#package-entry-points
+	// https://nodejs.org/api/packages.html#subpath-exports
+	// https://nodejs.org/api/packages.html#conditional-exports
 	packageData.exports = {}
 
-	// prepare
+	// types
+	// https://www.typescriptlang.org/docs/handbook/declaration-files/publishing.html
+	const typesIndexPath = cojoin('.', typesEdition && typesEdition.indexPath)
+	if (typesIndexPath) {
+		packageData.types = typesEdition.indexPath // don't prefix the ./
+	}
+
+	// node exports
 	const autoloaderPath = cojoin(
 		'.',
 		state.useEditionAutoloader && packageData.main,
@@ -674,37 +745,45 @@ export function updateEditionEntries(state) {
 		'.',
 		nodeEditionRequire && nodeEditionRequire.indexPath,
 	)
+	if (nodeImportPath || autoloaderPath || nodeRequirePath) {
+		const nodeExports = {}
+		set(nodeExports, 'types', typesIndexPath || null)
+		set(nodeExports, 'import', nodeImportPath || null)
+		set(nodeExports, 'default', autoloaderPath || null) // default before require, as require should be direct, whereas the autoloader is indirect, as intended
+		set(nodeExports, 'require', nodeRequirePath || null)
+		set(packageData.exports, 'node', nodeExports)
+	}
+
+	// browser exports
 	const browserPath = cojoin('.', browserEdition && browserEdition.indexPath)
 	const browserImportPath =
 		has(browserEdition && browserEdition.tags, 'import') && browserPath
 	const browserRequirePath =
 		has(browserEdition && browserEdition.tags, 'require') && browserPath
-	const activePath = cojoin('.', activeEdition && activeEdition.indexPath)
-	const activeImportPath =
-		has(activeEdition && activeEdition.tags, 'import') && activePath
-	const activeRequirePath =
-		has(activeEdition && activeEdition.tags, 'require') && activePath
-
-	// node exports
-	const nodeExports = {}
-	set(nodeExports, 'import', nodeImportPath || null)
-	set(nodeExports, 'default', autoloaderPath || null)
-	set(nodeExports, 'require', nodeRequirePath || null)
-	set(packageData.exports, 'node', nodeExports)
-
-	// browser exports
-	const browserExports = {}
-	set(browserExports, 'import', browserImportPath || null)
-	set(browserExports, 'require', browserRequirePath || null)
-	set(packageData.exports, 'browser', browserExports)
+	if (browserImportPath || browserRequirePath) {
+		const browserExports = {}
+		set(browserExports, 'types', typesIndexPath || null)
+		set(browserExports, 'import', browserImportPath || null)
+		set(browserExports, 'require', browserRequirePath || null)
+		set(packageData.exports, 'browser', browserExports)
+	}
 	set(packageData, 'browser', unjoin('.', browserPath) || null)
 	set(packageData, 'module', unjoin('.', browserImportPath) || null)
 
-	// default exports
-	const activeExports = {}
-	set(activeExports, 'import', activeImportPath || null)
-	set(activeExports, 'require', activeRequirePath || null)
-	set(packageData.exports, 'default', activeExports)
+	// // default exports
+	// const activePath = cojoin('.', activeEdition && activeEdition.indexPath)
+	// const activeImportPath =
+	// 	has(activeEdition && activeEdition.tags, 'import') && activePath
+	// const activeRequirePath =
+	// 	has(activeEdition && activeEdition.tags, 'require') && activePath
+	// if (activeImportPath || activeRequirePath) {
+	// 	const defaultExports = {}
+	// 	set(defaultExports, 'types', typesIndexPath || null)
+	// 	set(defaultExports, 'import', activeImportPath || null)
+	// 	set(defaultExports, 'require', activeRequirePath || null)
+	// 	set(packageData.exports, 'default', defaultExports)
+	// }
+	// ^ this never worked due to activeEdition not resolving due to missing getter, currently activeEdition is resolving to typescript source edition, which isn't what we want, so just ignore it for now.
 
 	// delete the exports if we don't need it
 	// this is required for for eslint-config-bevry/adapt.js
@@ -715,6 +794,7 @@ export function updateEditionEntries(state) {
 export async function scaffoldEditions(state) {
 	// fetch
 	const {
+		typesEdition,
 		sourceEdition,
 		nodeEdition,
 		nodeEditionRequire,
@@ -839,9 +919,9 @@ export async function scaffoldEditions(state) {
 		if (nodeEdition) {
 			packageData.main = await writeEntry({
 				entry: 'index',
-				typesDirectoryPath: state.typesDirectoryPath,
 				autoloader: state.useEditionAutoloader,
 				exportDefault,
+				typesEdition,
 				sourceEdition,
 				nodeEditionRequire,
 				nodeEditionImport,
@@ -854,9 +934,9 @@ export async function scaffoldEditions(state) {
 					await writeEntry({
 						entry: 'bin',
 						always: true,
-						typesDirectoryPath: state.typesDirectoryPath,
 						autoloader: state.useEditionAutoloader,
 						exportDefault,
+						typesEdition,
 						sourceEdition,
 						nodeEditionRequire,
 						nodeEditionImport,
@@ -869,9 +949,9 @@ export async function scaffoldEditions(state) {
 			if (answers.docpadPlugin === false) {
 				state.test = await writeEntry({
 					entry: 'test',
-					typesDirectoryPath: state.typesDirectoryPath,
 					autoloader: state.useEditionAutoloader,
 					exportDefault,
+					typesEdition,
 					sourceEdition,
 					nodeEditionRequire,
 					nodeEditionImport,

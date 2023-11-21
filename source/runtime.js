@@ -10,14 +10,9 @@ import write from '@bevry/fs-write'
 
 // local
 import { status } from './log.js'
-import {
-	bustedVersions,
-	typesDir,
-	allLanguages,
-	allTypescriptTargets,
-} from './data.js'
+import { bustedVersions, allLanguages, allTypescriptTargets } from './data.js'
 import { parse, exec, spawn } from './fs.js'
-import { fixTsc, getPreviousVersion, getDuplicateDeps } from './util.js'
+import { getPreviousVersion, getDuplicateDeps } from './util.js'
 import { readPackage, writePackage } from './package.js'
 import {
 	scaffoldEditions,
@@ -138,17 +133,10 @@ async function install({
 	})
 }
 
-export async function upgradePackageDependencies(install) {
-	try {
-		return await spawn(['ncu', '-u'])
-	} catch (err) {
-		if (install) {
-			throw err
-		} else {
-			await spawn(['npm', 'i', '-g', 'npm-check-updates'])
-			upgradePackageDependencies(true)
-		}
-	}
+export function upgradePackageDependencies(exclude = []) {
+	const args = ['npx', 'npm-check-updates', '-u']
+	if (exclude.length) args.push('-x', exclude.join(','))
+	return spawn(args)
 }
 
 export function peerDepInstallLocation(packageData, key) {
@@ -338,34 +326,43 @@ export async function updateRuntime(state) {
 	}
 
 	// dependency compatibility for legacy node versions
-	const dependencyCompat = {
-		'cli-spinners': 1,
-		'lazy-require': 2, // 4 is node 10, 3 is node 8, 2 is node 0.10, extract-opts, safeps dep ... only docpad uses it
-		// safefs: 4, // 8 is node 4, 5 is node 8, 4 is 0.12, graceful-fs as only dep
-		// safeps: 7, // 11 is node 4, 9 is 8, 8 is 0.12, 7 is 0.8, extract-opts dep, safefs dep
-		// taskgroup: 5, // 6 is node 8, 5 is 0.8
-		// cson: 5, // 6 is node 8, 5 is 0.14, has many deps
-		rimraf: 2,
-		semver: 4, // 5 is node 10, 4 is 4 -- should use version-range or version-compare instead
-	}
-	// editions v4 was last to support node <4
-	// https://github.com/bevry/editions/blob/master/HISTORY.md#v500-2020-october-27
-	const devDependencyCompat = {
-		// kava: 3, // 7 is node 4, 4 is 8, 3 is 0.12
-		// '@bevry/ansi': 2, // 6 is node 4
-		// errlop: 4, // 7 is node 4
-		// assert-helpers needs 'process' module, which is node 4 and up
-	}
-	if (versionCompare(answers.nodeVersionSupportedMinimum, 10) === -1) {
+	// lazy-require: v4 is >=10, v3 is >=8, v2 is >=0.10
+	//               extract-opts, safeps dep ... only docpad uses it
+	// safefs: v8 is >=4, v5 is >=8, v4 is >=0.12
+	//         graceful-fs as only dep
+	// safeps: v11 is >=4, 9 is >=8, 8 is >=0.12, 7 is >=0.8
+	//         extract-opts dep, safefs dep
+	// taskgroup: v6 is >=8, 5 is >=0.8
+	// cson: v6 is node >=8, 5 is >=0.14
+	//      has many deps
+	// semver: v5 is >=10, 4 >=4
+	//         should use version-range or version-compare instead
+	// rimraf: 2,
+	// kava: v7 is >=4, v4 is >=8, v3 is >=0.12
+	// '@bevry/ansi': v6 is >=4
+	// errlop: v7 is >=4
+	// assert-helpers: needs 'process' module, which is node 4 and up
+	// editions: v4 was last to support node <4
+	//           https://github.com/bevry/editions/blob/master/HISTORY.md#v500-2020-october-27
+	if (versionCompare(answers.nodeVersionSupportedMinimum, 8) === -1) {
+		const dependencyCompat = {
+			'cli-spinners': 1,
+			'lazy-require': 2,
+		}
 		for (const [key, value] of Object.entries(dependencyCompat)) {
 			versions[key] = value
 		}
 	}
-	if (versionCompare(answers.nodeVersionTestedMinimum, 10) === -1) {
-		for (const [key, value] of Object.entries(devDependencyCompat)) {
-			versions[key] = value
-		}
-	}
+	// if (versionCompare(answers.nodeVersionTestedMinimum, 8) === -1) {
+	// 	const devDependencyCompat = {}
+	// 	for (const [key, value] of Object.entries(devDependencyCompat)) {
+	// 		versions[key] = value
+	// 	}
+	// }
+
+	// brand new typescript version workaround for incompat with typedoc version
+	// https://github.com/TypeStrong/typedoc/releases
+	versions.typescript = '~5.2'
 
 	// add user overrides
 	Object.assign(
@@ -511,7 +508,7 @@ export async function updateRuntime(state) {
 			semi: false,
 			singleQuote: true,
 			trailingComma:
-				versionCompare(answers.nodeVersionTargetMinimum, '8') < 0
+				versionCompare(answers.nodeVersionTargetedMinimum, '8') < 0
 					? 'es5'
 					: 'all',
 		}
@@ -547,22 +544,6 @@ export async function updateRuntime(state) {
 				packages['make-deno-edition'] = 'dev'
 			}
 		}
-		// types
-		state.scripts['our:compile:types'] = [
-			'tsc',
-			`--project ${answers.tsconfig}`,
-			'--emitDeclarationOnly',
-			'--declaration',
-			'--declarationMap',
-			`--declarationDir ./${typesDir}`,
-			...fixTsc(typesDir, answers.sourceDirectory),
-			// doesn't work: '|| true', // fixes failures where types may be temporarily missing
-		]
-			.filter((part) => part)
-			.join(' ')
-		state.typesDirectoryPath = packageData.types = `./${typesDir}/`
-	} else {
-		state.typesDirectoryPath = null
 	}
 	// partially typescript
 	if (answers.languages.includes('typescript')) {
@@ -573,33 +554,6 @@ export async function updateRuntime(state) {
 		if (answers.keywords.has('node') && !packages['@types/node'])
 			packages['@types/node'] = 'dev'
 	}
-	// not typescript
-	else {
-		// Types
-		// define the possible locations
-		// do note that they must exist throughout boundation, which if it is a compiled dir, is sporadic
-		const typePaths = [
-			// existing types directory
-			packageData.types,
-			// e.g. index.d.ts
-			pathUtil.join(answers.indexEntry + '.d.ts'),
-			// e.g. source/index.d.ts
-			sourceEdition &&
-				pathUtil.join(sourceEdition.directory, answers.indexEntry + '.d.ts'),
-		].filter((v) => v)
-		// fetch their existing status and convert back into the original location
-		const typePathsExisting = await Promise.all(
-			typePaths.map((v) => isAccessible(v).then((e) => e && v)),
-		)
-		// find the first location that exists
-		const typePath = typePathsExisting.find((v) => v)
-		// and if exists, apply to types
-		if (typePath) {
-			packageData.types = typePath
-		} else {
-			delete packageData.types
-		}
-	}
 
 	// documentation
 	if (answers.docs) {
@@ -609,8 +563,6 @@ export async function updateRuntime(state) {
 		// typescript
 		if (answers.languages.includes('typescript')) {
 			tools.push('typedoc')
-			// https://github.com/TypeStrong/typedoc/releases
-			versions.typescript = '~5.2'
 		}
 		// coffeescript
 		if (answers.languages.includes('coffescript')) {
@@ -900,26 +852,30 @@ export async function updateRuntime(state) {
 		// resolveJsonModule seems to cause too many issues, so is disabled unless needed
 		const lib = new Set()
 		const exclude = new Set()
+		let skipLibCheck = false
 		let customCompilerOutDir = ''
 		if (await isAccessible(answers.tsconfig)) {
 			try {
 				// parse
 				const data = (await parse(answers.tsconfig)) || {}
 
-				// ensure necessary properties exist so we don't crash
+				// prepare necessary properties exist so we don't crash
 				if (data.compilerOptions == null) data.compilerOptions = {}
 				if (data.compilerOptions.lib == null) data.compilerOptions.lib = []
 				if (data.exclude == null) data.exclude = []
 
-				// add any lib that has a dot back to lib
+				// store any lib that has a dot back to lib
 				data.compilerOptions.lib
 					.filter((i) => i.includes('.'))
 					.forEach((i) => lib.add(i))
 
-				// add back excludes
+				// store excludes
 				data.exclude.forEach((i) => exclude.add(i))
 
-				// is there a custom out dir?
+				// store skipLibCheck
+				skipLibCheck = data.compilerOptions.skipLibCheck
+
+				// store custom out dir
 				customCompilerOutDir = data.compilerOptions.outDir
 			} catch (e) {
 				console.error(`Failed to parse ${answers.tsconfig}:`, e)
@@ -971,6 +927,7 @@ export async function updateRuntime(state) {
 							moduleResolution: 'Node',
 							strict: true,
 							target: typescriptTarget,
+							skipLibCheck,
 						},
 						answers.sourceModule ? { module: 'ESNext' } : {},
 					),
@@ -978,6 +935,8 @@ export async function updateRuntime(state) {
 			  }
 
 		// re-adjust custom properties
+		if (answers.targets.includes('ES5'))
+			tsconfig.compilerOptions.downlevelIteration = true
 		if (lib.size) tsconfig.compilerOptions.lib = Array.from(lib)
 		if (exclude.size) tsconfig.exclude = Array.from(exclude)
 		if (customCompilerOutDir)
@@ -1040,7 +999,7 @@ export async function updateRuntime(state) {
 	// upgrade deps
 	status('upgrading the installed dependencies...')
 	// npx -p npm-check-updates takes 14 seconds each time, so install globally instead
-	await upgradePackageDependencies()
+	await upgradePackageDependencies(Object.keys(versions))
 	// yarn still needs ncu to update package.json
 	if (answers.packageManager === 'yarn') {
 		await spawn(commands.yarn.install) // necessary to proceed

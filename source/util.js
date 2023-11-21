@@ -198,7 +198,7 @@ export function addExtension(file, extension) {
 }
 
 /** Trim the string */
-export function trim(input) {
+export function trim(input = '') {
 	return input.trim()
 }
 

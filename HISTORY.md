@@ -1,5 +1,27 @@
 # History
 
+## v1.86.0 2023 November 21
+
+-   ci:
+    -   Update `bevry-actions/npm` version
+    -   Auto-merge dependabot should squash, rather than making an additional merge commit
+-   editions:
+    -   Types is now it's own edition
+    -   Types point to an entry now, instead of the directory (as that is what typescript now wants)
+    -   Provide `types` field in each `exports` entry
+-   questions:
+    -   Add `nodeVersionsRange`, `nodeVersionsSupportedRange`, `nodeVersionsTestedRange`, `nodeVersionsTargetedRange` and remove the complexity that was needed without them
+    -   Overriding `*Minimum` and `*Maximum` versions is now disabled, use the `\*Range`` properties instead
+-   runtime:
+    -   Fix incompatible version upgrades breaking before compatible versions can be installed
+    -   Fix `npm-check-updates` having to be installed, using `npx` to invoke `npm-check-updates` instead
+    -   Compatible versions are now corrected for latest ecosystem improvements
+    -   tsconfig's `skipLibCheck` is now persisted
+    -   if targetting ES5, tsconfig's `downlevelIteration` will be enabled
+-   versions:
+    -   Update for latest `@bevry/testen` version
+-   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
+
 ## v1.85.0 2023 November 18
 
 -   Rename `organisation` to `githubOrganisation` and make it automatic
