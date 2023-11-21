@@ -944,12 +944,13 @@ export async function getQuestions(state) {
 			async choices({ compilerNode, nodeVersionsTargeted }) {
 				// ensure versions are in order of most preferred to least preferred
 				// otherwise edition trimming will not work as expected
+				const reversed = nodeVersionsTargeted.slice().reverse() // reverse modifies the actual array, hence need for slice
 				return compilerNode === 'babel'
-					? nodeVersionsTargeted.reverse()
+					? reversed
 					: compilerNode === 'typescript'
 					  ? intersect(allTypescriptTargets, [
 								...(await fetchExclusiveCompatibleESVersionsForNodeVersions(
-									nodeVersionsTargeted.reverse(),
+									reversed,
 								)),
 					    ]) // don't add ESNext as it is ephemeral
 					  : []

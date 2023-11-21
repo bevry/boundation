@@ -1,5 +1,9 @@
 # History
 
+## v1.86.1 2023 November 21
+
+-   Fix bad pre-release refactoring of targetting changes that caused minimum/maximum deprecation check to fail
+
 ## v1.86.0 2023 November 21
 
 -   ci:
