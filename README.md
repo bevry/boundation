@@ -46,7 +46,7 @@ It will ask you several questions about your project, then initialise or upgrade
     -   Automated edition generation so the one package can be used between Node.js, Web Browsers, and Deno where applicable
     -   Automated ES6 Import and CJS Require compatibility generation
     -   Automated compatible editions generated for Web Browsers, Node.js, Deno
-    -   Each generated edition is targeted specifically for each version of each target that you intend to support, with each edition compatibility tested and trimmed if redundant overlaps are present
+    -   Each generated edition is targeted specifically for each version of each target that you intend to support, with each edition compatibility tested by [Testen](https://github.com/bevry/testen) and trimmed if redundant overlaps are present
 -   Uses [Projectz](https://github.com/bevry/projectz) to automatically generate and maintain your readme, license, badges, and the contributing file
 -   Automatically configures sensible defaults based on the features that your project is using, while maintaining support for your extensions and customisations, supports
     -   TSConfig for JavaScript and TypeScript projects
