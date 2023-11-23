@@ -2,7 +2,7 @@
 import inquirer from 'inquirer'
 import * as ansi from '@bevry/ansi'
 import Errlop from 'errlop'
-import getarg from 'get-cli-arg'
+import getArgValue from 'get-cli-arg'
 
 // vars
 const skipAllArg = '--auto'
@@ -49,7 +49,7 @@ export default async function getAnswers(questions, user) {
 				// check args
 				const args = arg ? [name, arg] : [name]
 				for (const _arg of args) {
-					const _value = getarg(_arg)
+					const _value = getArgValue(_arg)
 					if (_value != null) {
 						opaque = true
 						defaults[name] = _value === 0.1 ? '0.10' : _value
@@ -58,7 +58,16 @@ export default async function getAnswers(questions, user) {
 				}
 
 				// check user
-				if (user && !reason && typeof user[name] !== 'undefined') {
+				if (user && typeof user[name] !== 'undefined') {
+					if (reason) {
+						console.warn(
+							`package:.json:boundation:${name}=${JSON.stringify(
+								user[name],
+							)} taking preference over ${reason} value of ${JSON.stringify(
+								defaults[name],
+							)}`,
+						)
+					}
 					defaults[name] = user[name]
 					reason = 'package'
 				}

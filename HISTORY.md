@@ -1,5 +1,9 @@
 # History
 
+## v1.87.0 2023 November 23
+
+-   CLI arguments should never take preference over `package.json:boundation` entries, as the latter is intended solely for that package, whereas CLI arguments are generally generic defaults
+
 ## v1.86.1 2023 November 21
 
 -   Fix bad pre-release refactoring of targetting changes that caused minimum/maximum deprecation check to fail
