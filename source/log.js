@@ -8,6 +8,13 @@ export function status(...messages) {
 	process.stdout.write('\n')
 }
 
+export function note(...messages) {
+	for (const message of messages) {
+		process.stderr.write(ansi.bold(ansi.yellow(message)))
+	}
+	process.stderr.write('\n')
+}
+
 export function warn(...messages) {
 	for (const message of messages) {
 		process.stderr.write(ansi.bold(ansi.underline(ansi.magenta(message))))

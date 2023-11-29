@@ -2,9 +2,11 @@
 import * as pathUtil from 'node:path'
 
 // external
-import { add, has } from '@bevry/list'
+import { add, has, intersect } from '@bevry/list'
 import { isAccessible } from '@bevry/fs-accessible'
 import write from '@bevry/fs-write'
+import { fetchAllCompatibleESVersionsForNodeVersions } from '@bevry/nodejs-ecmascript-compatibility'
+import { filterNodeVersions } from '@bevry/nodejs-versions'
 
 // local
 import { status } from './log.js'
@@ -21,6 +23,7 @@ import {
 	unjoin,
 } from './util.js'
 import {
+	allTypescriptTargets,
 	languageNames,
 	defaultBrowserTarget,
 	defaultCoffeeTarget,
@@ -245,6 +248,11 @@ class Edition {
 			},
 		})
 
+		Object.defineProperty(this, 'compileCommand', {
+			enumerable: false,
+			writable: true,
+		})
+
 		opts.tags = new Set(opts.tags || [])
 		opts.dependencies = new Set(opts.dependencies || [])
 		opts.devDependencies = new Set(opts.devDependencies || [])
@@ -433,57 +441,99 @@ export async function generateEditions(state) {
 		}
 
 		// add edition for each babel/typescript target
-		for (const targetModule of answers.targetModules) {
-			for (const targetVersion of answers.targets) {
+		if (
+			answers.compilerNode === 'babel' ||
+			answers.compilerNode === 'typescript'
+		) {
+			for (const targetModule of answers.targetModules) {
+				/* eslint no-undefined:0 */
+				const nodeVersionsTargets = filterNodeVersions(
+					answers.nodeVersionsTargeted,
+					{
+						esm: targetModule === 'import',
+						range:
+							targetModule === 'import'
+								? answers.nodeVersionsTargetedImportRange
+								: targetModule === 'require'
+								  ? answers.nodeVersionsTargetedRequireRange
+								  : undefined,
+					},
+				)
+					.slice()
+					.reverse() // reverse modifies the actual array, hence need for slice
 				if (answers.compilerNode === 'babel') {
-					const version = targetVersion
-					const directory =
-						`edition-node-${version}` +
-						(targetModule === 'import' ? '-esm' : '')
-					editions.set(
-						directory,
-						new Edition({
-							compiler: 'babel',
+					for (const nodeVersionTarget of nodeVersionsTargets) {
+						const directory =
+							`edition-node-${nodeVersionTarget}` +
+							(targetModule === 'import' ? '-esm' : '')
+						editions.set(
 							directory,
-							index: addExtension(answers.indexEntry, `js`),
-							node: addExtension(answers.nodeEntry, `js`),
-							browser: addExtension(answers.browserEntry, `js`),
-							test: addExtension(answers.testEntry, `js`),
-							bin: addExtension(answers.binEntry, `js`),
-							tags: ['compiled', 'javascript', targetModule],
-							targets: {
-								node: version,
-							},
-							engines: {
-								node: true,
-								browsers: false,
-							},
-						}),
-					)
+							new Edition({
+								compiler: 'babel',
+								directory,
+								index: addExtension(answers.indexEntry, `js`),
+								node: addExtension(answers.nodeEntry, `js`),
+								browser: addExtension(answers.browserEntry, `js`),
+								test: addExtension(answers.testEntry, `js`),
+								bin: addExtension(answers.binEntry, `js`),
+								tags: ['compiled', 'javascript', targetModule],
+								targets: {
+									node: nodeVersionTarget,
+								},
+								engines: {
+									node: true,
+									browsers: false,
+								},
+							}),
+						)
+					}
 				} else if (answers.compilerNode === 'typescript') {
-					const version = targetVersion.toLocaleLowerCase()
-					const directory =
-						`edition-${version}` + (targetModule === 'import' ? '-esm' : '')
-					editions.set(
-						directory,
-						new Edition({
-							compiler: 'typescript',
+					const esVersionsTargets = new Set()
+					for (const nodeVersionTarget of nodeVersionsTargets) {
+						// fetch the latest es version for the node.js version target that typescript supports
+						const esVersionTarget = intersect(
+							allTypescriptTargets,
+							await fetchAllCompatibleESVersionsForNodeVersions([
+								nodeVersionTarget,
+							]),
+						)[0]
+						// check that typescript supported it
+						if (!esVersionTarget) continue
+						// check that we haven't already generated an edition for this es verison target target
+						if (esVersionsTargets.has(esVersionTarget)) continue
+						esVersionsTargets.add(esVersionTarget)
+						// generate the edition
+						const esVersionTargetLower = esVersionTarget.toLowerCase()
+						const directory =
+							`edition-${esVersionTargetLower}` +
+							(targetModule === 'import' ? '-esm' : '')
+						editions.set(
 							directory,
-							index: addExtension(answers.indexEntry, `js`),
-							node: addExtension(answers.nodeEntry, `js`),
-							browser: addExtension(answers.browserEntry, `js`),
-							test: addExtension(answers.testEntry, `js`),
-							bin: addExtension(answers.binEntry, `js`),
-							tags: ['compiled', 'javascript', version, targetModule],
-							targets: {
-								es: targetVersion,
-							},
-							engines: {
-								node: true,
-								browsers: false,
-							},
-						}),
-					)
+							new Edition({
+								compiler: 'typescript',
+								directory,
+								index: addExtension(answers.indexEntry, `js`),
+								node: addExtension(answers.nodeEntry, `js`),
+								browser: addExtension(answers.browserEntry, `js`),
+								test: addExtension(answers.testEntry, `js`),
+								bin: addExtension(answers.binEntry, `js`),
+								tags: [
+									'compiled',
+									'javascript',
+									esVersionTargetLower,
+									targetModule,
+								],
+								targets: {
+									node: nodeVersionTarget,
+									es: esVersionTarget,
+								},
+								engines: {
+									node: true,
+									browsers: false,
+								},
+							}),
+						)
+					}
 				} else {
 					throw new Error(`invalid target for the compiler`)
 				}
@@ -699,6 +749,7 @@ export function updateEditionFields(state) {
 			description.push('with Import for modules')
 		}
 		edition.description = description.join(' ')
+		edition.compileCommand = [answers.packageManager, 'run', compileScriptName]
 	})
 }
 
@@ -735,7 +786,7 @@ export function updateEditionEntries(state) {
 	// node exports
 	const autoloaderPath = cojoin(
 		'.',
-		state.useEditionAutoloader && packageData.main,
+		state.useEditionsAutoloader && packageData.main,
 	)
 	const nodeImportPath = cojoin(
 		'.',
@@ -919,7 +970,7 @@ export async function scaffoldEditions(state) {
 		if (nodeEdition) {
 			packageData.main = await writeEntry({
 				entry: 'index',
-				autoloader: state.useEditionAutoloader,
+				autoloader: state.useEditionsAutoloader,
 				exportDefault,
 				typesEdition,
 				sourceEdition,
@@ -934,7 +985,7 @@ export async function scaffoldEditions(state) {
 					await writeEntry({
 						entry: 'bin',
 						always: true,
-						autoloader: state.useEditionAutoloader,
+						autoloader: state.useEditionsAutoloader,
 						exportDefault,
 						typesEdition,
 						sourceEdition,
@@ -949,7 +1000,7 @@ export async function scaffoldEditions(state) {
 			if (answers.docpadPlugin === false) {
 				state.test = await writeEntry({
 					entry: 'test',
-					autoloader: state.useEditionAutoloader,
+					autoloader: state.useEditionsAutoloader,
 					exportDefault,
 					typesEdition,
 					sourceEdition,

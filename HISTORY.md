@@ -1,5 +1,25 @@
 # History
 
+## v1.88.0 2023 November 29
+
+Dramatically improve performance of Boundation, eliminates unnecessary compilation and testing.
+
+-   ci/runtime:
+    -   `bevry-actions/surge` updated to `1.1.0` and `surge` dev dependency removed to avoid ["insecure" surge dev dependency alerts](https://github.com/sintaxi/surge/issues/504), close [#156](https://github.com/bevry/boundation/issues/156)
+    -   Renable Windows and MacOS CI tests, now that Dependabot is under control, close [#162](https://github.com/bevry/boundation/issues/162)
+-   editions/versions/questions:
+    -   Added `nodeVersionsTargetedImportRange` and `nodeVersionsTargetedRequireRange` questions, and removed automated `nodeVersionTargetedMinimum`, `nodeVersionTargetedMaximum`, `targets` questions
+        -   Targets are their compilation are now part of the Editions auto-generation rather than consumed by Editions, as such they are only compiled as necessary
+        -   If a prior Edition passes for everything except a particular target, we can now jump ahead to the Editions that do support that particular target, close [#159](https://github.com/bevry/boundation/issues/159)
+    -   Added `editionsAutoloader` question to allow for the Editions autoloader to be disabled, for when you want only a single Require edition that passes for all intended targets as such making the Editions Autoloader unnecessary (such as for the `version-range` package that the `editions` package depends upon), close [#160](https://github.com/bevry/boundation/issues/160)
+    -   Improved coloration of Editions changes
+-   runtime:
+    -   Fixed dependencies that are dependent on certain keywords, such as `@types/node`, close [#163](https://github.com/bevry/boundation/issues/163)
+    -   Enable TypeScript 5.3 now that TypeDoc supports it
+    -   Changed Prettier handling of `trailingComma` from Node.js <8 to ES5
+    -   Compilation and cleaning now skipped, as it is handled more appropriately by the Editions testing and by the `our:release:prepare` finale
+-   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
+
 ## v1.87.0 2023 November 23
 
 -   CLI arguments should never take preference over `package.json:boundation` entries, as the latter is intended solely for that package, whereas CLI arguments are generally generic defaults

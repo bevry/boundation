@@ -23,7 +23,7 @@ function generateGitHubActionsJSON(state) {
 
 	// prepare vars
 	const actionsOperatingSystems = answers.npm
-		? ['ubuntu-latest'] // , 'macos-latest', 'windows-latest']
+		? ['ubuntu-latest', 'macos-latest', 'windows-latest']
 		: ['ubuntu-latest']
 	const actionsOperatingSystemsExperimental = intersect(
 		actionsOperatingSystems,
@@ -108,7 +108,7 @@ function generateGitHubActionsJSON(state) {
 	const surgePublishSteps = [
 		{
 			name: 'publish to surge',
-			uses: 'bevry-actions/surge@v1.0.3',
+			uses: 'bevry-actions/surge@v1.1.0',
 			with: {
 				surgeLogin: '${{ secrets.SURGE_LOGIN }}',
 				surgeToken: '${{ secrets.SURGE_TOKEN }}',

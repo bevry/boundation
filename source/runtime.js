@@ -1,12 +1,10 @@
-// builtin
-import * as pathUtil from 'node:path'
-
 // external
 import versionCompare from 'version-compare'
-import { unique, toggle } from '@bevry/list'
+import { unique, toggle, intersect } from '@bevry/list'
 import { isAccessible } from '@bevry/fs-accessible'
 import unlink from '@bevry/fs-unlink'
 import write from '@bevry/fs-write'
+import { fetchExclusiveCompatibleESVersionsForNodeVersions } from '@bevry/nodejs-ecmascript-compatibility'
 
 // local
 import { status } from './log.js'
@@ -157,6 +155,33 @@ export async function updateRuntime(state) {
 	const test = [answers.packageManager, 'test']
 	const extension = answers.language === 'typescript' ? '.ts' : '.js'
 
+	// targets
+	const allTargets = unique([...allTypescriptTargets, ...allLanguages]).map(
+		(i) => i.toLowerCase(),
+	)
+	const usedTargets = unique([
+		...answers.languages.map((i) => i.toLowerCase()),
+		...state.activeEditions
+			.map((e) =>
+				Array.from(e.tags).find((t) => allTargets.includes(t.toLowerCase())),
+			)
+			.filter((i) => i)
+			.map((i) => i.toLowerCase()),
+	])
+
+	// keywords
+	toggle(answers.keywords, allTargets, false)
+	toggle(answers.keywords, usedTargets, true)
+	toggle(answers.keywords, 'website', answers.website)
+	toggle(
+		answers.keywords,
+		'node',
+		!answers.website && answers.npm && Boolean(answers.desiredNodeVersion),
+	)
+	toggle(answers.keywords, 'dom', answers.dom)
+	toggle(answers.keywords, 'browser', answers.browser)
+	toggle(answers.keywords, 'module', packageData.module)
+
 	// log
 	status('updating runtime...')
 
@@ -192,7 +217,7 @@ export async function updateRuntime(state) {
 		'joe-examples': false,
 		'joe-reporter-console': false,
 		'joe-reporter-list': false,
-		editions: state.useEditionAutoloader,
+		editions: state.useEditionsAutoloader,
 		surge: false,
 		vercel: false,
 		now: false,
@@ -362,7 +387,7 @@ export async function updateRuntime(state) {
 
 	// brand new typescript version workaround for incompat with typedoc version
 	// https://github.com/TypeStrong/typedoc/releases
-	versions.typescript = '~5.2'
+	versions.typescript = '~5.3'
 
 	// add user overrides
 	Object.assign(
@@ -507,10 +532,7 @@ export async function updateRuntime(state) {
 		packageData.prettier = {
 			semi: false,
 			singleQuote: true,
-			trailingComma:
-				versionCompare(answers.nodeVersionTargetedMinimum, '8') < 0
-					? 'es5'
-					: 'all',
+			trailingComma: answers.keywords.has('es5') ? 'es5' : 'all',
 		}
 		state.scripts['our:verify:eslint'] = [
 			'eslint',
@@ -551,8 +573,9 @@ export async function updateRuntime(state) {
 			packages['@typescript-eslint/eslint-plugin'] =
 			packages['@typescript-eslint/parser'] =
 				'dev'
-		if (answers.keywords.has('node') && !packages['@types/node'])
+		if (!packages['@types/node'] && answers.keywords.has('node')) {
 			packages['@types/node'] = 'dev'
+		}
 	}
 
 	// documentation
@@ -662,9 +685,9 @@ export async function updateRuntime(state) {
 	if (answers.website) {
 		// surge
 		if (answers.website === 'surge') {
-			packages.surge = 'dev'
+			// packages.surge = 'dev' <-- not until https://github.com/sintaxi/surge/issues/504 is solved
 			state.scripts['my:deploy'] =
-				`surge ./${answers.staticDirectory} ${answers.deployTarget}`
+				`npx --yes surge ./${answers.staticDirectory} ${answers.deployTarget}`
 		}
 		// vercel
 		else if (answers.vercelWebsite) {
@@ -704,7 +727,7 @@ export async function updateRuntime(state) {
 
 	// deploy: documentation
 	if (answers.docs) {
-		packages.surge = 'dev'
+		// packages.surge = 'dev' <-- not until https://github.com/sintaxi/surge/issues/504 is solved
 	}
 
 	// testing (not docpad plugin, nor website)
@@ -741,32 +764,7 @@ export async function updateRuntime(state) {
 		}
 	}
 
-	// targets
-	const allTargets = unique([...allTypescriptTargets, ...allLanguages]).map(
-		(i) => i.toLowerCase(),
-	)
-	const usedTargets = unique([
-		...answers.languages.map((i) => i.toLowerCase()),
-		...state.activeEditions
-			.map((e) =>
-				Array.from(e.tags).find((t) => allTargets.includes(t.toLowerCase())),
-			)
-			.filter((i) => i)
-			.map((i) => i.toLowerCase()),
-	])
-
 	// keywords
-	toggle(answers.keywords, allTargets, false)
-	toggle(answers.keywords, usedTargets, true)
-	toggle(answers.keywords, 'website', answers.website)
-	toggle(
-		answers.keywords,
-		'node',
-		!answers.website && answers.npm && Boolean(answers.desiredNodeVersion),
-	)
-	toggle(answers.keywords, 'dom', answers.dom)
-	toggle(answers.keywords, 'browser', answers.browser)
-	toggle(answers.keywords, 'module', packageData.module)
 	toggle(
 		answers.keywords,
 		['types', 'typed'],
@@ -886,9 +884,12 @@ export async function updateRuntime(state) {
 		if (answers.keywords.has('dom')) lib.add('DOM').add('DOM.Iterable')
 		if (answers.keywords.has('esnext')) lib.add('ESNext')
 		if (answers.website) exclude.add('node_modules')
-		const typescriptTarget = answers.targets.find((i) =>
-			allTypescriptTargets.includes(i),
-		)
+		const typescriptTarget = intersect(
+			allTypescriptTargets,
+			await fetchExclusiveCompatibleESVersionsForNodeVersions([
+				answers.desiredNodeVersion,
+			]),
+		)[0]
 		const tsconfig = answers.website
 			? {
 					compilerOptions: {
@@ -935,7 +936,7 @@ export async function updateRuntime(state) {
 			  }
 
 		// re-adjust custom properties
-		if (answers.targets.includes('ES5'))
+		if (answers.keywords.has('es5'))
 			tsconfig.compilerOptions.downlevelIteration = true
 		if (lib.size) tsconfig.compilerOptions.lib = Array.from(lib)
 		if (exclude.size) tsconfig.exclude = Array.from(exclude)
@@ -1044,16 +1045,6 @@ export async function updateRuntime(state) {
 	status('running setup...')
 	await spawn([...run, 'our:setup'])
 	status('...ran setup')
-
-	// run clean
-	status('running clean...')
-	await spawn([...run, 'our:clean'])
-	status('...ran clean')
-
-	// run compile
-	status('running compile...')
-	await spawn([...run, 'our:compile'])
-	status('...ran compile')
 
 	// read the updated package.json file
 	await readPackage(state)

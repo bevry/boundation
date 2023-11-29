@@ -6,9 +6,10 @@ import { Versions } from '@bevry/testen'
 import { complement, intersect } from '@bevry/list'
 import { filterNodeVersions } from '@bevry/nodejs-versions'
 import versionCompare from 'version-compare'
+import { isAccessible } from '@bevry/fs-accessible'
 
 // local
-import { status } from './log.js'
+import { status, note } from './log.js'
 import {
 	writePackage,
 	getPackageNodeEngine,
@@ -16,6 +17,7 @@ import {
 } from './package.js'
 import { updateRuntime } from './runtime.js'
 import { nodeMajorVersion, nodeMajorVersions } from './util.js'
+import { spawn } from './fs.js'
 
 // Update engines
 export async function updateEngines(state) {
@@ -80,7 +82,7 @@ export async function updateEngines(state) {
 			{
 				list: nodeEditionsRequire,
 				nodeVersions: answers.nodeVersionsTested,
-				mode: 'allUnique',
+				mode: answers.editionsAutoloader ? 'allUnique' : 'onlyAllSupported',
 			},
 		]) {
 			// Skip when we do not care about that module type
@@ -93,29 +95,46 @@ export async function updateEngines(state) {
 
 			// Determine
 			for (const edition of list) {
+				// check if we need to skip because passed everything
 				if (skipRemainderBecausePassedEverything) {
-					console.log(
-						`The edition [${edition.directory}] will be trimmed, as a previous edition already passes all targets`,
+					note(
+						`The edition [${edition.directory}] will be trimmed, as a previous edition already passed all targets`,
 					)
 					edition.active = false
 					recompile = true
 					continue
 				}
 
+				// target specified versions and the edition target
+				const target =
+					(edition.targets && nodeMajorVersion(edition.targets.node)) || null
+				const targets = nodeVersions.concat(target || [])
+
+				// check if we need to skip because unnecessary target
+				if (target && listPassedVersions.has(target)) {
+					note(
+						`The edition [${edition.directory}] will be trimmed, as a previous edition already passed its target of ${target}`,
+					)
+					edition.active = false
+					recompile = true
+					continue
+				}
+
+				// log
 				status(`determining engines for edition [${edition.directory}]...`)
+
+				// run compile if needed
+				if (edition.compileCommand && !(await isAccessible(edition.testPath))) {
+					await spawn(edition.compileCommand)
+				}
 
 				// determine the test script for the edition
 				const test = answers.docpadPlugin
 					? `npx docpad-plugintester --edition=${edition.directory}`
 					: `node ./${join(edition.directory || '.', edition.test)}`
 
-				// set the versions to test on as the supported node versions,
-				// and the target node version
-				const target =
-					(edition.targets && nodeMajorVersion(edition.targets.node)) || null
-				const versions = new Versions(nodeVersions.concat(target || []))
-
 				// install and test the versions
+				const versions = new Versions(targets)
 				await versions.load()
 				await versions.install()
 				const numbers = versions.array.map((version) => version.version)
@@ -154,7 +173,7 @@ export async function updateEngines(state) {
 				// trim non-unique version
 				if (passedUnique.length === 0) {
 					// if this one has no unique passes, then it is redundant and can be trimmed
-					console.log(
+					note(
 						`The edition [${edition.directory}] will be trimmed, as it has no unique passing versions`,
 					)
 					edition.active = false
@@ -170,8 +189,9 @@ export async function updateEngines(state) {
 						// if this one passes for all targets, then trim on all prior targets
 						for (const priorEdition of list) {
 							if (priorEdition === edition) break
-							console.log(
-								`The prior edition [${priorEdition.directory}] will be trimmed, as a latter edition supports its versions`,
+							if (!priorEdition.active) continue
+							note(
+								`The prior edition [${priorEdition.directory}] will be trimmed, as it was partial`,
 							)
 							priorEdition.active = false
 							recompile = true
@@ -261,7 +281,7 @@ export async function updateEngines(state) {
 	}
 
 	if (passedAndUnsupported.length) {
-		console.log(
+		note(
 			`The project supports the extra versions: ${passedAndUnsupported.join(
 				', ',
 			)}`,
@@ -269,7 +289,7 @@ export async function updateEngines(state) {
 	}
 
 	if (failedAndUnsupported.length) {
-		console.log(
+		note(
 			`The project failed on the unsupported versions: ${failedAndUnsupported.join(
 				', ',
 			)}`,
@@ -291,11 +311,11 @@ export async function updateEngines(state) {
 		const newValue = '>=' + testedAndPassed[0]
 		setPackageNodeEngine(packageData, newValue)
 		if (oldValue !== newValue) {
-			console.log(
+			note(
 				`The project's Node.js engine has expanded from ${oldValue} to ${newValue}`,
 			)
 		} else {
-			console.log(`The project's Node.js engine has stayed as ${oldValue}`)
+			note(`The project's Node.js engine has stayed as ${oldValue}`)
 		}
 	} else {
 		const oldValue = getPackageNodeEngine(packageData)
@@ -306,11 +326,11 @@ export async function updateEngines(state) {
 			`>=${answers.nodeVersionSupportedMinimum}`
 		setPackageNodeEngine(packageData, newValue)
 		if (oldValue !== newValue) {
-			console.log(
+			note(
 				`The project's Node.js engine has changed from ${oldValue} to ${newValue}`,
 			)
 		} else {
-			console.log(`The project's Node.js engine has stayed as ${oldValue}`)
+			note(`The project's Node.js engine has stayed as ${oldValue}`)
 		}
 	}
 
@@ -326,7 +346,7 @@ export async function updateEngines(state) {
 		if (answers.expandNodeVersions === false) {
 			state.nodeVersionsOptional = passedAndUnsupported
 		}
-		console.log(
+		note(
 			`The project's Node.js tests have been shrunk from ${oldValue} to ${newValue}`,
 		)
 	} else {

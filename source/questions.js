@@ -7,13 +7,11 @@ import { unique, last, first, intersect } from '@bevry/list'
 import {
 	filterNodeVersions,
 	filterSignificantNodeVersions,
-	isNodeVersionActiveOrCurrent,
 } from '@bevry/nodejs-versions'
-import { fetchExclusiveCompatibleESVersionsForNodeVersions } from '@bevry/nodejs-ecmascript-compatibility'
 
 // local
 import _getAnswers from './answers.js'
-import { pwd, allLanguages, allTypescriptTargets } from './data.js'
+import { pwd, allLanguages } from './data.js'
 import {
 	hasScript,
 	isGitUrl,
@@ -257,7 +255,7 @@ export async function getQuestions(state) {
 		{
 			name: 'nextWebsite',
 			type: 'confirm',
-			message: 'Will it be a Next by Zeit website?',
+			message: 'Will it be a Next.js website?',
 			default({ website }) {
 				return Boolean(website && website.includes('next'))
 			},
@@ -439,7 +437,7 @@ export async function getQuestions(state) {
 		{
 			name: 'compilerNode',
 			type: 'list',
-			message: 'Which compiler to use for the Node.js editions?',
+			message: 'Which compiler to use for Node.js?',
 			validate: isSpecified,
 			choices({ language }) {
 				return language === 'typescript'
@@ -679,8 +677,7 @@ export async function getQuestions(state) {
 		},
 		{
 			name: 'maintainedNodeVersions',
-			message:
-				'Should unmaintained Node.js versions be trimmed from our support?',
+			message: 'Should we aim to support only maintained Node.js versions?',
 			type: 'confirm',
 			default({ desiredNodeOnly }) {
 				if (desiredNodeOnly) return false
@@ -693,7 +690,7 @@ export async function getQuestions(state) {
 		{
 			name: 'expandNodeVersions',
 			message:
-				'Should unsupported Node.js versions be supported if they pass the tests?',
+				'Should other Node.js versions be supported if they pass the tests?',
 			type: 'confirm',
 			default({ desiredNodeOnly }) {
 				if (desiredNodeOnly) return false
@@ -909,57 +906,37 @@ export async function getQuestions(state) {
 			},
 		},
 		{
-			name: 'nodeVersionTargetedMinimum',
+			name: 'nodeVersionsTargetedImportRange',
 			message:
-				'Automated property (do not override) for constraining the minimum Node.js version for targeting',
-			type: 'list',
-			validate: isNumber,
-			choices({ nodeVersionsTargeted }) {
-				return nodeVersionsTargeted
+				'What range (if any) do you wish to restrict the targeted Node.js versions for Import modules to?',
+			filter: trim,
+			skip({ desiredNodeOnly }) {
+				return desiredNodeOnly
 			},
-			default(opts) {
-				return first(this.choices(opts))
+			ignore({ targetModules }) {
+				return targetModules.includes('import') === false
 			},
-			skip: true,
 		},
 		{
-			name: 'nodeVersionTargetedMaximum',
+			name: 'nodeVersionsTargetedRequireRange',
 			message:
-				'Automated property (do not override) for constraining the maximum Node.js version for targeting',
-			type: 'list',
-			validate: isNumber,
-			choices({ nodeVersionsTargeted }) {
-				return nodeVersionsTargeted
+				'What range (if any) do you wish to restrict the targeted Node.js versions for Require modules to?',
+			filter: trim,
+			skip({ desiredNodeOnly }) {
+				return desiredNodeOnly
 			},
-			default(opts) {
-				return last(this.choices(opts))
+			ignore({ targetModules }) {
+				return targetModules.includes('require') === false
 			},
-			skip: true,
 		},
 		{
-			name: 'targets',
-			type: 'checkbox',
-			message: 'Which compile targets should be generated?',
-			validate: isSpecified,
-			async choices({ compilerNode, nodeVersionsTargeted }) {
-				// ensure versions are in order of most preferred to least preferred
-				// otherwise edition trimming will not work as expected
-				const reversed = nodeVersionsTargeted.slice().reverse() // reverse modifies the actual array, hence need for slice
-				return compilerNode === 'babel'
-					? reversed
-					: compilerNode === 'typescript'
-					  ? intersect(allTypescriptTargets, [
-								...(await fetchExclusiveCompatibleESVersionsForNodeVersions(
-									reversed,
-								)),
-					    ]) // don't add ESNext as it is ephemeral
-					  : []
-			},
-			default(opts) {
-				return this.choices(opts)
-			},
-			when({ compilerNode }) {
-				return ['typescript', 'babel'].includes(compilerNode)
+			name: 'editionsAutoloader',
+			type: 'confirm',
+			message:
+				'Use the Editions Autoloader to support the case where multiple editions may be required to support all intended Node.js versions?',
+			default: true,
+			when({ nodeVersionsTargeted }) {
+				return nodeVersionsTargeted.length > 1
 			},
 		},
 		{
@@ -1008,7 +985,6 @@ export async function getAnswers(state) {
 
 	// Apply
 	state.answers = answers
-	answers.targets = answers.targets || []
 	answers.keywords = new Set((answers.keywords || '').split(/,\s*/))
 
 	// ensure we don't have a situation where node 14 is about to be released, but we only support node 13 and up
@@ -1035,9 +1011,7 @@ export async function getAnswers(state) {
 		last(answers.nodeVersionsSupported) !=
 			answers.nodeVersionSupportedMaximum ||
 		first(answers.nodeVersionsTested) != answers.nodeVersionTestedMinimum ||
-		last(answers.nodeVersionsTested) != answers.nodeVersionTestedMaximum ||
-		first(answers.nodeVersionsTargeted) != answers.nodeVersionTargetedMinimum ||
-		last(answers.nodeVersionsTargeted) != answers.nodeVersionTargetedMaximum
+		last(answers.nodeVersionsTested) != answers.nodeVersionTestedMaximum
 	) {
 		console.error(
 			first(answers.nodeVersionsSupported),
@@ -1048,10 +1022,6 @@ export async function getAnswers(state) {
 			answers.nodeVersionTestedMinimum,
 			last(answers.nodeVersionsTested),
 			answers.nodeVersionTestedMaximum,
-			first(answers.nodeVersionsTargeted),
-			answers.nodeVersionTargetedMinimum,
-			last(answers.nodeVersionsTargeted),
-			answers.nodeVersionTargetedMaximum,
 		)
 		throw new Error(
 			'do not use nodeVersion*Minimum and nodeVersion*Maximum, use nodeVersions*Range instead',

@@ -9,7 +9,7 @@ export const state = {
 	packageData: {},
 	vercelConfig: {},
 	editions: [],
-	get useEditionAutoloader() {
+	get useEditionsAutoloader() {
 		return this.nodeEditionsRequire.length >= 2
 	},
 	// active is not loadable, active is only kept
