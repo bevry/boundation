@@ -14,8 +14,10 @@ function fetch(q, value, ...args) {
 }
 
 // Action
-export default async function getAnswers(questions, user) {
+export default async function getAnswers(questions, user = {}) {
 	try {
+		// dereference user, so our modifications don't apply to it
+		user = JSON.parse(JSON.stringify(user))
 		// find defaults
 		const defaults = {}
 		questions.forEach(function (question) {
@@ -58,7 +60,7 @@ export default async function getAnswers(questions, user) {
 				}
 
 				// check user
-				if (user && typeof user[name] !== 'undefined') {
+				if (typeof user[name] !== 'undefined') {
 					if (reason) {
 						console.warn(
 							`package:.json:boundation:${name}=${JSON.stringify(
@@ -69,6 +71,7 @@ export default async function getAnswers(questions, user) {
 						)
 					}
 					defaults[name] = user[name]
+					delete user[name]
 					reason = 'package'
 				}
 
@@ -145,6 +148,19 @@ export default async function getAnswers(questions, user) {
 
 		// merge in defaults
 		const values = Object.assign({}, defaults, answers)
+
+		// check if we had any unknown properties
+		const unknownProperties = new Set(Object.keys(user))
+		unknownProperties.delete('comment')
+		unknownProperties.delete('versions')
+		if (unknownProperties.size) {
+			console.log(user)
+			throw new Error(
+				`package.json:boundation had unknown properties: ${Array.from(
+					unknownProperties.values(),
+				).join(', ')}`,
+			)
+		}
 
 		// return merge
 		return values

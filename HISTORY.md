@@ -1,5 +1,12 @@
 # History
 
+## v1.88.1 2023 December 4
+
+-   error on unknown configuration properties
+-   tsconfig properties are now persisted and sorted
+-   cleaning now always happens initially guaranteeing clean compilation
+-   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
+
 ## v1.88.0 2023 November 29
 
 Dramatically improve performance of Boundation, eliminates unnecessary compilation and testing.

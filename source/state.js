@@ -3,6 +3,7 @@ import { has } from '@bevry/list'
 
 // export
 export const state = {
+	cleaned: false,
 	githubWorkflow: 'bevry', // will change if custom was detected
 	answers: null,
 	nodeVersionsOptional: [],

@@ -498,6 +498,9 @@ export async function getQuestions(state) {
 			choices({ sourceModule, docpadPlugin, compileNode, compileBrowser }) {
 				if (docpadPlugin) return ['require']
 				if (sourceModule) {
+					// require first, as editions currently doesn't support loading esm:
+					// Error [ERR_REQUIRE_ESM]: require() of ES Module /Users/balupton/Projects/auto/errlop/edition-es2017-esm/index.js not supported.
+					// Instead change the require of index.js in null to a dynamic import() which is available in all CommonJS modules.
 					if (compileNode || compileBrowser) return ['require', 'import']
 					return ['import']
 				}

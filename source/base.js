@@ -310,7 +310,7 @@ export async function updateBaseFiles({ answers, packageData }) {
 			status('...wrote security file')
 		}
 
-		// fuunding
+		// funding
 		// https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/displaying-a-sponsor-button-in-your-repository
 		await mkdirp('.github')
 		await write(

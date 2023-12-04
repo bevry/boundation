@@ -1,4 +1,5 @@
 // external
+import sortObject from 'sortobject'
 import versionCompare from 'version-compare'
 import { unique, toggle, intersect } from '@bevry/list'
 import { isAccessible } from '@bevry/fs-accessible'
@@ -10,7 +11,7 @@ import { fetchExclusiveCompatibleESVersionsForNodeVersions } from '@bevry/nodejs
 import { status } from './log.js'
 import { bustedVersions, allLanguages, allTypescriptTargets } from './data.js'
 import { parse, exec, spawn } from './fs.js'
-import { getPreviousVersion, getDuplicateDeps } from './util.js'
+import { getPreviousVersion, getDuplicateDeps, trimEmpty } from './util.js'
 import { readPackage, writePackage } from './package.js'
 import {
 	scaffoldEditions,
@@ -848,103 +849,96 @@ export async function updateRuntime(state) {
 		// https://github.com/Microsoft/TypeScript/issues/29056#issuecomment-448386794
 		// Only enable isolatedModules on TypeScript projects, as for JavaScript projects it will be incompatible with 'use strict'
 		// resolveJsonModule seems to cause too many issues, so is disabled unless needed
-		const lib = new Set()
-		const exclude = new Set()
-		let skipLibCheck = false
-		let customCompilerOutDir = ''
+		let tsconfig
 		if (await isAccessible(answers.tsconfig)) {
 			try {
-				// parse
-				const data = (await parse(answers.tsconfig)) || {}
-
-				// prepare necessary properties exist so we don't crash
-				if (data.compilerOptions == null) data.compilerOptions = {}
-				if (data.compilerOptions.lib == null) data.compilerOptions.lib = []
-				if (data.exclude == null) data.exclude = []
-
-				// store any lib that has a dot back to lib
-				data.compilerOptions.lib
-					.filter((i) => i.includes('.'))
-					.forEach((i) => lib.add(i))
-
-				// store excludes
-				data.exclude.forEach((i) => exclude.add(i))
-
-				// store skipLibCheck
-				skipLibCheck = data.compilerOptions.skipLibCheck
-
-				// store custom out dir
-				customCompilerOutDir = data.compilerOptions.outDir
+				tsconfig = (await parse(answers.tsconfig)) || {}
 			} catch (e) {
 				console.error(`Failed to parse ${answers.tsconfig}:`, e)
 			}
 		}
 		status('writing tsconfig file...')
+
+		// ensure necessary properties exist so we don't crash
+		if (tsconfig.compilerOptions == null) tsconfig.compilerOptions = {}
+		if (tsconfig.compilerOptions.lib == null) tsconfig.compilerOptions.lib = []
+		if (tsconfig.exclude == null) tsconfig.exclude = []
+
+		// store lib
+		const lib = new Set()
+		// add anything with a dot back to lib
+		tsconfig.compilerOptions.lib
+			.filter((i) => i.includes('.'))
+			.forEach((i) => lib.add(i))
 		if (answers.keywords.has('webworker')) lib.add('WebWorker')
 		if (answers.keywords.has('dom')) lib.add('DOM').add('DOM.Iterable')
 		if (answers.keywords.has('esnext')) lib.add('ESNext')
+
+		// store include
+		const include = new Set()
+		tsconfig.include.forEach((i) => include.add(i))
+
+		// store exclude
+		const exclude = new Set()
+		tsconfig.exclude.forEach((i) => exclude.add(i))
 		if (answers.website) exclude.add('node_modules')
+
+		// target
 		const typescriptTarget = intersect(
 			allTypescriptTargets,
 			await fetchExclusiveCompatibleESVersionsForNodeVersions([
 				answers.desiredNodeVersion,
 			]),
 		)[0]
-		const tsconfig = answers.website
-			? {
-					compilerOptions: {
-						allowJs: true,
-						allowSyntheticDefaultImports: true,
-						jsx: 'preserve',
-						maxNodeModuleJsDepth: 5,
-						module: 'ESNext',
-						moduleResolution: 'Node',
-						sourceMap: true,
-						strict: true,
-						target: typescriptTarget,
-						// new props
-						skipLibCheck: true,
-						forceConsistentCasingInFileNames: true,
-						noEmit: true,
-						esModuleInterop: true,
-						resolveJsonModule: true,
-						isolatedModules: true,
-					},
-					include: unique([
-						'components',
-						'pages',
-						'public',
-						'lib',
-						answers.staticDirectory,
-					]),
-			  }
-			: {
-					compilerOptions: Object.assign(
-						{
-							allowJs: true,
-							esModuleInterop: true,
-							isolatedModules: answers.language === 'typescript',
-							maxNodeModuleJsDepth: 5,
-							moduleResolution: 'Node',
-							strict: true,
-							target: typescriptTarget,
-							skipLibCheck,
-						},
-						answers.sourceModule ? { module: 'ESNext' } : {},
-					),
-					include: [answers.sourceDirectory],
-			  }
+
+		// compiler options
+		Object.assign(tsconfig.compilerOptions, {
+			allowJs: true,
+			downlevelIteration: answers.keywords.has('es5') ? true : null,
+			esModuleInterop: true,
+			maxNodeModuleJsDepth: 5,
+			moduleResolution: 'Node',
+			strict: true,
+			target: typescriptTarget,
+		})
+		if (answers.website) {
+			// website
+			Object.assign(tsconfig.compilerOptions, {
+				allowSyntheticDefaultImports: true,
+				forceConsistentCasingInFileNames: true,
+				isolatedModules: true,
+				jsx: 'preserve',
+				module: 'ESNext',
+				noEmit: true,
+				resolveJsonModule: true,
+				sourceMap: true,
+			})
+			include.add(
+				'components',
+				'pages',
+				'public',
+				'lib',
+				answers.staticDirectory,
+			)
+		} else {
+			// package
+			Object.assign(tsconfig.compilerOptions, {
+				isolatedModules: answers.language === 'typescript',
+				module: answers.sourceModule ? 'ESNext' : null,
+			})
+			include.add(answers.sourceDirectory)
+		}
 
 		// re-adjust custom properties
-		if (answers.keywords.has('es5'))
-			tsconfig.compilerOptions.downlevelIteration = true
-		if (lib.size) tsconfig.compilerOptions.lib = Array.from(lib)
-		if (exclude.size) tsconfig.exclude = Array.from(exclude)
-		if (customCompilerOutDir)
-			tsconfig.compilerOptions.outDir = customCompilerOutDir
+		if (lib.size) tsconfig.compilerOptions.lib = Array.from(lib.values())
+		if (include.size) tsconfig.include = Array.from(include.values())
+		if (exclude.size) tsconfig.exclude = Array.from(exclude.values())
 
 		// write
-		await write('tsconfig.json', JSON.stringify(tsconfig, null, '  ') + '\n')
+		await write(
+			'tsconfig.json',
+			JSON.stringify(sortObject(trimEmpty(tsconfig)), null, '  ') + '\n',
+		)
 		status('...wrote tsconfig file')
 	} else {
 		// remove tsconfig.json
@@ -1049,8 +1043,17 @@ export async function updateRuntime(state) {
 	// read the updated package.json file
 	await readPackage(state)
 
+	// clean old editions to ensure new ones are compiled, do it only initially, not on recompiles
+	if (!state.cleaned) {
+		status('running clean...')
+		await spawn([...run, 'our:clean'])
+		state.cleaned = true
+		status('...ran clean')
+	}
+
 	// continue
 	if (answers.language !== 'json') {
+		// determine which editions are necessary and which engines are supported
 		status('update engines...')
 		await updateEngines(state)
 		status('...updated engines')
