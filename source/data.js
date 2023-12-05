@@ -5,6 +5,7 @@ import { cwd } from 'node:process'
 import {
 	getESVersionsByDate,
 	getESVersionByDate,
+	getESVersionsByNow,
 	getDateWithYearOffset,
 } from '@bevry/ecmascript-versions'
 
@@ -32,12 +33,18 @@ export const allLanguages = [
 const aYearAgo = getDateWithYearOffset(-1)
 
 // we reverse, to make sure it is newest first
-export const allTypescriptTargets = [
+export const allTypescriptEcmascriptTargets = [
 	'ESNext',
 	...getESVersionsByDate(aYearAgo).reverse(),
 ]
 
-export const defaultCoffeeTarget = 'ESNext'
+// we reverse, to make sure it is newest first
+export const allEcmascriptVersions = [
+	'ESNext',
+	...getESVersionsByNow().reverse(),
+]
+
+export const defaultCoffeeEcmascriptTarget = 'ESNext'
 
 // previous year
 export const defaultBrowserTarget = getESVersionByDate(aYearAgo)

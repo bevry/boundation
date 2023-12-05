@@ -1,5 +1,11 @@
 # History
 
+## v1.88.3 2023 December 5
+
+-   fix non-typescript projects that target Node.js v4 and v6 from failing due to bad prettier configuration
+    -   regression from https://github.com/bevry/boundation/commit/b54830456812d9bd591141d8af162eb8638fcae6#diff-f4c695cccbf0d3ce1b79765091f9b57956c45cb9dd1b8f5661116a7b93c4e5ceL510 which removed `nodeVersionTargetedMinimum` and relied solely on edition keywords, which until now did not exist on all node.js editions that we generate (was missing on coffeescript, babel, json)
+-   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
+
 ## v1.88.2 2023 December 5
 
 -   configure prettier to use lf line endings, to prevent complications on Windows

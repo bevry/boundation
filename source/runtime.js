@@ -9,7 +9,12 @@ import { fetchExclusiveCompatibleESVersionsForNodeVersions } from '@bevry/nodejs
 
 // local
 import { status } from './log.js'
-import { bustedVersions, allLanguages, allTypescriptTargets } from './data.js'
+import {
+	bustedVersions,
+	allLanguages,
+	allTypescriptEcmascriptTargets,
+	allEcmascriptVersions,
+} from './data.js'
 import { parse, exec, spawn } from './fs.js'
 import { getPreviousVersion, getDuplicateDeps, trimEmpty } from './util.js'
 import { readPackage, writePackage } from './package.js'
@@ -157,21 +162,35 @@ export async function updateRuntime(state) {
 	const extension = answers.language === 'typescript' ? '.ts' : '.js'
 
 	// targets
-	const allTargets = unique([...allTypescriptTargets, ...allLanguages]).map(
-		(i) => i.toLowerCase(),
-	)
+	const possibleTargets = unique([
+		...allLanguages,
+		...allEcmascriptVersions,
+	]).map((i) => i.toLowerCase())
 	const usedTargets = unique([
+		// answered languages
 		...answers.languages.map((i) => i.toLowerCase()),
+		// ecmascript versions and languages for our editions
 		...state.activeEditions
 			.map((e) =>
-				Array.from(e.tags).find((t) => allTargets.includes(t.toLowerCase())),
+				Array.from(e.tags).find((t) =>
+					possibleTargets.includes(t.toLowerCase()),
+				),
 			)
 			.filter((i) => i)
 			.map((i) => i.toLowerCase()),
 	])
+	/* editions could probably auto-detect their es versions via updating them based on the testen results
+	via something like the following, however at that point we should probably add esversions to engines
+	...(
+		await fetchAllCompatibleESVersionsForNodeVersions(
+			await fetchSupportedNodeVersions({
+				range: getPackageNodeEngine(packageData)
+			}),
+		)
+	).map((i) => i.toLowerCase()) */
 
 	// keywords
-	toggle(answers.keywords, allTargets, false)
+	toggle(answers.keywords, possibleTargets, false)
 	toggle(answers.keywords, usedTargets, true)
 	toggle(answers.keywords, 'website', answers.website)
 	toggle(
@@ -533,7 +552,11 @@ export async function updateRuntime(state) {
 		packageData.prettier = {
 			semi: false,
 			singleQuote: true,
-			trailingComma: answers.keywords.has('es5') ? 'es5' : 'all',
+			trailingComma:
+				// Node.js v4 is es5, v6 is es2015, both require es5 commas
+				answers.keywords.has('es5') || answers.keywords.has('es2015')
+					? 'es5'
+					: 'all',
 			endOfLine: 'lf',
 		}
 		state.scripts['our:verify:eslint'] = [
@@ -886,7 +909,7 @@ export async function updateRuntime(state) {
 
 		// target
 		const typescriptTarget = intersect(
-			allTypescriptTargets,
+			allTypescriptEcmascriptTargets,
 			await fetchExclusiveCompatibleESVersionsForNodeVersions([
 				answers.desiredNodeVersion,
 			]),

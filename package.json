@@ -1,6 +1,6 @@
 {
   "name": "boundation",
-  "version": "1.88.2",
+  "version": "1.88.3",
   "description": "Automatic scaffolding and upgrading of your JavaScript ecosystem projects using Bevry's best practices",
   "homepage": "https://github.com/bevry/boundation",
   "license": "Artistic-2.0",
@@ -99,7 +99,7 @@
     }
   },
   "dependencies": {
-    "@bevry/ansi": "^6.5.0",
+    "@bevry/ansi": "^6.6.0",
     "@bevry/ecmascript-versions": "^4.5.0",
     "@bevry/fs-accessible": "^2.2.0",
     "@bevry/fs-read": "^1.3.0",
@@ -114,20 +114,20 @@
     "@bevry/testen": "^9.1.0",
     "arrange-package-json": "^4.5.0",
     "arrangekeys": "^6.4.0",
-    "errlop": "^8.0.0",
+    "errlop": "^8.1.0",
     "filedirname": "^3.1.0",
     "get-cli-arg": "^8.3.0",
     "inquirer": "^9.2.12",
     "js-yaml": "^4.1.0",
     "safeps": "^11.4.0",
     "sortobject": "^5.3.0",
-    "typechecker": "^9.0.0",
-    "version-compare": "^3.6.0",
-    "version-range": "^4.9.0"
+    "typechecker": "^9.1.0",
+    "version-compare": "^3.7.0",
+    "version-range": "^4.10.0"
   },
   "devDependencies": {
     "@bevry/update-contributors": "^1.23.0",
-    "assert-helpers": "^11.7.0",
+    "assert-helpers": "^11.8.0",
     "eslint": "^8.55.0",
     "eslint-config-bevry": "^5.2.0",
     "eslint-config-prettier": "^9.1.0",
@@ -174,7 +174,8 @@
   "prettier": {
     "semi": false,
     "singleQuote": true,
-    "trailingComma": "all"
+    "trailingComma": "all",
+    "endOfLine": "lf"
   },
   "boundation": {
     "maintainedNodeVersions": true,

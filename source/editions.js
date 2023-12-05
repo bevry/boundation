@@ -23,10 +23,10 @@ import {
 	unjoin,
 } from './util.js'
 import {
-	allTypescriptTargets,
+	allTypescriptEcmascriptTargets,
 	languageNames,
 	defaultBrowserTarget,
-	defaultCoffeeTarget,
+	defaultCoffeeEcmascriptTarget,
 } from './data.js'
 import { spawn, exec, unlinkIfContains } from './fs.js'
 
@@ -376,7 +376,7 @@ export async function generateEditions(state) {
 					browser: addExtension(answers.browserEntry, `json`),
 					test: addExtension(answers.testEntry, `js`),
 					bin: addExtension(answers.binEntry, `js`),
-					tags: ['source', 'json'],
+					tags: ['source', 'json', 'es5'],
 					engines: {
 						node: true,
 						browsers: answers.browsersTargeted && !answers.compilerBrowser,
@@ -419,8 +419,8 @@ export async function generateEditions(state) {
 
 		// add coffeescript edition
 		if (answers.compilerNode === 'coffeescript') {
-			const syntax = defaultCoffeeTarget.toLowerCase()
-			const directory = `edition-${syntax}`
+			const esVersionTargetLower = defaultCoffeeEcmascriptTarget.toLowerCase()
+			const directory = `edition-${esVersionTargetLower}`
 			editions.set(
 				'coffeescript',
 				new Edition({
@@ -431,7 +431,7 @@ export async function generateEditions(state) {
 					browser: addExtension(answers.browserEntry, `js`),
 					test: addExtension(answers.testEntry, `js`),
 					bin: addExtension(answers.binEntry, `js`),
-					tags: ['compiled', 'javascript', syntax, 'require'],
+					tags: ['compiled', 'javascript', esVersionTargetLower, 'require'],
 					engines: {
 						node: true,
 						browsers: answers.browsersTargeted,
@@ -439,9 +439,8 @@ export async function generateEditions(state) {
 				}),
 			)
 		}
-
 		// add edition for each babel/typescript target
-		if (
+		else if (
 			answers.compilerNode === 'babel' ||
 			answers.compilerNode === 'typescript'
 		) {
@@ -463,6 +462,14 @@ export async function generateEditions(state) {
 					.reverse() // reverse modifies the actual array, hence need for slice
 				if (answers.compilerNode === 'babel') {
 					for (const nodeVersionTarget of nodeVersionsTargets) {
+						// fetch es version which is essential for accurate prettier configuration for node v6 which is es5
+						const esVersionTargetLower = (
+							await fetchAllCompatibleESVersionsForNodeVersions([
+								nodeVersionTarget,
+							])
+						)
+							.reverse()[0]
+							.toLowerCase()
 						const directory =
 							`edition-node-${nodeVersionTarget}` +
 							(targetModule === 'import' ? '-esm' : '')
@@ -476,7 +483,12 @@ export async function generateEditions(state) {
 								browser: addExtension(answers.browserEntry, `js`),
 								test: addExtension(answers.testEntry, `js`),
 								bin: addExtension(answers.binEntry, `js`),
-								tags: ['compiled', 'javascript', targetModule],
+								tags: [
+									'compiled',
+									'javascript',
+									esVersionTargetLower,
+									targetModule,
+								],
 								targets: {
 									node: nodeVersionTarget,
 								},
@@ -492,7 +504,7 @@ export async function generateEditions(state) {
 					for (const nodeVersionTarget of nodeVersionsTargets) {
 						// fetch the latest es version for the node.js version target that typescript supports
 						const esVersionTarget = intersect(
-							allTypescriptTargets,
+							allTypescriptEcmascriptTargets,
 							await fetchAllCompatibleESVersionsForNodeVersions([
 								nodeVersionTarget,
 							]),
