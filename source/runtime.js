@@ -534,6 +534,7 @@ export async function updateRuntime(state) {
 			semi: false,
 			singleQuote: true,
 			trailingComma: answers.keywords.has('es5') ? 'es5' : 'all',
+			endOfLine: 'lf',
 		}
 		state.scripts['our:verify:eslint'] = [
 			'eslint',

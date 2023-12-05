@@ -1,5 +1,9 @@
 # History
 
+## v1.88.2 2023 December 5
+
+-   configure prettier to use lf line endings, to prevent complications on Windows
+
 ## v1.88.1 2023 December 4
 
 -   error on unknown configuration properties
