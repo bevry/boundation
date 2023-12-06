@@ -29,6 +29,7 @@ import {
 	defaultCoffeeEcmascriptTarget,
 } from './data.js'
 import { spawn, exec, unlinkIfContains } from './fs.js'
+import state from './state.js'
 
 async function writeLoader({
 	entry = 'index',
@@ -125,6 +126,52 @@ async function writeEntry({
 // Helpers
 class Edition {
 	constructor(opts) {
+		Object.defineProperty(this, 'description', {
+			enumerable: true,
+			get() {
+				// ensure description exists
+				const edition = this
+				const browserSupport = edition.engines && edition.engines.browsers
+				const nodeSupport = edition.engines && edition.engines.node
+				const esSupport = edition.targets && edition.targets.es
+				const description = [
+					languageNames[state.answers.language] || state.answers.language,
+					edition.directory === state.answers.sourceDirectory
+						? 'source code'
+						: 'compiled',
+				]
+				if (esSupport && typeof esSupport === 'string') {
+					// what the typescript compiler targets
+					description.push(`against ${esSupport}`)
+				}
+				if (browserSupport) {
+					description.push(`for web browsers`)
+					if (
+						typeof browserSupport === 'string' &&
+						browserSupport !== 'defaults'
+					) {
+						description.push(`[${browserSupport}]`)
+					}
+				}
+				if (nodeSupport) {
+					description.push(browserSupport ? 'and' : 'for', `Node.js`)
+					if (typeof nodeSupport === 'string') {
+						// typescript compiler will be true, as typescript doesn't compile to specific node versions
+						description.push(`${nodeSupport}`)
+					}
+				}
+				if (has(edition.tags, 'types')) {
+					description.push('Types')
+				}
+				if (has(edition.tags, 'require')) {
+					description.push('with Require for modules')
+				} else if (has(edition.tags, 'import')) {
+					description.push('with Import for modules')
+				}
+				return description.join(' ')
+			},
+		})
+
 		Object.defineProperty(this, 'targets', {
 			enumerable: false,
 			writable: true,
@@ -273,7 +320,6 @@ export async function generateEditions(state) {
 		delete packageData.main
 		state.editions = [
 			new Edition({
-				description: 'source',
 				directory: '.',
 				tags: [
 					'source',
@@ -369,7 +415,6 @@ export async function generateEditions(state) {
 			editions.set(
 				'source',
 				new Edition({
-					description: 'JSON',
 					directory: answers.sourceDirectory,
 					index: addExtension(answers.indexEntry, `json`),
 					node: addExtension(answers.nodeEntry, `json`),
@@ -406,7 +451,6 @@ export async function generateEditions(state) {
 					],
 					targets: {
 						es: defaultBrowserTarget,
-						esmodules: answers.sourceModule,
 						browsers: answers.browsersTargeted,
 					},
 					engines: {
@@ -616,12 +660,6 @@ export function updateEditionFields(state) {
 
 	// autogenerate various fields
 	editions.forEach(function (edition) {
-		const browserVersion =
-			(edition.targets && edition.targets.browsers) ||
-			(edition.engines && edition.engines.browsers)
-		const nodeVersion =
-			(edition.targets && edition.targets.node) ||
-			(edition.engines && edition.engines.node)
 		const compileScriptName = `our:compile:${edition.directory}`
 
 		// add compilation details
@@ -728,39 +766,7 @@ export function updateEditionFields(state) {
 				` && printf '%s' '{"type": "${packageType}"}' > ${edition.directory}/package.json`
 		}
 
-		// ensure description exists
-		const description = [
-			languageNames[answers.language] || answers.language,
-			edition.directory === answers.sourceDirectory
-				? 'source code'
-				: 'compiled',
-		]
-		if (edition.targets && edition.targets.es) {
-			// what the typescript compiler targets
-			description.push(`against ${edition.targets.es}`)
-		}
-		if (browserVersion) {
-			description.push(`for web browsers`)
-			if (typeof browserVersion === 'string' && browserVersion !== 'defaults') {
-				description.push(`[${browserVersion}]`)
-			}
-		}
-		if (nodeVersion) {
-			description.push(browserVersion ? 'and' : 'for', `Node.js`)
-			if (typeof nodeVersion === 'string') {
-				// typescript compiler will be true, as typescript doesn't compile to specific node versions
-				description.push(`${nodeVersion}`)
-			}
-		}
-		if (has(edition.tags, 'types')) {
-			description.push('Types')
-		}
-		if (has(edition.tags, 'require')) {
-			description.push('with Require for modules')
-		} else if (has(edition.tags, 'import')) {
-			description.push('with Import for modules')
-		}
-		edition.description = description.join(' ')
+		// note the compiler command
 		edition.compileCommand = [answers.packageManager, 'run', compileScriptName]
 	})
 }

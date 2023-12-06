@@ -1,5 +1,10 @@
 # History
 
+## v1.88.4 2023 December 6
+
+-   fix descriptions of editions not including the full engines
+-   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry. me) using [boundation](https://github.com/bevry/boundation)
+
 ## v1.88.3 2023 December 5
 
 -   fix non-typescript projects that target Node.js v4 and v6 from failing due to bad prettier configuration
