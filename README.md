@@ -119,11 +119,11 @@ This package is published with the following editions:
 
 #### Authors
 
--   [Benjamin Lupton](https://balupton.com)
+-   [Benjamin Lupton](https://balupton.com) — Accelerating collaborative wisdom.
 
 #### Maintainers
 
--   [Benjamin Lupton](https://github.com/balupton)
+-   [Benjamin Lupton](https://github.com/balupton) — Accelerating collaborative wisdom.
 
 #### Contributors
 
@@ -140,15 +140,32 @@ This package is published with the following editions:
 <span class="badge-crypto"><a href="https://bevry.me/crypto" title="Donate to this project using Cryptocurrency"><img src="https://img.shields.io/badge/crypto-donate-yellow.svg" alt="crypto donate button" /></a></span>
 <span class="badge-paypal"><a href="https://bevry.me/paypal" title="Donate to this project using Paypal"><img src="https://img.shields.io/badge/paypal-donate-yellow.svg" alt="PayPal donate button" /></a></span>
 
+#### Sponsors
+
+-   [Andrew Nesbitt](https://nesbitt.io) — Software engineer and researcher
+-   [Balsa](https://balsa.com) — We're Balsa, and we're building tools for builders.
+-   [Codecov](https://codecov.io/) — Empower developers with tools to improve code quality and testing.
+-   [Poonacha Medappa](https://poonachamedappa.com)
+-   [Rob Morris](https://github.com/Rob-Morris)
+-   [Sentry](https://sentry.io) — Real-time crash reporting for your web apps, mobile apps, and games.
+-   [Syntax](https://syntax.fm) — Syntax Podcast
+
 #### Donors
 
+-   [Andrew Nesbitt](https://nesbitt.io)
+-   [Balsa](https://balsa.com)
 -   [Chad](https://opencollective.com/chad8)
+-   [Codecov](https://codecov.io/)
 -   [entroniq](https://gitlab.com/entroniq)
 -   [Jean-Luc Geering](https://github.com/jlgeering)
--   [mikeumus](https://bevry.me)
--   [serviejs](https://github.com/serviejs)
+-   [Michael Duane Mooring](https://mdm.cc)
+-   [Mohammed Shah](https://github.com/smashah)
+-   [Poonacha Medappa](https://poonachamedappa.com)
+-   [Rob Morris](https://github.com/Rob-Morris)
+-   [Sentry](https://sentry.io)
+-   [ServieJS](https://github.com/serviejs)
 -   [Skunk Team](https://skunk.team)
--   [smashah](https://github.com/smashah)
+-   [Syntax](https://syntax.fm)
 
 <!-- /BACKERS -->
 

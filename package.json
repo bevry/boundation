@@ -1,6 +1,6 @@
 {
   "name": "boundation",
-  "version": "1.89.1",
+  "version": "1.90.0",
   "license": "Artistic-2.0",
   "description": "Automatic scaffolding and upgrading of your JavaScript ecosystem projects using Bevry's best practices",
   "homepage": "https://github.com/bevry/boundation",
@@ -66,22 +66,38 @@
   },
   "author": "Benjamin Lupton <b@lupton.cc> (https://balupton.com) (https://github.com/balupton)",
   "authors": [
-    "Benjamin Lupton <b@lupton.cc> (https://balupton.com) (https://github.com/balupton)"
+    "Benjamin Lupton <b@lupton.cc> (https://balupton.com) (https://github.com/balupton): Accelerating collaborative wisdom."
   ],
   "maintainers": [
-    "Benjamin Lupton <b@lupton.cc> (https://balupton.com) (https://github.com/balupton)"
+    "Benjamin Lupton <b@lupton.cc> (https://balupton.com) (https://github.com/balupton): Accelerating collaborative wisdom."
   ],
   "contributors": [
     "Benjamin Lupton <b@lupton.cc> (https://balupton.com) (https://github.com/balupton)"
   ],
+  "sponsors": [
+    "Andrew Nesbitt (https://nesbitt.io) (https://github.com/andrew): Software engineer and researcher",
+    "Balsa <hello@balsa.com> (https://balsa.com) (https://github.com/balsa): We're Balsa, and we're building tools for builders.",
+    "Codecov <hello-codecov@sentry.io> (https://codecov.io/) (https://github.com/codecov): Empower developers with tools to improve code quality and testing.",
+    "Poonacha Medappa (https://poonachamedappa.com) (https://github.com/km-Poonacha)",
+    "Rob Morris <rob@prismatik.com.au> (https://github.com/Rob-Morris)",
+    "Sentry (https://sentry.io) (https://github.com/getsentry): Real-time crash reporting for your web apps, mobile apps, and games.",
+    "Syntax <scott@syntax.fm> (https://syntax.fm) (https://github.com/syntaxfm): Syntax Podcast"
+  ],
   "donors": [
+    "Andrew Nesbitt (https://nesbitt.io) (https://github.com/andrew)",
+    "Balsa <hello@balsa.com> (https://balsa.com) (https://github.com/balsa)",
     "Chad (https://opencollective.com/chad8)",
+    "Codecov <hello-codecov@sentry.io> (https://codecov.io/) (https://github.com/codecov)",
     "entroniq (https://gitlab.com/entroniq) (https://thanks.dev/d/gl/entroniq)",
     "Jean-Luc Geering (https://github.com/jlgeering) (https://opencollective.com/jlgeering) (https://twitter.com/jlgeering)",
-    "mikeumus (https://bevry.me) (https://github.com/mikeumus) (https://opencollective.com/mikeumus) (https://twitter.com/mikeumus)",
-    "serviejs (https://github.com/serviejs) (https://thanks.dev/d/gh/serviejs)",
+    "Michael Duane Mooring (https://mdm.cc) (https://github.com/mikeumus) (https://opencollective.com/mikeumus) (https://twitter.com/mikeumus)",
+    "Mohammed Shah <shah@idk.uno> (https://github.com/smashah) (https://thanks.dev/d/gh/smashah) (https://twitter.com/smashah)",
+    "Poonacha Medappa (https://poonachamedappa.com) (https://github.com/km-Poonacha)",
+    "Rob Morris <rob@prismatik.com.au> (https://github.com/Rob-Morris)",
+    "Sentry (https://sentry.io) (https://github.com/getsentry)",
+    "ServieJS (https://github.com/serviejs) (https://thanks.dev/d/gh/serviejs)",
     "Skunk Team (https://skunk.team) (https://github.com/skunkteam)",
-    "smashah (https://github.com/smashah) (https://thanks.dev/d/gh/smashah)"
+    "Syntax <scott@syntax.fm> (https://syntax.fm) (https://github.com/syntaxfm)"
   ],
   "engines": {
     "node": ">=18"
@@ -111,40 +127,40 @@
     }
   },
   "dependencies": {
-    "@bevry/ansi": "^6.7.0",
+    "@bevry/ansi": "^6.8.0",
     "@bevry/ecmascript-versions": "^4.6.0",
-    "@bevry/fs-accessible": "^2.3.0",
-    "@bevry/fs-read": "^1.4.0",
-    "@bevry/fs-readable": "^2.3.0",
-    "@bevry/fs-remove": "^1.4.0",
-    "@bevry/fs-unlink": "^1.4.0",
-    "@bevry/fs-write": "^1.4.0",
+    "@bevry/fs-accessible": "^2.4.0",
+    "@bevry/fs-read": "^1.5.0",
+    "@bevry/fs-readable": "^2.4.0",
+    "@bevry/fs-remove": "^1.5.0",
+    "@bevry/fs-unlink": "^1.5.0",
+    "@bevry/fs-write": "^1.5.0",
     "@bevry/github-orgs": "^3.4.0",
     "@bevry/list": "^2.3.0",
     "@bevry/nodejs-ecmascript-compatibility": "^5.6.0",
     "@bevry/nodejs-versions": "^3.3.0",
     "@bevry/testen": "^9.2.0",
-    "arrange-package-json": "^5.0.2",
-    "arrangekeys": "^6.5.0",
-    "errlop": "^8.2.0",
+    "arrange-package-json": "^5.1.0",
+    "arrangekeys": "^6.6.0",
+    "errlop": "^8.3.0",
     "fellow": "^7.0.4",
     "filedirname": "^3.2.0",
     "get-cli-arg": "^8.4.0",
     "inquirer": "^9.2.12",
     "js-yaml": "^4.1.0",
-    "safeps": "^11.4.0",
-    "sortobject": "^5.4.0",
-    "typechecker": "^9.2.0",
-    "version-compare": "^3.8.0",
-    "version-range": "^4.11.0"
+    "safeps": "^11.5.0",
+    "sortobject": "^5.5.0",
+    "typechecker": "^9.3.0",
+    "version-compare": "^3.9.0",
+    "version-range": "^4.12.0"
   },
   "devDependencies": {
-    "assert-helpers": "^11.10.0",
+    "assert-helpers": "^11.11.0",
     "eslint": "^8.56.0",
     "eslint-config-bevry": "^5.3.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.1.2",
-    "kava": "^7.5.0",
+    "kava": "^7.6.0",
     "prettier": "^3.1.1",
     "projectz": "^4.0.0",
     "valid-directory": "^4.7.0"
