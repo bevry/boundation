@@ -1,9 +1,17 @@
 {
   "name": "boundation",
-  "version": "1.88.4",
+  "version": "1.89.0",
+  "license": "Artistic-2.0",
   "description": "Automatic scaffolding and upgrading of your JavaScript ecosystem projects using Bevry's best practices",
   "homepage": "https://github.com/bevry/boundation",
-  "license": "Artistic-2.0",
+  "funding": "https://bevry.me/fund",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bevry/boundation.git"
+  },
+  "bugs": {
+    "url": "https://github.com/bevry/boundation/issues"
+  },
   "keywords": [
     ".travis.yml",
     "esnext",
@@ -56,21 +64,25 @@
       "npmPackageName": "boundation"
     }
   },
-  "funding": "https://bevry.me/fund",
-  "author": "2017+ Bevry <us@bevry.me> (http://bevry.me)",
+  "author": "Benjamin Lupton <b@lupton.cc> (https://balupton.com) (https://github.com/balupton)",
+  "authors": [
+    "Benjamin Lupton <b@lupton.cc> (https://balupton.com) (https://github.com/balupton)"
+  ],
   "maintainers": [
-    "Benjamin Lupton <b@lupton.cc> (https://github.com/balupton)"
+    "Benjamin Lupton <b@lupton.cc> (https://balupton.com) (https://github.com/balupton)"
   ],
   "contributors": [
-    "Benjamin Lupton <b@lupton.cc> (https://github.com/balupton)"
+    "Benjamin Lupton <b@lupton.cc> (https://balupton.com) (https://github.com/balupton)"
   ],
-  "bugs": {
-    "url": "https://github.com/bevry/boundation/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/bevry/boundation.git"
-  },
+  "donors": [
+    "Chad (https://opencollective.com/chad8)",
+    "entroniq (https://gitlab.com/entroniq) (https://thanks.dev/d/gl/entroniq)",
+    "Jean-Luc Geering (https://github.com/jlgeering) (https://opencollective.com/jlgeering) (https://twitter.com/jlgeering)",
+    "mikeumus (https://bevry.me) (https://github.com/mikeumus) (https://opencollective.com/mikeumus) (https://twitter.com/mikeumus)",
+    "serviejs (https://github.com/serviejs) (https://thanks.dev/d/gh/serviejs)",
+    "Skunk Team (https://skunk.team) (https://github.com/skunkteam)",
+    "smashah (https://github.com/smashah) (https://thanks.dev/d/gh/smashah)"
+  ],
   "engines": {
     "node": ">=18"
   },
@@ -112,9 +124,10 @@
     "@bevry/nodejs-ecmascript-compatibility": "^5.6.0",
     "@bevry/nodejs-versions": "^3.3.0",
     "@bevry/testen": "^9.2.0",
-    "arrange-package-json": "^4.6.0",
+    "arrange-package-json": "^5.0.2",
     "arrangekeys": "^6.5.0",
     "errlop": "^8.2.0",
+    "fellow": "^7.0.4",
     "filedirname": "^3.2.0",
     "get-cli-arg": "^8.4.0",
     "inquirer": "^9.2.12",
@@ -126,15 +139,14 @@
     "version-range": "^4.11.0"
   },
   "devDependencies": {
-    "@bevry/update-contributors": "^1.23.0",
-    "assert-helpers": "^11.9.0",
-    "eslint": "^8.55.0",
+    "assert-helpers": "^11.10.0",
+    "eslint": "^8.56.0",
     "eslint-config-bevry": "^5.3.0",
     "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-prettier": "^5.0.1",
+    "eslint-plugin-prettier": "^5.1.2",
     "kava": "^7.5.0",
-    "prettier": "^3.1.0",
-    "projectz": "^3.4.0",
+    "prettier": "^3.1.1",
+    "projectz": "^4.0.0",
     "valid-directory": "^4.7.0"
   },
   "scripts": {
@@ -142,9 +154,8 @@
     "our:clean": "rm -rf ./docs ./edition* ./es2015 ./es5 ./out ./.next",
     "our:compile": "printf '%s\n' 'no need for this project'",
     "our:deploy": "printf '%s\n' 'no need for this project'",
-    "our:meta": "npm run our:meta:contributors && npm run our:meta:projectz",
-    "our:meta:contributors": "update-contributors",
-    "our:meta:projectz": "projectz compile",
+    "our:meta": "npm run our:meta:projectz",
+    "our:meta:projectz": "projectz",
     "our:release": "npm run our:release:prepare && npm run our:release:check-changelog && npm run our:release:check-dirty && npm run our:release:tag && npm run our:release:push",
     "our:release:check-changelog": "cat ./HISTORY.md | grep \"v$npm_package_version\" || (printf '%s\n' \"add a changelog entry for v$npm_package_version\" && exit -1)",
     "our:release:check-dirty": "git diff --exit-code",
@@ -154,11 +165,15 @@
     "our:setup": "npm run our:setup:install",
     "our:setup:install": "npm install",
     "our:test": "npm run our:verify && npm test",
-    "our:verify": "npm run our:verify:directory && npm run our:verify:eslint && npm run our:verify:prettier",
-    "our:verify:directory": "valid-directory",
+    "our:verify": "npm run our:verify:eslint && npm run our:verify:prettier",
     "our:verify:eslint": "eslint --fix --ignore-pattern '**/*.d.ts' --ignore-pattern '**/vendor/' --ignore-pattern '**/node_modules/' --ext .mjs,.js,.jsx,.ts,.tsx ./source",
     "our:verify:prettier": "prettier --write .",
     "test": "node ./source/test.js"
+  },
+  "boundation": {
+    "maintainedNodeVersions": true,
+    "expandNodeVersions": false,
+    "compileNode": false
   },
   "eslintConfig": {
     "extends": [
@@ -176,10 +191,5 @@
     "singleQuote": true,
     "trailingComma": "all",
     "endOfLine": "lf"
-  },
-  "boundation": {
-    "maintainedNodeVersions": true,
-    "expandNodeVersions": false,
-    "compileNode": false
   }
 }

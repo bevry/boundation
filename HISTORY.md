@@ -1,5 +1,17 @@
 # History
 
+## v1.89.0 2023 December 27
+
+-   Updated for `projectz` v4.0.0
+-   Fixed hidden configuration property `githubActionTestEnv` not being accepted (regression since v1.88.1)
+-   Updated `bevry-actions/npm`
+-   Improved custom bin handling, by leaving it up to `package.json` configuration rather than complex CSV answer handling as before
+-   For bevry projects, transfer the defunct `Bevry Pty Ltd` copyrights to @balupton
+-   No need for copyright years if there is only one author
+-   For bevry projects, add @skunkteam as a historical donor
+-   Remove deprecated `@bevry/github-*` dependencies (not all are deprecated, only some)
+-   Thank you to the sponsors: [Andrew Nesbitt](https://nesbitt.io), [Balsa](https://balsa.com), [Codecov](https://codecov.io/), [Poonacha Medappa](https://poonachamedappa.com), [Rob Morris](https://github.com/Rob-Morris), [Sentry](https://sentry.io), [Syntax](https://syntax.fm)
+
 ## v1.88.4 2023 December 6
 
 -   fix descriptions of editions not including the full engines

@@ -185,10 +185,10 @@ export async function updateBaseFiles({ answers, packageData }) {
 			answers.deploymentStrategy === 'bevry'
 				? `https://cdn.bevry.me/${trimOrgName(answers.name)}/${
 						answers.defaultBranch
-				  }/`
+					}/`
 				: `http://${answers.defaultBranch}.${trimOrgName(answers.name)}.${
 						answers.githubOrganisation
-				  }.surge.sh/`
+					}.surge.sh/`
 		const newDocumentationSuffix = `docs/${
 			answers.deploymentStrategy === 'bevry' ? 'index.html' : ''
 		}` // don't use globals.html, it may not always be present

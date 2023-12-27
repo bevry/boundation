@@ -1,5 +1,6 @@
 // external
 import * as typeChecker from 'typechecker'
+import Fellow from 'fellow'
 
 /** Delete the keys of the object which have empty values */
 export function trimEmpty(obj, log = false, parents = []) {
@@ -69,22 +70,6 @@ export function isEmpty(value) {
 export function set(obj, key, value) {
 	if (isEmpty(value)) delete obj[key]
 	else obj[key] = value
-}
-
-// return the bin entry as a string (if single bin entry), or as an object of strings that point to the same bin entry (if multiple bin names)
-export function binField(answers, binEntry) {
-	if (answers.binExecutable) {
-		if (answers.binExecutable === answers.name) {
-			return binEntry
-		} else {
-			const result = {}
-			for (const executable of answers.binExecutable.split(/,\s*/)) {
-				result[executable] = binEntry
-			}
-			return result
-		}
-	}
-	return null
 }
 
 /**
@@ -161,6 +146,22 @@ export function fixTsc(editionDirectory, sourceDirectory) {
 		`)`, // end move
 		')', // end fix
 	]
+}
+
+export function fixBevry(input) {
+	const people = input
+		.split(', ')
+		.map((person) =>
+			person
+				.replace('Bevry Pty Ltd', 'Benjamin Lupton')
+				.replace('<us@bevry.me>', '<b@lupton.cc>')
+				.replace('://bevry.me', '://balupton.com'),
+		)
+		.join(', ')
+	const fellows = Fellow.add(people)
+	if (fellows.length === 1) {
+		return fellows[0].toString({ displayYears: false }) // only one person, no need for the years
+	}
 }
 
 export function fixBalupton(person) {

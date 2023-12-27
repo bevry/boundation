@@ -11,6 +11,12 @@ import {
 
 export const pwd = cwd()
 
+export const hiddenConfigurationProperties = [
+	'comment',
+	'versions',
+	'githubActionTestEnv',
+]
+
 // fill this with a map of dependency package names to versions that are busted
 // so that if they are necessary, a previous version is used instead
 export const bustedVersions = {}

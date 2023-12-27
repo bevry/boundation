@@ -13,6 +13,7 @@ import write from '@bevry/fs-write'
 import {
 	defaultDeploy,
 	ensureScript,
+	fixBevry,
 	fixBalupton,
 	repoToOrganisation,
 	repoToWebsite,
@@ -259,25 +260,33 @@ export function getPackageTestEntry(packageData) {
 	return null
 }
 
-export function getPackageBinEntry(packageData) {
+// return the bin entry as a string (if single bin entry), or as an object of strings that point to the same bin entry (if multiple bin names)
+export function newPackageBinEntry(packageData, binEntry) {
+	if (!binEntry) return null
+	if (typeof packageData.bin === 'string') {
+		return binEntry
+	} else if (typeof packageData.bin === 'object') {
+		const result = {}
+		for (const key of Object.keys(packageData.bin)) {
+			result[key] = binEntry
+		}
+		return result
+	} else {
+		// not yet created, so add
+		return binEntry
+	}
+}
+
+export function getPackageBinEntry(packageData, basename = true) {
 	const bin = packageData.bin
 	if (bin) {
 		const entry = typeof bin === 'string' ? bin : Object.values(bin)[0]
-		return getBasename(entry)
+		return basename ? getBasename(entry) : entry
 	}
 	return null
 }
 
-export function getPackageBinExecutable(packageData) {
-	const bin = packageData.bin
-	if (bin) {
-		if (typeof bin === 'string') return null
-		return Object.keys(bin).join(', ')
-	}
-	return null
-}
-
-export async function getPackageIndexEntry(packageData) {
+export async function getPackageIndexEntry(packageData, basename = true) {
 	if (packageData && isPackageDocPadPlugin(packageData)) {
 		return 'index'
 	}
@@ -634,9 +643,26 @@ export async function updatePackageData(state) {
 		}
 	}
 
+	// correct author
+	packageData.author = fixBevry(packageData.author)
+
 	// correct balupton
 	packageData.maintainers = packageData.maintainers.map(fixBalupton)
 	packageData.contributors = packageData.contributors.map(fixBalupton)
+
+	// add skunk to donors
+	if (isBevryOrganisation(answers.githubOrganisation)) {
+		if (!packageData.donors) {
+			packageData.donors = []
+		}
+		if (
+			!packageData.donors.join(' ').includes('https://github.com/skunkteam')
+		) {
+			packageData.donors.push(
+				'Skunk Team (https://skunk.team) (https://github.com/skunkteam)',
+			)
+		}
+	}
 
 	// remove old fields
 	delete packageData.nakeConfiguration

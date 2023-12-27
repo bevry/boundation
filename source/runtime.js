@@ -17,7 +17,7 @@ import {
 } from './data.js'
 import { parse, exec, spawn } from './fs.js'
 import { getPreviousVersion, getDuplicateDeps, trimEmpty } from './util.js'
-import { readPackage, writePackage } from './package.js'
+import { readPackage, writePackage, getPackageBinEntry } from './package.js'
 import {
 	scaffoldEditions,
 	updateEditionEntries,
@@ -230,19 +230,26 @@ export async function updateRuntime(state) {
 
 	/** @type {Object.<string, boolean | 'dev'>} */
 	const packages = {
-		projectz: 'dev',
+		projectz: false,
+		'make-deno-edition': false,
+		'valid-directory': false,
+		'valid-module': false,
+		'@bevry/github-commit': false, // deprecated, use @bevry/github-api
+		'@bevry/github-contributors': false, // deprecated, use @bevry/github-api
+		'@bevry/github-members': false, // deprecated, use @bevry/github-api
+		'@bevry/github-repos': false, // deprecated, use @bevry/github-api
+		'@bevry/update-contributors': false, // deprecated, use projectz
 		'assert-helpers': false,
-		joe: false,
 		kava: false,
-		'joe-examples': false,
-		'joe-reporter-console': false,
-		'joe-reporter-list': false,
+		joe: false, // deprecated, use kava
+		'joe-examples': false, // deprecated, use kava
+		'joe-reporter-console': false, // deprecated, use kava
+		'joe-reporter-list': false, // deprecated, use kava
 		editions: state.useEditionsAutoloader,
 		surge: false,
 		vercel: false,
 		now: false,
 		next: false,
-		'@zeit/next-typescript': false,
 		'@zeit/next-mdx': false,
 		'next-server': false,
 		'@types/next': false,
@@ -261,7 +268,6 @@ export async function updateRuntime(state) {
 		'@babel/plugin-proposal-optional-chaining': false,
 		'babel-plugin-add-module-exports': false,
 		typescript: false,
-		'make-deno-edition': false,
 		'typescript-eslint-parser': false,
 		'@typescript-eslint/parser': false,
 		prettier: false,
@@ -275,8 +281,7 @@ export async function updateRuntime(state) {
 		'eslint-plugin-react': false,
 		'eslint-plugin-typescript': false,
 		'@typescript-eslint/eslint-plugin': false,
-		'valid-directory': false,
-		'valid-module': false,
+		'@zeit/next-typescript': false,
 		documentation: false,
 		jsdoc: false,
 		minami: false,
@@ -295,11 +300,11 @@ export async function updateRuntime(state) {
 			packageData.devDependencies['coffee-script']
 				? 'dev'
 				: packageData.dependencies.coffeescript ||
-				    packageData.dependencies['coffee-script']
-				  ? true
-				  : answers.languages === 'coffeescript'
-				    ? 'dev'
-				    : false,
+					  packageData.dependencies['coffee-script']
+					? true
+					: answers.languages === 'coffeescript'
+						? 'dev'
+						: false,
 	}
 
 	// =================================
@@ -428,10 +433,6 @@ export async function updateRuntime(state) {
 	state.scripts = {
 		'our:setup:install': commands[answers.packageManager].install.join(' '),
 		'our:clean': 'rm -rf ./docs ./edition* ./es2015 ./es5 ./out ./.next',
-		'our:meta:projectz':
-			packageData.name === 'projectz'
-				? 'npm run our:bin -- compile'
-				: 'projectz compile',
 		'our:test': [[...run, 'our:verify'], test]
 			.map((i) => i.join(' '))
 			.join(' && '),
@@ -446,10 +447,38 @@ export async function updateRuntime(state) {
 		'our:release:push': 'git push origin && git push origin --tags',
 		'our:release': [...run, 'our:release:push'].join(' '),
 	}
+	if (answers.name === 'projectz') {
+		state.scripts['our:meta:projectz'] = 'npm run our:bin'
+	} else {
+		state.scripts['our:meta:projectz'] = 'projectz'
+		if (!packages.projectz) packages.projectz = 'dev'
+	}
+	if (answers.npm) {
+		if (answers.name === 'valid-directory') {
+			// do not valid-directory, the valid-directory package
+			// as it deliberately has invalid files in it
+			// such that it tests can detect that it works
+			// state.scripts['our:verify:directory'] = 'npm run our:bin'
+		} else {
+			packages['valid-directory'] ??= 'dev'
+			if (!packages['valid-directory']) packages['valid-directory'] = 'dev'
+		}
+		if (packageData.module) {
+			if (answers.name === 'valid-module') {
+				state.scripts['our:verify:module'] = 'npm run our:bin'
+			} else {
+				state.scripts['our:verify:module'] = 'valid-module'
+				if (!packages['valid-module']) packages['valid-module'] = 'dev'
+			}
+		}
+	}
 
 	// add bin script
 	if (packageData.bin) {
-		state.scripts['our:bin'] = `node ./${packageData.bin}`
+		state.scripts['our:bin'] = `node ./${getPackageBinEntry(
+			packageData,
+			false,
+		)}`
 	}
 
 	// add test script
@@ -762,33 +791,6 @@ export async function updateRuntime(state) {
 		packages.kava = packages['assert-helpers'] = 'dev'
 	}
 
-	// package
-	if (answers.npm) {
-		if (answers.name !== '@bevry/update-contributors') {
-			packages['@bevry/update-contributors'] = 'dev'
-			state.scripts['our:meta:contributors'] = 'update-contributors'
-		} else {
-			state.scripts['our:meta:directory'] = 'npm run our:bin'
-		}
-		if (answers.name !== 'valid-directory') {
-			packages['valid-directory'] = 'dev'
-			state.scripts['our:verify:directory'] = 'valid-directory'
-		} else {
-			// do not valid-directory, the valid-directory package
-			// as it deliberately has invalid files in it
-			// such that it tests can detect that it works
-			// state.scripts['our:verify:directory'] = 'npm run our:bin'
-		}
-		if (packageData.module) {
-			if (answers.name !== 'valid-module') {
-				packages['valid-module'] = 'dev'
-				state.scripts['our:verify:module'] = 'valid-module'
-			} else {
-				state.scripts['our:verify:module'] = 'npm run our:bin'
-			}
-		}
-	}
-
 	// keywords
 	toggle(
 		answers.keywords,
@@ -873,7 +875,7 @@ export async function updateRuntime(state) {
 		// https://github.com/Microsoft/TypeScript/issues/29056#issuecomment-448386794
 		// Only enable isolatedModules on TypeScript projects, as for JavaScript projects it will be incompatible with 'use strict'
 		// resolveJsonModule seems to cause too many issues, so is disabled unless needed
-		let tsconfig
+		let tsconfig = {}
 		if (await isAccessible(answers.tsconfig)) {
 			try {
 				tsconfig = (await parse(answers.tsconfig)) || {}
@@ -887,6 +889,7 @@ export async function updateRuntime(state) {
 		if (tsconfig.compilerOptions == null) tsconfig.compilerOptions = {}
 		if (tsconfig.compilerOptions.lib == null) tsconfig.compilerOptions.lib = []
 		if (tsconfig.exclude == null) tsconfig.exclude = []
+		if (tsconfig.include == null) tsconfig.include = []
 
 		// store lib
 		const lib = new Set()

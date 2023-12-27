@@ -4,6 +4,9 @@ import * as ansi from '@bevry/ansi'
 import Errlop from 'errlop'
 import getArgValue from 'get-cli-arg'
 
+// local
+import { hiddenConfigurationProperties } from './data.js'
+
 // vars
 const skipAllArg = '--auto'
 const skipAll = process.argv.includes(skipAllArg)
@@ -130,8 +133,8 @@ export default async function getAnswers(questions, user = {}) {
 								question.type === 'password'
 									? '[hidden]'
 									: typeof value === 'string'
-									  ? value
-									  : JSON.stringify(value),
+										? value
+										: JSON.stringify(value),
 							),
 						),
 					]
@@ -151,8 +154,8 @@ export default async function getAnswers(questions, user = {}) {
 
 		// check if we had any unknown properties
 		const unknownProperties = new Set(Object.keys(user))
-		unknownProperties.delete('comment')
-		unknownProperties.delete('versions')
+		for (const hidden of hiddenConfigurationProperties)
+			unknownProperties.delete(hidden)
 		if (unknownProperties.size) {
 			console.log(user)
 			throw new Error(

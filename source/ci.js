@@ -43,7 +43,7 @@ function generateGitHubActionsJSON(state) {
 		actionsOperatingSystemsExperimental.length
 			? `contains('${actionsOperatingSystemsExperimental.join(
 					' ',
-			  )}', matrix.os)`
+				)}', matrix.os)`
 			: '',
 	]
 		.filter((i) => i)
@@ -98,7 +98,7 @@ function generateGitHubActionsJSON(state) {
 	const npmPublishSteps = [
 		{
 			name: 'publish to npm',
-			uses: 'bevry-actions/npm@v1.1.2',
+			uses: 'bevry-actions/npm@v1.1.3',
 			with: {
 				npmAuthToken: '${{ secrets.NPM_AUTH_TOKEN }}',
 				npmBranchTag: answers.npm ? ':next' : null,
@@ -208,7 +208,7 @@ function generateGitHubActionsJSON(state) {
 							...prePublishSteps,
 							...publishSteps,
 						],
-				  }
+					}
 				: null,
 			automerge: {
 				permissions: {

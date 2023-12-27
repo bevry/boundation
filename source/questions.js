@@ -31,7 +31,6 @@ import {
 import {
 	getPackageAuthor,
 	getPackageBinEntry,
-	getPackageBinExecutable,
 	getPackageBrowserEntry,
 	getPackageDescription,
 	getPackageFlowtypeDependency,
@@ -443,15 +442,15 @@ export async function getQuestions(state) {
 				return language === 'typescript'
 					? ['typescript', 'babel']
 					: language === 'coffeescript'
-					  ? ['babel', 'coffeescript']
-					  : ['babel']
+						? ['babel', 'coffeescript']
+						: ['babel']
 			},
 			default({ language }) {
 				return language === 'typescript'
 					? 'typescript'
 					: language === 'coffeescript'
-					  ? 'coffeescript'
-					  : 'babel'
+						? 'coffeescript'
+						: 'babel'
 			},
 			when({ compileNode }) {
 				return compileNode
@@ -480,8 +479,8 @@ export async function getQuestions(state) {
 				return language === 'typescript'
 					? ['typescript', 'babel']
 					: language === 'coffeescript'
-					  ? ['babel', 'coffeescript']
-					  : ['babel']
+						? ['babel', 'coffeescript']
+						: ['babel']
 			},
 			default({ language }) {
 				return language === 'typescript' ? 'typescript' : 'babel'
@@ -576,7 +575,7 @@ export async function getQuestions(state) {
 		},
 		{
 			name: 'bin',
-			message: 'Will there be a binary/executable file?',
+			message: 'Will there be a bin/executable/CLI?',
 			type: 'confirm',
 			default: Boolean(getPackageBinEntry(packageData)),
 			skip({ bin }) {
@@ -588,27 +587,13 @@ export async function getQuestions(state) {
 		},
 		{
 			name: 'binEntry',
-			message: 'What is the filename of the bin entry (without extension)?',
+			message:
+				'What is the filename of the bin/executable/CLI entry (without extension)?',
 			validate: isSpecified,
 			filter: trim,
 			default: getPackageBinEntry(packageData) || 'bin',
 			skip() {
 				return getPackageBinEntry(packageData)
-			},
-			when({ bin }) {
-				return bin
-			},
-		},
-		{
-			name: 'binExecutable',
-			message: 'What is the name of the bin executable(s)?',
-			validate: isSpecified,
-			filter: trim,
-			default({ name }) {
-				return getPackageBinExecutable(packageData) || name
-			},
-			skip() {
-				return getPackageBinExecutable(packageData)
 			},
 			when({ bin }) {
 				return bin
