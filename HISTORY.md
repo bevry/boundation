@@ -1,5 +1,9 @@
 # History
 
+## v1.89.1 2023 December 27
+
+-   Fixed v1.89.0 writing an empty author field when multiple authors were present
+
 ## v1.89.0 2023 December 27
 
 -   Updated for `projectz` v4.0.0

@@ -162,6 +162,9 @@ export function fixBevry(input) {
 	if (fellows.length === 1) {
 		return fellows[0].toString({ displayYears: false }) // only one person, no need for the years
 	}
+	return fellows
+		.map((fellow) => fellow.toString({ displayYears: true }))
+		.join(', ')
 }
 
 export function fixBalupton(person) {
