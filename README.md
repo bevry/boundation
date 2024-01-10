@@ -143,6 +143,8 @@ This package is published with the following editions:
 -   [Andrew Nesbitt](https://nesbitt.io) — Software engineer and researcher
 -   [Balsa](https://balsa.com) — We're Balsa, and we're building tools for builders.
 -   [Codecov](https://codecov.io) — Empower developers with tools to improve code quality and testing.
+-   [Frontend Masters](https://FrontendMasters.com) — The training platform for web app engineering skills – from front-end to full-stack! 🚀
+-   [Mr. Henry](https://mrhenry.be)
 -   [Poonacha Medappa](https://poonachamedappa.com)
 -   [Rob Morris](https://github.com/Rob-Morris)
 -   [Sentry](https://sentry.io) — Real-time crash reporting for your web apps, mobile apps, and games.
@@ -151,7 +153,7 @@ This package is published with the following editions:
 #### Donors
 
 -   [Andrew Nesbitt](https://nesbitt.io)
--   [Ángel González](https://github.com/Aglezabad)
+-   [Ángel González](https://univunix.com)
 -   [Armen Mkrtchian](https://mogoni.dev)
 -   [Balsa](https://balsa.com)
 -   [Chad](https://opencollective.com/chad8)
@@ -159,10 +161,11 @@ This package is published with the following editions:
 -   [dr.dimitru](https://veliovgroup.com)
 -   [Elliott Ditman](https://elliottditman.com)
 -   [entroniq](https://gitlab.com/entroniq)
+-   [Frontend Masters](https://FrontendMasters.com)
 -   [GitHub](https://github.com/about)
 -   [Hunter Beast](https://cryptoquick.com)
 -   [Jean-Luc Geering](https://github.com/jlgeering)
--   [Lee Driscoll](https://github.com/leedriscoll)
+-   [Lee Driscoll](https://leedriscoll.me)
 -   [Michael Duane Mooring](https://mdm.cc)
 -   [Michael Harry Scepaniak](https://michaelscepaniak.com)
 -   [Mohammed Shah](https://github.com/smashah)
