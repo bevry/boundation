@@ -5,21 +5,32 @@ import * as pathUtil from 'node:path'
 import { is as isBevryOrganisation } from '@bevry/github-orgs'
 import { complement, has } from '@bevry/list'
 import arrangekeys from 'arrangekeys'
-import arrangePackageProperties from 'arrange-package-json'
+import arrangePackageData from 'arrange-package-json'
 import { isAccessible } from '@bevry/fs-accessible'
 import write from '@bevry/fs-write'
+import {
+	Fellow,
+	getBackers,
+	renderBackers,
+	getGitHubSlugFromPackageData,
+	getGitHubSlugFromUrl,
+	getRepositoryIssuesUrlFromGitHubSlugOrUrl,
+	getRepositoryUrlFromPackageData,
+	getRepositoryUrlFromUrlOrGitHubSlug,
+	getRepositoryWebsiteUrlFromGitHubSlugOrUrl,
+	hasCredentials,
+} from '@bevry/github-api'
+import trimEmptyKeys from 'trim-empty-keys'
 
 // local
 import {
 	defaultDeploy,
 	ensureScript,
-	fixBevry,
 	fixBalupton,
-	repoToOrganisation,
-	repoToWebsite,
-	trimEmpty,
+	fixAuthor,
+	fixAuthors,
 } from './util.js'
-import { pwd } from './data.js'
+import { pwd, pastBevrySponsors } from './data.js'
 import { status } from './log.js'
 import { echoExists, parse } from './fs.js'
 import { getVercelName } from './website.js'
@@ -31,7 +42,7 @@ const mandatoryScriptsList =
 	)
 
 // ====================================
-// Fetchers
+// Helpers
 
 export async function isNPM() {
 	const npmlock = await isAccessible(`./package-lock.json`)
@@ -49,6 +60,36 @@ export async function isYARN() {
 	const yarnlock = await isAccessible(`./yarn.lock`)
 	const yarn = yarnlock || pnp || pnpjs
 	return yarn
+}
+
+export function isGitUrl(input) {
+	return /\.git$/.test(input)
+}
+
+export function getRepoUrl(input = '') {
+	return getRepositoryUrlFromUrlOrGitHubSlug(input) || null
+}
+
+export function slugToWebsite(githubSlug = '') {
+	return getRepositoryWebsiteUrlFromGitHubSlugOrUrl(githubSlug) || null
+}
+
+export function slugToIssues(githubSlug = '') {
+	return getRepositoryIssuesUrlFromGitHubSlugOrUrl(githubSlug) || null
+}
+
+export function repoToSlug(input = '') {
+	return getGitHubSlugFromUrl(input) || null
+}
+
+export function repoToUsername(input = '') {
+	const githubSlug = getGitHubSlugFromUrl(input)
+	return (githubSlug && githubSlug.split('/')[0]) || null
+}
+
+export function repoToProject(input = '') {
+	const githubSlug = getGitHubSlugFromUrl(input)
+	return (githubSlug && githubSlug.split('/')[1]) || null
 }
 
 export function getPackageName(packageData) {
@@ -119,7 +160,7 @@ export function isPackageModule(packageData) {
 }
 
 export function getPackageRepoUrl(packageData) {
-	return (packageData.repository && packageData.repository.url) || null
+	return getRepositoryUrlFromPackageData(packageData) || null
 }
 
 export function getPackageAuthor(packageData) {
@@ -215,7 +256,7 @@ export function getPackageProperty(packageData, key) {
 }
 
 export function getPackageOrganisation(packageData) {
-	return repoToOrganisation(getPackageRepoUrl(packageData) || '') || null
+	return repoToUsername(getGitHubSlugFromPackageData(packageData)) || null
 }
 
 export function isPackageDocPadPlugin(packageData) {
@@ -286,7 +327,7 @@ export function getPackageBinEntry(packageData, basename = true) {
 	return null
 }
 
-export async function getPackageIndexEntry(packageData, basename = true) {
+export async function getPackageIndexEntry(packageData) {
 	if (packageData && isPackageDocPadPlugin(packageData)) {
 		return 'index'
 	}
@@ -401,13 +442,13 @@ export function arrangePackage(state) {
 	}
 
 	// trim empty keys
-	trimEmpty(packageData)
+	trimEmptyKeys(packageData)
 
 	// ---------------------------------
 	// Arrange
 
 	// package keys
-	packageData = arrangePackageProperties(packageData)
+	packageData = arrangePackageData(packageData)
 
 	// ---------------------------------
 	// Scripts
@@ -590,25 +631,41 @@ export async function updatePackageData(state) {
 			engines: {},
 			dependencies: {},
 			devDependencies: {},
+			scripts: {},
 		},
 		packageDataLocal || {},
 		{
 			name: answers.name,
 			author: answers.author,
 			description: answers.description,
-			homepage: repoToWebsite(answers.repoUrl),
-			bugs: {
-				url: repoToWebsite(answers.repoUrl) + '/issues',
-			},
 			repository: {
 				type: 'git',
-				url: repoToWebsite(answers.repoUrl) + '.git',
+				url: answers.repoUrl,
 			},
-			scripts: {},
 		},
 	)
 
-	// engines
+	// prepare badge removals and remove badges relating to private
+	const removeBadges = ['gratipay', 'daviddm', 'daviddmdev']
+	if (!answers.npm) removeBadges.push('npmversion', 'npmdownloads')
+
+	// homepage, issues
+	const homepage = slugToWebsite(answers.githubSlug)
+	if (homepage) packageData.homepage = homepage
+	const issues = slugToIssues(answers.githubSlug)
+	if (issues) packageData.bugs = { url: issues }
+
+	// remove old fields
+	delete packageData.nakeConfiguration
+	delete packageData.cakeConfiguration
+	delete packageData.directories
+	delete packageData.preferGlobal
+
+	// moved to vercel.json
+	delete packageData.now
+	delete packageData.vercel
+
+	// remove old docpad engines convention, replaced by peer dependency
 	delete packageData.engines.docpad
 
 	// license
@@ -623,63 +680,37 @@ export async function updatePackageData(state) {
 		packageData.private = true
 	}
 
-	// prepare contributors
-	if (!packageData.contributors) {
-		packageData.contributors = []
-	}
+	// prepare backers
+	packageData.author = fixAuthor(packageData.author)
+	packageData.authors = fixAuthors(packageData.authors || [])
+	if (!packageData.contributors) packageData.contributors = []
+	if (!packageData.maintainers) packageData.maintainers = []
+	if (!packageData.funders) packageData.funders = []
+	if (!packageData.sponsors) packageData.sponsors = []
+	if (!packageData.donors) packageData.donors = []
 
-	// add maintainer if there aren't any
-	if (!packageData.maintainers || packageData.maintainers.length === 0) {
-		if (packageData.contributors.length === 1) {
-			packageData.maintainers = [].concat(packageData.contributors)
-		} else {
-			packageData.maintainers = [
-				packageData.author
-					.split(/, +/)
-					.sort()
-					.slice(-1)[0]
-					.replace(/^[\d-+]+ +/, ''),
-			]
-		}
-	}
-
-	// correct author
-	packageData.author = fixBevry(packageData.author)
-
-	// correct balupton
+	// correct backer fields
+	if (packageData.maintainers.length === 0)
+		packageData.maintainers = [packageData.author.split(', ')[0]]
 	packageData.maintainers = packageData.maintainers.map(fixBalupton)
 	packageData.contributors = packageData.contributors.map(fixBalupton)
 
-	// add skunk to donors
-	if (isBevryOrganisation(answers.githubOrganisation)) {
-		if (!packageData.donors) {
-			packageData.donors = []
-		}
-		if (
-			!packageData.donors.join(' ').includes('https://github.com/skunkteam')
-		) {
-			packageData.donors.push(
-				'Skunk Team (https://skunk.team) (https://github.com/skunkteam)',
-			)
-		}
-	}
+	// bevry org customisations
+	if (isBevryOrganisation(answers.githubUsername)) {
+		console.log('applying bevry customisations')
 
-	// remove old fields
-	delete packageData.nakeConfiguration
-	delete packageData.cakeConfiguration
-	delete packageData.directories
-	delete packageData.preferGlobal
+		// past donors
+		packageData.donors = Fellow.add(packageData.donors, pastBevrySponsors).map(
+			(fellow) => fellow.toString(),
+		)
 
-	// moved to vercel.json
-	delete packageData.now
-	delete packageData.vercel
+		// funding
+		packageData.funding = 'https://bevry.me/fund'
 
-	// badges
-	const removeBadges = ['gratipay', 'daviddm', 'daviddmdev']
-	if (isBevryOrganisation(answers.githubOrganisation)) {
-		if (packageData.license === 'MIT') {
-			packageData.license = 'Artistic-2.0'
-		}
+		// change license
+		if (packageData.license === 'MIT') packageData.license = 'Artistic-2.0'
+
+		// badges
 		packageData.badges = {
 			list: [
 				'githubworkflow',
@@ -688,8 +719,8 @@ export async function updatePackageData(state) {
 				'---',
 				'githubsponsors',
 				'thanksdev',
-				'patreon',
 				'liberapay',
+				// doesn't support kofi
 				'buymeacoffee',
 				'opencollective',
 				'crypto',
@@ -701,21 +732,17 @@ export async function updatePackageData(state) {
 			config: {
 				githubWorkflow: state.githubWorkflow,
 				githubSponsorsUsername: 'balupton',
-				thanksdevGithubUsername: answers.githubOrganisation,
-				buymeacoffeeUsername: 'balupton',
-				cryptoURL: 'https://bevry.me/crypto',
-				flattrUsername: 'balupton',
+				thanksdevGithubUsername: answers.githubUsername,
 				liberapayUsername: 'bevry',
+				buymeacoffeeUsername: 'balupton',
 				opencollectiveUsername: 'bevry',
-				patreonUsername: 'bevry',
+				cryptoURL: 'https://bevry.me/crypto',
 				paypalURL: 'https://bevry.me/paypal',
-				wishlistURL: 'https://bevry.me/wishlist',
 				discordServerID: '1147436445783560193',
 				discordServerInvite: 'nQuXddV7VP',
 				twitchUsername: 'balupton',
 			},
 		}
-		packageData.funding = 'https://bevry.me/fund'
 	}
 
 	// default badges
@@ -729,14 +756,20 @@ export async function updatePackageData(state) {
 		}
 	}
 
-	// remove badges relating to private
-	if (!answers.npm) {
-		removeBadges.push('npmversion', 'npmdownloads')
-	}
-
 	// apply badge removals
 	packageData.badges.list = complement(packageData.badges.list, removeBadges)
 	delete packageData.badges.gratipayUsername
+
+	// merge with latest backers
+	if (hasCredentials()) {
+		console.log('fetching lastest backers...')
+		const backers = await getBackers({
+			githubSlug: answers.githubSlug,
+			packageData,
+		})
+		Object.assign(packageData, renderBackers(backers, { format: 'package' }))
+		console.log('...fetched lastest backers')
+	}
 
 	// note
 	status('...customised package data')

@@ -1,14 +1,15 @@
+/* eslint no-template-curly-in-string:0 */
+
 // external
-import { intersect } from '@bevry/list'
 import { filterNodeVersions } from '@bevry/nodejs-versions'
 import unlink from '@bevry/fs-unlink'
 import { isAccessible } from '@bevry/fs-accessible'
 import mkdirp from '@bevry/fs-mkdirp'
+import trimEmptyKeys from 'trim-empty-keys'
 
 // local
 import { status } from './log.js'
 import { writeYAML } from './fs.js'
-import { trimEmpty } from './util.js'
 
 // github actions no longer supports node versions prior to 16
 // https://github.blog/changelog/2023-06-13-github-actions-all-actions-will-run-on-node16-instead-of-node12-by-default/
@@ -25,10 +26,12 @@ function generateGitHubActionsJSON(state) {
 	const actionsOperatingSystems = answers.npm
 		? ['ubuntu-latest', 'macos-latest', 'windows-latest']
 		: ['ubuntu-latest']
-	const actionsOperatingSystemsExperimental = intersect(
-		actionsOperatingSystems,
-		['macos-latest', 'windows-latest'],
-	)
+	const actionsOperatingSystemsOptional = []
+	/* @todo: make optional operating systems a hidden question, as we now want to guarantee support on all operating systems unless exacerbating circumstances prevent such:
+	= intersect(actionsOperatingSystems, [
+		'macos-latest',
+		'windows-latest',
+	]) */
 	const { desiredNodeVersion } = answers
 	const actionsNodeVersions = filterSetupNodeVersions(
 		answers.nodeVersionsTested,
@@ -40,10 +43,8 @@ function generateGitHubActionsJSON(state) {
 		actionsNodeVersionsOptional.length
 			? `contains('${actionsNodeVersionsOptional.join(' ')}', matrix.node)`
 			: '',
-		actionsOperatingSystemsExperimental.length
-			? `contains('${actionsOperatingSystemsExperimental.join(
-					' ',
-				)}', matrix.os)`
+		actionsOperatingSystemsOptional.length
+			? `contains('${actionsOperatingSystemsOptional.join(' ')}', matrix.os)`
 			: '',
 	]
 		.filter((i) => i)
@@ -98,7 +99,7 @@ function generateGitHubActionsJSON(state) {
 	const npmPublishSteps = [
 		{
 			name: 'publish to npm',
-			uses: 'bevry-actions/npm@v1.1.3',
+			uses: 'bevry-actions/npm@v1.1.7',
 			with: {
 				npmAuthToken: '${{ secrets.NPM_AUTH_TOKEN }}',
 				npmBranchTag: answers.npm ? ':next' : null,
@@ -152,6 +153,7 @@ function generateGitHubActionsJSON(state) {
 	const targetNodeSteps = [
 		{
 			name: 'Install targeted Node.js',
+
 			if: `\${{ matrix.node != ${desiredNodeVersion} }}`,
 			uses: 'actions/setup-node@v4',
 			with: {
@@ -176,7 +178,7 @@ function generateGitHubActionsJSON(state) {
 	}
 
 	// merge
-	return trimEmpty({
+	return trimEmptyKeys({
 		name: 'bevry',
 		on: ['push', 'pull_request'],
 		jobs: {

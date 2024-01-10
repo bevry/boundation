@@ -11,6 +11,59 @@ import {
 
 export const pwd = cwd()
 
+export const pastBevrySponsors = [
+	// fetched manually with incognito mode from: https://github.com/sponsors/balupton
+	// as there isn't an api for this yet, when there is an api, add it to github-api
+	{ githubUsername: 'dr-dimitru' },
+	{ githubUsername: 'elliottditman' },
+	{ githubUsername: 'Armenm' },
+	{ githubUsername: 'WriterJohnBuck' },
+	{ githubUsername: 'cryptoquick' },
+	{ githubUsername: 'rdeforest' },
+	{ githubUsername: 'hispanic' },
+	{ githubUsername: 'github' },
+	{ githubUsername: 'pleo-io' },
+	{ githubUsername: 'mrhenry' },
+	{ githubUsername: 'nermalcat69' },
+	{ githubUsername: 'skunkteam' },
+	// fetched manually from: https://www.patreon.com/members via bevry creator account
+	// github associations performed manually
+	{
+		githubUsername: 'elliottditman',
+		// from patreon:
+		email: 'elliottditman@gmail.com',
+		patreonId: '15026448',
+	},
+	{
+		githubUsername: 'Armenm',
+		// from patreon:
+		nomen: 'Armen Mkrtchian',
+		email: 'armen.mkrtchian@gmail.com',
+		twitterUsername: 'armen_mkrtchian',
+	},
+	{
+		githubUsername: 'leedriscoll',
+		// from patreon:
+		nomen: 'Lee Driscoll',
+		email: 'lsdriscoll@icloud.com',
+		patreonId: '5292556',
+	},
+	{
+		githubUsername: 'Aglezabad',
+		// from patreon:
+		nomen: 'Ángel González',
+		email: 'aglezabad@gmail.com',
+		twitterUsername: 'Aglezabad',
+	},
+	{
+		githubUsername: 'scokem',
+		twitterUsername: 'scokem',
+		// from patreon:
+		nomen: 'Scott Kempson',
+		email: 'scottkempson@gmail.com',
+	},
+]
+
 export const hiddenConfigurationProperties = [
 	'comment',
 	'versions',

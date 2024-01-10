@@ -15,6 +15,10 @@ import write from '@bevry/fs-write'
 import { status } from './log.js'
 import { pwd } from './data.js'
 
+export async function contains(file, data) {
+	return (await read(file)).toString().includes(data)
+}
+
 export async function echoExists(file) {
 	const e = await isAccessible(file)
 	return e ? file : ''
@@ -37,10 +41,6 @@ export async function unlinkIfContains(file, what) {
 			)
 		}
 	}
-}
-
-export async function contains(file, data) {
-	return (await read(file)).toString().includes(data)
 }
 
 export function rename(source, target) {

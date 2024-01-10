@@ -1,7 +1,7 @@
 // local
 import { pwd } from './data.js'
 import { exec } from './fs.js'
-import { repoToOrganisation, repoToProject } from './util.js'
+import { repoToUsername, repoToProject } from './package.js'
 
 // Cache the results for different repositories
 const details = {}
@@ -23,7 +23,7 @@ export async function getGitOriginUrl(cwd = pwd) {
 }
 
 export async function getGitOrganisation(cwd = pwd) {
-	return repoToOrganisation(await getGitOriginUrl(cwd)) || null
+	return repoToUsername(await getGitOriginUrl(cwd)) || null
 }
 
 export async function getGitProject(cwd = pwd) {

@@ -85,6 +85,11 @@ async function writeRootEntry({
 	nodeEditionRequire,
 	nodeEditionImport,
 }) {
+	// prepare
+	const typesPath = typesEdition
+		? typesEdition[entry + 'Path']
+		: sourceEdition[entry + 'Path']
+	// resolve
 	let resolved
 	if (nodeEditionRequire) {
 		if (autoloader || always) {
@@ -92,7 +97,7 @@ async function writeRootEntry({
 			await writeLoader({
 				entry: entryWithExtension,
 				autoloader,
-				typesPath: typesEdition && typesEdition[entry + 'Path'],
+				typesPath,
 				targetEntry: nodeEditionRequire[entry],
 				targetPath: nodeEditionRequire[entry + 'Path'],
 			})
@@ -108,7 +113,7 @@ async function writeRootEntry({
 			await writeLoader({
 				entry: entryWithExtension,
 				autoloader,
-				typesPath: typesEdition && typesEdition[entry + 'Path'],
+				typesPath,
 				targetEntry: nodeEditionImport[entry],
 				targetPath: nodeEditionImport[entry + 'Path'],
 			})
@@ -729,31 +734,31 @@ export function updateEditionFields(state) {
 						},
 					],
 				],
-				plugins: ['@babel/proposal-object-rest-spread'],
+				plugins: ['@babel/plugin-transform-object-rest-spread'],
 			}
 
 			add(
 				edition.devDependencies,
-				'@babel/core',
 				'@babel/cli',
+				'@babel/core',
+				'@babel/plugin-transform-object-rest-spread',
 				'@babel/preset-env',
-				'@babel/plugin-proposal-object-rest-spread',
 			)
 
 			if (answers.language === 'typescript') {
 				add(edition.babel.presets, '@babel/preset-typescript')
 				add(
 					edition.babel.plugins,
+					'@babel/plugin-proposal-class-properties',
 					'@babel/plugin-proposal-optional-chaining',
-					'@babel/proposal-class-properties',
 				)
 				add(
 					edition.devDependencies,
 					'@babel/core',
-					'@babel/preset-typescript',
 					'@babel/plugin-proposal-class-properties',
-					'@babel/plugin-proposal-object-rest-spread',
 					'@babel/plugin-proposal-optional-chaining',
+					'@babel/plugin-transform-object-rest-spread',
+					'@babel/preset-typescript',
 				)
 			}
 		}

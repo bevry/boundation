@@ -3,7 +3,7 @@ import * as pathUtil from 'node:path'
 
 // external
 import versionCompare from 'version-compare'
-import { unique, last, first, intersect } from '@bevry/list'
+import { unique, last, first } from '@bevry/list'
 import {
 	filterNodeVersions,
 	filterSignificantNodeVersions,
@@ -12,15 +12,7 @@ import {
 // local
 import _getAnswers from './answers.js'
 import { pwd, allLanguages } from './data.js'
-import {
-	hasScript,
-	isGitUrl,
-	isNumber,
-	isSpecified,
-	repoToOrganisation,
-	repoToSlug,
-	trim,
-} from './util.js'
+import { hasScript, isNumber, isSpecified } from './util.js'
 import {
 	getGitDefaultBranch,
 	getGitEmail,
@@ -43,17 +35,21 @@ import {
 	getPackageRepoUrl,
 	getPackageTestEntry,
 	getProjectType,
+	getRepoUrl,
 	getWebsiteType,
 	hasDocumentation,
 	hasEditions,
 	hasPackageDependency,
 	isES5,
+	isGitUrl,
 	isPackageCoffee,
 	isPackageDocPadPlugin,
 	isPackageJavaScript,
 	isPackageJSON,
 	isPackageTypeScript,
 	isSourceModule,
+	repoToSlug,
+	repoToUsername,
 } from './package.js'
 import { getVercelAliases, getVercelName } from './website.js'
 
@@ -74,21 +70,18 @@ export async function getQuestions(state) {
 			name: 'name',
 			message: 'What will be the package name?',
 			validate: isSpecified,
-			filter: trim,
 			default: getPackageName(packageData) || pathUtil.basename(pwd),
 		},
 		{
 			name: 'description',
 			message: 'and the package description?',
 			validate: isSpecified,
-			filter: trim,
 			default: getPackageDescription(packageData),
 		},
 		{
 			name: 'keywords',
 			message: 'What are some keywords to describe the project?',
 			validate: isSpecified,
-			filter: trim,
 			default: getPackageKeywords(packageData),
 			skip({ keywords }) {
 				return Boolean(keywords)
@@ -98,14 +91,13 @@ export async function getQuestions(state) {
 			name: 'repoUrl',
 			message: 'What will the git URL be?',
 			validate: isGitUrl,
-			filter: trim,
-			default: (await getGitOriginUrl()) || getPackageRepoUrl(packageData),
+			default:
+				getRepoUrl(await getGitOriginUrl()) || getPackageRepoUrl(packageData),
 		},
 		{
 			name: 'defaultBranch',
 			message: 'What is the default branch for the repository?',
 			validate: isSpecified,
-			filter: trim,
 			default: (await getGitDefaultBranch()) || 'main',
 			async skip() {
 				return Boolean(await getGitDefaultBranch()) // not an issue due to caching
@@ -113,21 +105,19 @@ export async function getQuestions(state) {
 		},
 		{
 			name: 'githubSlug',
-			message: 'What is the github repository slug?',
+			message: 'What is the GitHub Repository slug?',
 			validate: isSpecified,
-			filter: trim,
 			skip: true,
 			default({ repoUrl }) {
-				return repoUrl && repoUrl.includes('github') ? repoToSlug(repoUrl) : ''
+				return repoToSlug(repoUrl)
 			},
 		},
 		{
-			name: 'githubOrganisation',
-			message: 'What is the organisation username for the package?',
+			name: 'githubUsername',
+			message: 'What is the GitHub username for the package?',
 			validate: isSpecified,
-			filter: trim,
 			default({ repoUrl }) {
-				return repoToOrganisation(repoUrl)
+				return repoToUsername(repoUrl)
 			},
 			skip: true,
 		},
@@ -135,7 +125,6 @@ export async function getQuestions(state) {
 			name: 'author',
 			message: 'Who will the package author be?',
 			validate: isSpecified,
-			filter: trim,
 			default:
 				getPackageAuthor(packageData) ||
 				`${new Date().getFullYear()}+ ${(await getGitUsername()) || 'name'} <${
@@ -199,7 +188,6 @@ export async function getQuestions(state) {
 			message:
 				'For the static website, which directory contains the site to be deployed?',
 			validate: isSpecified,
-			filter: trim,
 			default({ website }) {
 				return website && website.includes('docpad') ? 'out' : 'www'
 			},
@@ -211,7 +199,6 @@ export async function getQuestions(state) {
 			name: 'deployTarget',
 			message: 'For the static website, what is the deploy target?',
 			validate: isSpecified,
-			filter: trim,
 			when({ staticDirectory, website }) {
 				return staticDirectory && website === 'surge'
 			},
@@ -232,7 +219,6 @@ export async function getQuestions(state) {
 			name: 'vercelName',
 			message: 'What label should be used for the site?',
 			validate: isSpecified,
-			filter: trim,
 			default: getVercelName(vercelConfig) || (await getGitProject()),
 			skip: getVercelName(vercelConfig),
 			when({ vercelWebsite }) {
@@ -242,7 +228,6 @@ export async function getQuestions(state) {
 		{
 			name: 'vercelAliases',
 			message: 'What aliases should be used for the site?',
-			filter: trim,
 			default: getVercelAliases(vercelConfig).join(', '),
 			skip({ vercelAliases }) {
 				return vercelAliases
@@ -336,7 +321,6 @@ export async function getQuestions(state) {
 			name: 'tsconfig',
 			message: 'What should the path of the tsconfig file be?',
 			validate: isSpecified,
-			filter: trim,
 			default: 'tsconfig.json',
 			ignore({ languages }) {
 				return languages.includes('typescript') === false
@@ -516,7 +500,6 @@ export async function getQuestions(state) {
 			name: 'sourceDirectory',
 			message: 'Which directory will the source code be located in?',
 			validate: isSpecified,
-			filter: trim,
 			default: 'source',
 			ignore({ website }) {
 				return website
@@ -526,7 +509,6 @@ export async function getQuestions(state) {
 			name: 'indexEntry',
 			message: 'What is the default entry filename (without extension)?',
 			validate: isSpecified, // @todo attempt to remove this
-			filter: trim,
 			default: (await getPackageIndexEntry(packageData)) || 'index',
 			skip: editioned,
 			ignore({ website }) {
@@ -538,7 +520,6 @@ export async function getQuestions(state) {
 			message:
 				'What is the entry filename (without extension) to use for Node.js?',
 			validate: isSpecified,
-			filter: trim,
 			async default({ indexEntry }) {
 				return (await getPackageNodeEntry(packageData)) || indexEntry
 			},
@@ -552,7 +533,6 @@ export async function getQuestions(state) {
 			message:
 				'What is the entry filename (without extension) to use for Web Browsers?',
 			validate: isSpecified,
-			filter: trim,
 			async default({ indexEntry }) {
 				return (await getPackageBrowserEntry()) || indexEntry
 			},
@@ -566,7 +546,6 @@ export async function getQuestions(state) {
 			message:
 				'What is the entry filename (without extension) to use for tests?',
 			validate: isSpecified,
-			filter: trim,
 			default: getPackageTestEntry(packageData) || 'test',
 			skip: editioned,
 			ignore({ website }) {
@@ -590,7 +569,6 @@ export async function getQuestions(state) {
 			message:
 				'What is the filename of the bin/executable/CLI entry (without extension)?',
 			validate: isSpecified,
-			filter: trim,
 			default: getPackageBinEntry(packageData) || 'bin',
 			skip() {
 				return getPackageBinEntry(packageData)
@@ -603,7 +581,6 @@ export async function getQuestions(state) {
 			name: 'nodeVersionsRange',
 			message:
 				'What range (if any) do you wish to restrict the Node.js versions to?',
-			filter: trim,
 			ignore({ vercelWebsite, targetModules }) {
 				return vercelWebsite || targetModules.join('') === 'import'
 			},
@@ -705,7 +682,6 @@ export async function getQuestions(state) {
 			name: 'nodeVersionsSupportedRange',
 			message:
 				'What range (if any) do you wish to restrict the supported Node.js versions to?',
-			filter: trim,
 			default: nodeEngine,
 			skip({ desiredNodeOnly }) {
 				return desiredNodeOnly
@@ -775,7 +751,6 @@ export async function getQuestions(state) {
 			name: 'nodeVersionsTestedRange',
 			message:
 				'What range (if any) do you wish to restrict the tested Node.js versions to?',
-			filter: trim,
 			skip({ desiredNodeOnly }) {
 				return desiredNodeOnly
 			},
@@ -850,7 +825,6 @@ export async function getQuestions(state) {
 			name: 'nodeVersionsTargetedRange',
 			message:
 				'What range (if any) do you wish to restrict the targeted Node.js versions to?',
-			filter: trim,
 			skip({ desiredNodeOnly }) {
 				return desiredNodeOnly
 			},
@@ -897,7 +871,6 @@ export async function getQuestions(state) {
 			name: 'nodeVersionsTargetedImportRange',
 			message:
 				'What range (if any) do you wish to restrict the targeted Node.js versions for Import modules to?',
-			filter: trim,
 			skip({ desiredNodeOnly }) {
 				return desiredNodeOnly
 			},
@@ -909,7 +882,6 @@ export async function getQuestions(state) {
 			name: 'nodeVersionsTargetedRequireRange',
 			message:
 				'What range (if any) do you wish to restrict the targeted Node.js versions for Require modules to?',
-			filter: trim,
 			skip({ desiredNodeOnly }) {
 				return desiredNodeOnly
 			},

@@ -2,30 +2,6 @@
 import * as typeChecker from 'typechecker'
 import Fellow from 'fellow'
 
-/** Delete the keys of the object which have empty values */
-export function trimEmpty(obj, log = false, parents = []) {
-	for (const key in obj) {
-		if (obj.hasOwnProperty(key)) {
-			const keys = [...parents, key]
-			const value = obj[key]
-			if (typeChecker.isArray(value) && typeChecker.isEmptyArray(value)) {
-				if (log) console.log('trim:', keys, value)
-				delete obj[key]
-			} else if (
-				typeChecker.isPlainObject(value) &&
-				typeChecker.isEmptyPlainObject(trimEmpty(value, log, keys))
-			) {
-				if (log) console.log('trim:', keys, value)
-				delete obj[key]
-			} else if (value == null || value === '') {
-				if (log) console.log('trim:', keys, value)
-				delete obj[key]
-			}
-		}
-	}
-	return obj
-}
-
 export function nodeMajorVersion(value) {
 	if (typeof value === 'number') {
 		value = String(value)
@@ -148,7 +124,15 @@ export function fixTsc(editionDirectory, sourceDirectory) {
 	]
 }
 
-export function fixBevry(input) {
+/** If only one person, then no need to display the years */
+export function fixAuthors(people) {
+	const fellows = Fellow.add(people)
+	const opts = { displayYears: fellows.length !== 1 }
+	return fellows.map((fellow) => fellow.toString(opts))
+}
+
+/** Convert Bevry to Benjamin Lupton */
+export function fixAuthor(input) {
 	const people = input
 		.split(', ')
 		.map((person) =>
@@ -158,15 +142,10 @@ export function fixBevry(input) {
 				.replace('://bevry.me', '://balupton.com'),
 		)
 		.join(', ')
-	const fellows = Fellow.add(people)
-	if (fellows.length === 1) {
-		return fellows[0].toString({ displayYears: false }) // only one person, no need for the years
-	}
-	return fellows
-		.map((fellow) => fellow.toString({ displayYears: true }))
-		.join(', ')
+	return fixAuthors(people).join(', ')
 }
 
+/** Fix various bad forms of Benjamin Lupton */
 export function fixBalupton(person) {
 	return person
 		.replace(
@@ -220,30 +199,6 @@ export function isSpecified(input) {
 /** Is the string representing a positive number? */
 export function isNumber(input) {
 	return /^[0-9.]+$/.test(input)
-}
-
-export function isGitUrl(input) {
-	return /\.git$/.test(input)
-}
-
-export function repoToWebsite(input = '') {
-	return input
-		.replace(/\.git$/, '')
-		.replace(/^(ssh[:/]+)?git@github\.com[:/]*/, 'https://github.com/')
-}
-
-export function repoToSlug(input = '') {
-	return (
-		(input && input.replace(/\.git$/, '').replace(/^.+?\.com[:/]*/, '')) || ''
-	)
-}
-
-export function repoToOrganisation(input = '') {
-	return (input && repoToSlug(input).split('/')[0]) || ''
-}
-
-export function repoToProject(input = '') {
-	return (input && repoToSlug(input).split('/')[1]) || ''
 }
 
 export const defaultScript = "printf '%s\n' 'no need for this project'"

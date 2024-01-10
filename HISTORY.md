@@ -1,5 +1,28 @@
 # History
 
+## v1.91.0 2024 January 10
+
+-   Add `gitattributes` file to prevent tests failing on Windows due to git changing line endings without these defaults
+-   Windows and macOS tests are no longer optional, for packages that fail I'll introduce a question to make them optional, or you can do it within your tests
+-   Renamed `githubOrganisation` to `githubUsername`
+-   For Bevry projects, add all historical github and patreon donors
+-   For Bevry projects, disable patreon (not actually used) and flattr (defunct) badges
+-   Fix JavaScript packages having an invalid types
+    -   Regression from v1.86.0
+    -   Closes [bevry/taskgroup#241](https://github.com/bevry/taskgroup/issues/241)
+-   Support latest babel ecosystem
+    -   Replaced deprecated `@babel/proposal-object-rest-spread` with `@babel/plugin-transform-object-rest-spread`
+    -   Use explicit names instead of implied names
+-   Removed unimplemented filters in question answer handling
+-   Have `our:meta:projectz` use `--offline`
+-   Fix documentation output for `es5` projects
+-   Now use `trim-empty-keys`, `github-api`, and `fellow` for relevant utility functions
+    -   This improves handling and conversion of repository URIs
+-   Fix some linting issues
+-   Prettier and ESLint configuration is now set appropriately, rather than being tangled
+-   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
+-   Thank you to the sponsors: [Andrew Nesbitt](https://nesbitt.io), [Balsa](https://balsa.com), [Codecov](https://codecov.io), [Frontend Masters](https://FrontendMasters.com), [Mr. Henry](https://mrhenry.be), [Poonacha Medappa](https://poonachamedappa.com), [Rob Morris](https://github.com/Rob-Morris), [Sentry](https://sentry.io), [Syntax](https://syntax.fm)
+
 ## v1.90.0 2023 December 27
 
 -   Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
@@ -15,9 +38,11 @@
 -   Fixed hidden configuration property `githubActionTestEnv` not being accepted (regression since v1.88.1)
 -   Updated `bevry-actions/npm`
 -   Improved custom bin handling, by leaving it up to `package.json` configuration rather than complex CSV answer handling as before
--   For bevry projects, transfer the defunct `Bevry Pty Ltd` copyrights to @balupton
+    -   Closes [issue #24](https://github.com/bevry/boundation/issues/24)
+-   For Bevry projects, transfer the defunct `Bevry Pty Ltd` copyrights to @balupton
+    -   Closes [issue #161](https://github.com/bevry/boundation/issues/161)
 -   No need for copyright years if there is only one author
--   For bevry projects, add @skunkteam as a historical donor
+-   For Bevry projects, add @skunkteam as a historical donor
 -   Remove deprecated `@bevry/github-*` dependencies (not all are deprecated, only some)
 -   Thank you to the sponsors: [Andrew Nesbitt](https://nesbitt.io), [Balsa](https://balsa.com), [Codecov](https://codecov.io/), [Poonacha Medappa](https://poonachamedappa.com), [Rob Morris](https://github.com/Rob-Morris), [Sentry](https://sentry.io), [Syntax](https://syntax.fm)
 

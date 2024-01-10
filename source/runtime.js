@@ -6,6 +6,7 @@ import { isAccessible } from '@bevry/fs-accessible'
 import unlink from '@bevry/fs-unlink'
 import write from '@bevry/fs-write'
 import { fetchExclusiveCompatibleESVersionsForNodeVersions } from '@bevry/nodejs-ecmascript-compatibility'
+import trimEmptyKeys from 'trim-empty-keys'
 
 // local
 import { status } from './log.js'
@@ -16,7 +17,7 @@ import {
 	allEcmascriptVersions,
 } from './data.js'
 import { parse, exec, spawn } from './fs.js'
-import { getPreviousVersion, getDuplicateDeps, trimEmpty } from './util.js'
+import { getPreviousVersion, getDuplicateDeps } from './util.js'
 import { readPackage, writePackage, getPackageBinEntry } from './package.js'
 import {
 	scaffoldEditions,
@@ -83,13 +84,7 @@ function uninstallRaw({ packageManager, packageData, dependencies }) {
 function uninstall({ packageManager, packageData, dependencies }) {
 	return uninstallRaw({ packageManager, packageData, dependencies })
 }
-function installRaw({
-	packageManager,
-	packageData,
-	dependencies,
-	mode,
-	exact = false,
-}) {
+function installRaw({ packageManager, dependencies, mode, exact = false }) {
 	if (!dependencies.length) return
 	const command = []
 	const args = []
@@ -149,7 +144,7 @@ export function peerDepInstallLocation(packageData, key) {
 
 // Update runtime
 export async function updateRuntime(state) {
-	const { answers, packageData, sourceEdition } = state
+	const { answers, packageData } = state
 
 	// prepare
 	const sourcePath =
@@ -255,18 +250,19 @@ export async function updateRuntime(state) {
 		'@types/next': false,
 		'@types/react': false,
 		'@types/react-dom': false,
-		'babel-cli': false,
-		'babel-core': false,
-		'babel-preset-es2015': false,
-		'babel-preset-env': false,
 		'@babel/cli': false,
 		'@babel/core': false,
-		'@babel/preset-env': false,
-		'@babel/preset-typescript': false,
 		'@babel/plugin-proposal-class-properties': false,
 		'@babel/plugin-proposal-object-rest-spread': false,
 		'@babel/plugin-proposal-optional-chaining': false,
+		'@babel/plugin-transform-object-rest-spread': false,
+		'@babel/preset-env': false,
+		'@babel/preset-typescript': false,
+		'babel-cli': false,
+		'babel-core': false,
 		'babel-plugin-add-module-exports': false,
+		'babel-preset-env': false,
+		'babel-preset-es2015': false,
 		typescript: false,
 		'typescript-eslint-parser': false,
 		'@typescript-eslint/parser': false,
@@ -330,12 +326,13 @@ export async function updateRuntime(state) {
 		let cmd,
 			out,
 			version = packageData.version
+		/* eslint no-constant-condition:0 */
 		while (true) {
 			// prepare
 			const nextVersion = getPreviousVersion(version, 0, 1)
 			if (version === nextVersion) {
 				throw new Error(
-					`unable to rever to a previous version that did not have duplicate packages, please fix the duplication of the following packages manually: ${duplicateDepNames.join(
+					`unable to revert to a previous version that did not have duplicate packages, please fix the duplication of the following packages manually: ${duplicateDepNames.join(
 						', ',
 					)}`,
 				)
@@ -448,9 +445,9 @@ export async function updateRuntime(state) {
 		'our:release': [...run, 'our:release:push'].join(' '),
 	}
 	if (answers.name === 'projectz') {
-		state.scripts['our:meta:projectz'] = 'npm run our:bin'
+		state.scripts['our:meta:projectz'] = 'npm run our:bin -- --offline'
 	} else {
-		state.scripts['our:meta:projectz'] = 'projectz'
+		state.scripts['our:meta:projectz'] = 'projectz --offline'
 		if (!packages.projectz) packages.projectz = 'dev'
 	}
 	if (answers.npm) {
@@ -559,34 +556,25 @@ export async function updateRuntime(state) {
 
 	// javascript
 	if (
+		answers.languages.includes('es5') ||
 		answers.languages.includes('esnext') ||
 		answers.languages.includes('typescript')
 	) {
-		packages.eslint = 'dev'
+		packages.prettier = packages.eslint = 'dev'
 	}
 
 	// eslint
 	if (packages.eslint) {
-		packages.prettier =
-			packages['eslint-config-prettier'] =
-			packages['eslint-plugin-prettier'] =
+		if (packages.prettier) {
+			packages['eslint-config-prettier'] = packages['eslint-plugin-prettier'] =
 				'dev'
+		}
 		if (!packageData.eslintConfig) packageData.eslintConfig = {}
 		if (answers.name === 'eslint-config-bevry') {
 			packageData.eslintConfig.extends = ['./local.js']
 		} else {
 			packageData.eslintConfig.extends = ['bevry']
 			packages['eslint-config-bevry'] = 'dev'
-		}
-		packageData.prettier = {
-			semi: false,
-			singleQuote: true,
-			trailingComma:
-				// Node.js v4 is es5, v6 is es2015, both require es5 commas
-				answers.keywords.has('es5') || answers.keywords.has('es2015')
-					? 'es5'
-					: 'all',
-			endOfLine: 'lf',
 		}
 		state.scripts['our:verify:eslint'] = [
 			'eslint',
@@ -601,6 +589,16 @@ export async function updateRuntime(state) {
 
 	// prettier
 	if (packages.prettier) {
+		packageData.prettier = {
+			semi: false,
+			singleQuote: true,
+			trailingComma:
+				// Node.js v4 is es5, v6 is es2015, both require es5 commas
+				answers.keywords.has('es5') || answers.keywords.has('es2015')
+					? 'es5'
+					: 'all',
+			endOfLine: 'lf',
+		}
 		state.scripts['our:verify:prettier'] = `prettier --write .`
 	}
 
@@ -653,7 +651,10 @@ export async function updateRuntime(state) {
 			}
 		}
 		// esnext
-		if (answers.languages.includes('esnext')) {
+		if (
+			answers.languages.includes('es5') ||
+			answers.languages.includes('esnext')
+		) {
 			tools.push('jsdoc')
 		}
 
@@ -964,7 +965,7 @@ export async function updateRuntime(state) {
 		// write
 		await write(
 			'tsconfig.json',
-			JSON.stringify(sortObject(trimEmpty(tsconfig)), null, '  ') + '\n',
+			JSON.stringify(sortObject(trimEmptyKeys(tsconfig)), null, '  ') + '\n',
 		)
 		status('...wrote tsconfig file')
 	} else {

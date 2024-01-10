@@ -136,6 +136,10 @@ export async function updateBaseFiles({ answers, packageData }) {
 	const downloads = [
 		'https://raw.githubusercontent.com/bevry/base/HEAD/.editorconfig',
 		{
+			url: 'https://raw.githubusercontent.com/bevry/base/HEAD/.gitattributes',
+			custom: true,
+		},
+		{
 			url: 'https://raw.githubusercontent.com/bevry/base/HEAD/.gitignore',
 			custom: true,
 		},
@@ -187,7 +191,7 @@ export async function updateBaseFiles({ answers, packageData }) {
 						answers.defaultBranch
 					}/`
 				: `http://${answers.defaultBranch}.${trimOrgName(answers.name)}.${
-						answers.githubOrganisation
+						answers.githubUsername
 					}.surge.sh/`
 		const newDocumentationSuffix = `docs/${
 			answers.deploymentStrategy === 'bevry' ? 'index.html' : ''
@@ -275,7 +279,7 @@ export async function updateBaseFiles({ answers, packageData }) {
 	}
 
 	// write bevry specific files
-	if (isBevryOrganisation(answers.githubOrganisation)) {
+	if (isBevryOrganisation(answers.githubUsername)) {
 		// security
 		if (answers.npm) {
 			status('writing security file...')
@@ -317,10 +321,11 @@ export async function updateBaseFiles({ answers, packageData }) {
 			'.github/FUNDING.yml',
 			[
 				'github: [balupton]',
-				'patreon: bevry',
-				'open_collective: bevry',
-				'ko_fi: balupton',
+				// doesn't support thanksdev
 				'liberapay: bevry',
+				'ko_fi: balupton',
+				// doesn't support buymeacoffee
+				'open_collective: bevry',
 				answers.npm ? `tidelift: npm/${answers.name}` : '',
 				"custom: ['https://bevry.me/fund']",
 			]
