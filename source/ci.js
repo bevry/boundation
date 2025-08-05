@@ -5,19 +5,27 @@ import { filterNodeVersions } from '@bevry/nodejs-versions'
 import unlink from '@bevry/fs-unlink'
 import { isAccessible } from '@bevry/fs-accessible'
 import mkdirp from '@bevry/fs-mkdirp'
-import trimEmptyKeys from 'trim-empty-keys'
+import { trimEmptyKeys } from 'trim-empty-keys'
 
 // local
 import { status } from './log.js'
 import { writeYAML } from './fs.js'
 
-// github actions no longer supports node versions prior to 16
-// https://github.blog/changelog/2023-06-13-github-actions-all-actions-will-run-on-node16-instead-of-node12-by-default/
+/**
+ * Filter node versions to those compatible with GitHub Actions setup-node (>=16)
+ * https://github.blog/changelog/2023-06-13-github-actions-all-actions-will-run-on-node16-instead-of-node12-by-default/
+ * @param {string[]} nodeVersions - Array of node version strings
+ * @returns {string[]} Filtered array of node versions that meet the minimum requirement
+ */
 function filterSetupNodeVersions(nodeVersions) {
 	return filterNodeVersions(nodeVersions, { gte: 16 })
 }
 
-// generate the json file
+/**
+ * Generate GitHub Actions workflow configuration JSON
+ * @param {object} state - Application state containing packageData and answers
+ * @returns {object} GitHub Actions workflow configuration object
+ */
 function generateGitHubActionsJSON(state) {
 	// extract
 	const { packageData, answers } = state
@@ -55,37 +63,21 @@ function generateGitHubActionsJSON(state) {
 
 	// standard actions
 	const preTestSteps = [
-		{
-			run: 'npm run our:setup',
-		},
-		{
-			run: 'npm run our:compile',
-		},
-		{
-			run: 'npm run our:verify',
-		},
+		{ run: 'npm run our:setup' },
+		{ run: 'npm run our:compile' },
+		{ run: 'npm run our:verify' },
 	]
 	const verifyNodeVersionSteps = [
 		{
 			name: 'Verify Node.js Versions',
-			run: "printf '%s' 'node: ' && node --version && printf '%s' 'npm: ' && npm --version && node -e 'console.log(process.versions)'",
+			run: "printf '%s' 'node: ' && node --version && printf '%s' 'npm: ' && npm --version && node -e 'console.info(process.versions)'",
 		},
 	]
-	const testSteps = [
-		{
-			run: 'npm test',
-		},
-	]
+	const testSteps = [{ run: 'npm test' }]
 	const prePublishSteps = [
-		{
-			run: 'npm run our:setup',
-		},
-		{
-			run: 'npm run our:compile',
-		},
-		{
-			run: 'npm run our:meta',
-		},
+		{ run: 'npm run our:setup' },
+		{ run: 'npm run our:compile' },
+		{ run: 'npm run our:meta' },
 	]
 
 	// inject custom conf into test steps
@@ -116,11 +108,7 @@ function generateGitHubActionsJSON(state) {
 			},
 		},
 	]
-	const customPublishSteps = [
-		{
-			run: 'npm run my:deploy',
-		},
-	]
+	const customPublishSteps = [{ run: 'npm run my:deploy' }]
 	const publishSteps = []
 	// @todo turn bevry cdn into its own github action
 	// https://github.com/bevry-actions/npm/blob/2811aea332baf2e7994ae4f118e23a52e4615cf9/action.bash#L110
@@ -135,18 +123,12 @@ function generateGitHubActionsJSON(state) {
 	}
 
 	// github actions
-	const setupSteps = [
-		{
-			uses: 'actions/checkout@v4',
-		},
-	]
+	const setupSteps = [{ uses: 'actions/checkout@v4' }]
 	const desiredNodeSteps = [
 		{
 			name: 'Install desired Node.js version',
 			uses: 'actions/setup-node@v4',
-			with: {
-				'node-version': desiredNodeVersion,
-			},
+			with: { 'node-version': desiredNodeVersion },
 		},
 		...verifyNodeVersionSteps,
 	]
@@ -156,19 +138,15 @@ function generateGitHubActionsJSON(state) {
 
 			if: `\${{ matrix.node != ${desiredNodeVersion} }}`,
 			uses: 'actions/setup-node@v4',
-			with: {
-				'node-version': '${{ matrix.node }}',
-			},
+			with: { 'node-version': '${{ matrix.node }}' },
 		},
 		...verifyNodeVersionSteps,
 	]
 	const setupDenoSteps = [
 		{
 			name: 'Install Deno',
-			uses: 'denoland/setup-deno@v1',
-			with: {
-				'deno-version': 'vx.x.x',
-			},
+			uses: 'denoland/setup-deno@v2',
+			with: { 'deno-version': 'vx.x.x' },
 		},
 	]
 
@@ -184,10 +162,7 @@ function generateGitHubActionsJSON(state) {
 		jobs: {
 			test: {
 				strategy: {
-					matrix: {
-						os: actionsOperatingSystems,
-						node: actionsNodeVersions,
-					},
+					matrix: { os: actionsOperatingSystems, node: actionsNodeVersions },
 				},
 				'runs-on': '${{ matrix.os }}',
 				'continue-on-error': continueOnError,
@@ -213,10 +188,7 @@ function generateGitHubActionsJSON(state) {
 					}
 				: null,
 			automerge: {
-				permissions: {
-					contents: 'write',
-					'pull-requests': 'write',
-				},
+				permissions: { contents: 'write', 'pull-requests': 'write' },
 				'runs-on': 'ubuntu-latest',
 				if: "github.actor == 'dependabot[bot]'",
 				steps: [
@@ -234,7 +206,11 @@ function generateGitHubActionsJSON(state) {
 	})
 }
 
-// Thing
+/**
+ * Update CI configuration files for the project
+ * @param {object} state - Application state containing packageData and answers
+ * @returns {Promise<void>} Promise that resolves when CI files are updated
+ */
 export async function updateCI(state) {
 	status('customising ci...')
 
@@ -282,7 +258,7 @@ export async function updateCI(state) {
 	// add github actions if a custom one is not present
 	if (await isAccessible('.github/workflows/custom.yml')) {
 		state.githubWorkflow = 'custom'
-		console.log('skipping writing github actions as a custom workflow exists')
+		console.info('skipping writing github actions as a custom workflow exists')
 	} else {
 		await writeYAML(
 			'.github/workflows/bevry.yml',

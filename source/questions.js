@@ -3,7 +3,7 @@ import * as pathUtil from 'node:path'
 
 // external
 import versionCompare from 'version-compare'
-import { unique, last, first } from '@bevry/list'
+import { intersect, unique, last, first } from '@bevry/list'
 import {
 	filterNodeVersions,
 	filterSignificantNodeVersions,
@@ -11,7 +11,7 @@ import {
 
 // local
 import _getAnswers from './answers.js'
-import { pwd, allLanguages } from './data.js'
+import { pwd, allLanguages, allEcmascriptVersions } from './data.js'
 import { hasScript, isNumber, isSpecified } from './util.js'
 import {
 	getGitDefaultBranch,
@@ -28,6 +28,7 @@ import {
 	getPackageFlowtypeDependency,
 	getPackageIndexEntry,
 	getPackageKeywords,
+	getPackageLanguages,
 	getPackageName,
 	getPackageNodeEngine,
 	getPackageNodeEntry,
@@ -39,14 +40,8 @@ import {
 	getWebsiteType,
 	hasDocumentation,
 	hasEditions,
-	hasPackageDependency,
-	isES5,
 	isGitUrl,
-	isPackageCoffee,
 	isPackageDocPadPlugin,
-	isPackageJavaScript,
-	isPackageJSON,
-	isPackageTypeScript,
 	isSourceModule,
 	repoToSlug,
 	repoToUsername,
@@ -56,6 +51,11 @@ import { getVercelAliases, getVercelName } from './website.js'
 // ====================================
 // Questions
 
+/**
+ * Generate questions for the interactive questionnaire based on project state
+ * @param {object} state - Application state containing packageData, vercelConfig, etc.
+ * @returns {Promise<object[]>} Promise that resolves to array of inquirer question objects
+ */
 export async function getQuestions(state) {
 	const { packageData, vercelConfig } = state
 	const browsers = getPackageProperty(packageData, 'browsers')
@@ -282,21 +282,7 @@ export async function getQuestions(state) {
 			message: 'What programming languages will the source code be written in?',
 			validate: isSpecified,
 			default({ website, nextWebsite }) {
-				const types = [
-					isES5(packageData) && 'es5',
-					isPackageTypeScript(packageData) && 'typescript',
-					isPackageJavaScript(packageData) && 'esnext',
-					isPackageCoffee(packageData) && 'coffeescript',
-					isPackageJSON(packageData) && 'json',
-					(hasPackageDependency(packageData, 'react') || nextWebsite) &&
-						'react',
-					(hasPackageDependency(packageData, 'react') || nextWebsite) && 'jsx',
-					website && 'html',
-					website && 'css',
-				]
-				const typesString =
-					types.filter((value) => value).join(' ') || 'typescript'
-				return typesString.split(' ')
+				return getPackageLanguages(packageData, website, nextWebsite)
 			},
 		},
 		{
@@ -315,6 +301,27 @@ export async function getQuestions(state) {
 			},
 			ignore({ website }) {
 				return website
+			},
+		},
+		{
+			name: 'ecmascriptVersion',
+			type: 'list',
+			message: 'Which ECMAScript version will the source code be written in?',
+			validate: isSpecified,
+			choices: allEcmascriptVersions,
+			default() {
+				// state.sourceEdition hasn't loaded yet, use packageData.editions[0]
+				return (
+					first(
+						intersect(
+							allEcmascriptVersions,
+							packageData.editions[0]?.tags || [],
+						),
+					) || 'esnext'
+				)
+			},
+			ignore({ language }) {
+				return ['javascript', 'typescript'].includes(language) === false
 			},
 		},
 		{
@@ -406,15 +413,20 @@ export async function getQuestions(state) {
 			name: 'compileNode',
 			type: 'confirm',
 			message: 'Would you like to compile your source code for Node.js?',
-			default: true,
+			default({ language, ecmascriptVersion }) {
+				return (
+					['typescript', 'coffeescript'].includes(language) ||
+					ecmascriptVersion === 'esnext'
+				)
+			},
 			skip({ language }) {
 				return ['typescript', 'coffeescript'].includes(language)
 			},
 			when({ website, language }) {
-				return (
-					!website &&
-					['esnext', 'typescript', 'coffeescript'].includes(language)
-				)
+				if (website) return false
+				if (['javascript', 'typescript', 'coffeescript'].includes(language))
+					return true
+				return false
 			},
 		},
 		{
@@ -445,12 +457,16 @@ export async function getQuestions(state) {
 			type: 'confirm',
 			message: 'Would you like to compile your source code for web browsers?',
 			default: true,
-			skip({ language }) {
-				return ['typescript', 'coffeescript'].includes(language)
+			skip({ language, ecmascriptVersion }) {
+				return (
+					['typescript', 'coffeescript'].includes(language) ||
+					ecmascriptVersion === 'esnext'
+				)
 			},
 			when({ browser, language }) {
 				return (
-					browser && ['esnext', 'typescript', 'coffeescript'].includes(language)
+					browser &&
+					['javascript', 'typescript', 'coffeescript'].includes(language)
 				)
 			},
 		},
@@ -593,14 +609,16 @@ export async function getQuestions(state) {
 			validate: isSpecified,
 			choices({ vercelWebsite, targetModules, nodeVersionsRange }) {
 				// use released flag just in case something ever changes
-				if (vercelWebsite)
+				if (vercelWebsite) {
 					return filterSignificantNodeVersions({ released: true, vercel: true })
-				if (targetModules.join('') === 'import')
+				}
+				if (targetModules.join('') === 'import') {
 					return filterSignificantNodeVersions({
 						released: true,
 						maintainedOrLTS: true,
 						esm: true,
 					})
+				}
 				return filterSignificantNodeVersions({
 					released: true,
 					maintainedOrLTS: true,
@@ -936,6 +954,11 @@ export async function getQuestions(state) {
 	]
 }
 
+/**
+ * Get user answers by running the questionnaire with the generated questions
+ * @param {object} state - Application state containing packageData and other configuration
+ * @returns {Promise<object>} Promise that resolves to the user's answers
+ */
 export async function getAnswers(state) {
 	// Fetch
 	const answers = await _getAnswers(
@@ -955,7 +978,7 @@ export async function getAnswers(state) {
 				answers.nodeVersionSupportedMaximum,
 			) === 1
 		) {
-			console.log(
+			console.info(
 				'constrained desiredNodeVersion to the nodeVersionSupportedMaximum of',
 				answers.nodeVersionSupportedMaximum,
 			)

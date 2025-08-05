@@ -19,7 +19,11 @@ import { updateRuntime } from './runtime.js'
 import { nodeMajorVersion, nodeMajorVersions } from './util.js'
 import { spawn } from './fs.js'
 
-// Update engines
+/**
+ * Update Node.js engine versions in package.json based on compatibility analysis
+ * @param {object} state - Application state containing answers, editions, and packageData
+ * @returns {Promise<void>} Promise that resolves when engines are updated
+ */
 export async function updateEngines(state) {
 	const { answers, nodeEditionsRequire, nodeEditionsImport, packageData } =
 		state
@@ -105,15 +109,19 @@ export async function updateEngines(state) {
 					continue
 				}
 
-				// target specified versions and the edition target
-				const target =
-					(edition.targets && nodeMajorVersion(edition.targets.node)) || null
-				const targets = nodeVersions.concat(target || [])
+				// target specified versions and the edition targets
+				const editionTargets = nodeMajorVersions(edition?.targets?.node)
+				const allTargets = nodeVersions.concat(editionTargets)
 
-				// check if we need to skip because unnecessary target
-				if (target && listPassedVersions.has(target)) {
+				// check if we need to skip because unnecessary because all of its targets have already passed
+				// this checks multiple edition targets, instead of just a single edition target, as this avoids trimming edition-2017-esm which is required for Node.js 12, when edition-2024-esm passes on Node.js >=14 <-- the alternative to multiple edition targets would be to have the target only be the minimal targets, which could be done via fetchExclusiveCompatibleESVersionsForNodeVersions perhaps
+				if (
+					editionTargets.length && // only if we have edition targets
+					complement(editionTargets, Array.from(listPassedVersions)).length ===
+						0 // only if all of its targets have already passed
+				) {
 					note(
-						`The edition [${edition.directory}] will be trimmed, as a previous edition already passed its target of ${target}`,
+						`The edition [${edition.directory}] will be trimmed, as a previous edition already passed all its targets of ${editionTargets.join(', ')}`,
 					)
 					edition.active = false
 					recompile = true
@@ -134,7 +142,7 @@ export async function updateEngines(state) {
 					: `node ./${join(edition.directory || '.', edition.test)}`
 
 				// install and test the versions
-				const versions = new Versions(targets)
+				const versions = new Versions(allTargets)
 				await versions.load()
 				await versions.install()
 				const numbers = versions.array.map((version) => version.version)
@@ -159,9 +167,9 @@ export async function updateEngines(state) {
 
 				// log the results
 				debug += versions.messages.join('\n\n')
-				console.log(
+				console.info(
 					[
-						`target:      ${target || '*'}`,
+						`targets:     ${editionTargets.join(', ') || '*'}`,
 						`passed:      ${passed.join(', ')}`,
 						`.unique:     ${passedUnique.join(', ')}`,
 						`failed:      ${failed.join(', ')}`,
@@ -259,7 +267,12 @@ export async function updateEngines(state) {
 	}
 
 	// =================================
-	// update engines.node
+	// ensure engines
+
+	if (!packageData.engines) packageData.engines = {}
+
+	// =================================
+	// update engines.node via setPackageNodeEngine
 
 	const supported = answers.nodeVersionsSupported
 	const tested = answers.nodeVersionsTested
@@ -352,6 +365,12 @@ export async function updateEngines(state) {
 	} else {
 		state.nodeVersionsOptional = failedAndUnsupported
 	}
+
+	// ---------------------------------
+	// update engines.ecmascript via setPackageNodeEngine
+
+	// if this is empty, writePackage will trim it, so we don't have to worry
+	packageData.engines.ecmascript = state.ecmascriptVersionRange
 
 	// =================================
 	// update the package.json file

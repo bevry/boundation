@@ -15,15 +15,46 @@ import write from '@bevry/fs-write'
 import { status } from './log.js'
 import { pwd } from './data.js'
 
+/**
+ * Check if a file contains specific data/text
+ * @param {string} file - The file path to check
+ * @param {string} data - The text/data to search for in the file
+ * @returns {Promise<boolean>} True if the file contains the specified data, false otherwise
+ */
 export async function contains(file, data) {
 	return (await read(file)).toString().includes(data)
 }
 
-export async function echoExists(file) {
-	const e = await isAccessible(file)
-	return e ? file : ''
+/**
+ * Check which files exist from a list of file paths
+ * @param {...string} files - One or more file paths to check for existence
+ * @returns {Promise<string|string[]>} If single file: the file path if exists or empty string. If multiple files: array of existing file paths
+ */
+export async function echoExists(...files) {
+	const results = await Promise.all(
+		files.map(async (file) => {
+			if (Array.isArray(file)) {
+				throw new Error(
+					'you wanted echoExists(...files) instead of echoExists(files)',
+				)
+			}
+			const e = await isAccessible(file)
+			return e ? file : ''
+		}),
+	)
+	if (files.length === 1) {
+		return results[0] || ''
+	} else {
+		return results.filter((i) => i)
+	}
 }
 
+/**
+ * Remove a file if it contains specific text
+ * @param {string|string[]} file - The file path(s) to check and potentially remove
+ * @param {string} what - The text to search for in the file(s)
+ * @returns {Promise<void|void[]>} Promise that resolves when operation is complete
+ */
 export async function unlinkIfContains(file, what) {
 	if (Array.isArray(file)) {
 		return Promise.all(file.map((i) => unlinkIfContains(i, what)))
@@ -31,10 +62,10 @@ export async function unlinkIfContains(file, what) {
 	const path = resolve(pwd, file)
 	if (await isAccessible(path)) {
 		if (await contains(path, what)) {
-			console.log(path, 'will be removed because it contains:', what)
+			console.info(path, 'will be removed because it contains:', what)
 			return unlink(path)
 		} else {
-			console.log(
+			console.info(
 				path,
 				'will not be removed because it does not contain:',
 				what,
@@ -43,6 +74,12 @@ export async function unlinkIfContains(file, what) {
 	}
 }
 
+/**
+ * Rename a file from source to target path
+ * @param {string} source - The current file path
+ * @param {string} target - The new file path
+ * @returns {Promise<void>} Promise that resolves when rename is complete
+ */
 export function rename(source, target) {
 	source = resolve(pwd, source)
 	target = resolve(pwd, target)
@@ -54,6 +91,11 @@ export function rename(source, target) {
 	})
 }
 
+/**
+ * Read and parse a JSON file
+ * @param {string} file - The JSON file path to read
+ * @returns {Promise<object>} The parsed JSON object, or empty object if file doesn't exist
+ */
 export async function readJSON(file) {
 	const exist = await isAccessible(file)
 	if (!exist) return {}
@@ -61,17 +103,34 @@ export async function readJSON(file) {
 	return JSON.parse(data)
 }
 
+/**
+ * Read and parse a YAML file
+ * @param {string} file - The YAML file path to read
+ * @returns {Promise<object>} The parsed YAML object, or empty object if file doesn't exist
+ */
 export async function readYAML(file) {
 	const exist = await isAccessible(file)
 	if (!exist) return {}
 	const data = await read(file)
-	return yaml.load(data)
+	return yaml.load(data) // eslint-disable-line
 }
 
+/**
+ * Write data to a YAML file
+ * @param {string} file - The YAML file path to write to
+ * @param {object} data - The data to serialize and write as YAML
+ * @returns {Promise<void>} Promise that resolves when write is complete
+ */
 export function writeYAML(file, data) {
-	return write(file, yaml.dump(data, { noRefs: true }))
+	return write(file, yaml.dump(data, { noRefs: true })) // eslint-disable-line
 }
 
+/**
+ * Spawn a command as a child process
+ * @param {string[]} command - The command and its arguments to execute
+ * @param {object} [opts] - Options for the spawn operation, defaults to the current working directory and inheriting stdio
+ * @returns {Promise<string>} Promise that resolves with stdout output
+ */
 export function spawn(command, opts = {}) {
 	opts.cwd = opts.cwd || pwd
 	opts.stdio = opts.stdio == null ? 'inherit' : opts.stdio
@@ -87,7 +146,7 @@ export function spawn(command, opts = {}) {
 						errorMessage.includes('timeout') ||
 						errorMessage.includes('econn')
 					) {
-						console.log(
+						console.warn(
 							'trying again due to poor internet connection or caching',
 						)
 						return spawn(command, opts).then(resolve).catch(reject)
@@ -100,6 +159,12 @@ export function spawn(command, opts = {}) {
 	})
 }
 
+/**
+ * Execute a command and return its output
+ * @param {string} command - The command string to execute
+ * @param {object} [opts] - Options for the execution, defaults to the current working directory
+ * @returns {Promise<string>} Promise that resolves with stdout output
+ */
 export function exec(command, opts = {}) {
 	opts.cwd = opts.cwd || pwd
 	return new Promise(function (resolve, reject) {
@@ -110,6 +175,11 @@ export function exec(command, opts = {}) {
 	})
 }
 
+/**
+ * Parse a JSON file with error handling and logging
+ * @param {string} file - The file path to parse
+ * @returns {Promise<object|null>} The parsed JSON object, or null if file doesn't exist or parsing fails
+ */
 export async function parse(file) {
 	const path = resolve(pwd, file)
 	const filename = basename(path)
@@ -122,7 +192,7 @@ export async function parse(file) {
 		} else {
 			status(`...missing the ${path} file...`)
 		}
-	} catch (err) {
+	} catch {
 		status(`...skipped the ${filename} file`)
 		return null
 	}

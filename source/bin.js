@@ -5,7 +5,7 @@ import { resolve, join } from 'node:path'
 
 // get root with imports
 import filedirname from 'filedirname'
-const [file, dir] = filedirname()
+const [, dir] = filedirname()
 const root = resolve(dir, '..')
 const pkgPath = join(root, 'package.json')
 
@@ -21,13 +21,17 @@ import { pwd } from './data.js'
 // 	process.exit(-1)
 // })
 
+/**
+ * Main function that runs the boundation CLI tool
+ * @returns {Promise<void>} Promise that resolves when the CLI tool completes
+ */
 async function main() {
 	// boundation
 	const { version } = await readJSON(pkgPath)
-	console.log(`Boundation v${version} [${root}]`)
+	console.info(`Boundation v${version} [${root}]`)
 
 	// app
-	console.log(`Running on [${pwd}]`)
+	console.info(`Running on [${pwd}]`)
 
 	// run
 	await boundation(state)
@@ -35,5 +39,5 @@ async function main() {
 
 main().catch((err) => {
 	console.error(err)
-	process.exit(1)
+	process.exit(1) // eslint-disable-line
 })

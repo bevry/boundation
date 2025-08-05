@@ -2,7 +2,7 @@
 import * as pathUtil from 'node:path'
 
 // external
-import { add, has, intersect } from '@bevry/list'
+import { first, add, has, intersect } from '@bevry/list'
 import { isAccessible } from '@bevry/fs-accessible'
 import write from '@bevry/fs-write'
 import { fetchAllCompatibleESVersionsForNodeVersions } from '@bevry/nodejs-ecmascript-compatibility'
@@ -11,6 +11,7 @@ import { filterNodeVersions } from '@bevry/nodejs-versions'
 // local
 import { status } from './log.js'
 import {
+	toLowerCase,
 	strip,
 	addExtension,
 	fixTsc,
@@ -23,14 +24,25 @@ import {
 } from './util.js'
 import { newPackageBinEntry } from './package.js'
 import {
-	allTypescriptEcmascriptTargets,
+	allTypescriptEcmascriptVersions,
 	languageNames,
-	defaultBrowserTarget,
+	defaultBrowsersEcmascriptTarget,
 	defaultCoffeeEcmascriptTarget,
 } from './data.js'
 import { spawn, exec, unlinkIfContains } from './fs.js'
 import state from './state.js'
 
+/**
+ * Write a loader file for module imports with optional autoloader and TypeScript support
+ * @param {object} root0 - Configuration object
+ * @param {string} [root0.entry] - Entry point name
+ * @param {boolean} [root0.autoloader] - Whether to include autoloader functionality
+ * @param {boolean} [root0.exportDefault] - Whether to export as default
+ * @param {string} [root0.typesPath] - Path to TypeScript type definitions
+ * @param {string} [root0.targetEntry] - Target entry point name
+ * @param {string} [root0.targetPath] - Target file path
+ * @returns {Promise<void>} Promise that resolves when loader is written
+ */
 async function writeLoader({
 	entry = 'index',
 	autoloader = false,
@@ -64,22 +76,36 @@ async function writeLoader({
 		}
 	} else {
 		if (mjs) lines.push(`export * from './${targetPath}'`)
-		if (exportDefault)
+		if (exportDefault) {
 			lines.push(
 				`import d from './${targetPath}'`,
 				// cjs exports {default} instead of default
 				'export default ' + (cjs ? 'd.default || d' : 'd'),
 			)
+		}
 		if (cjs) lines.push(`module.exports = require('./${targetPath}')`)
 	}
 	await write(entry, lines.filter((i) => i).join('\n'))
 }
 
+/**
+ * Write root entry file with edition handling and autoloader support
+ * @param {object} root0 - Configuration object
+ * @param {string} [root0.entry] - Entry point name
+ * @param {boolean} [root0.autoloader] - Whether to include autoloader functionality
+ * @param {boolean} [root0.always] - Whether to always load editions
+ * @param {boolean} [root0.exportDefault] - Whether to export as default
+ * @param {object} root0.sourceEdition - Source edition configuration
+ * @param {object} root0.typesEdition - Types edition configuration
+ * @param {object} root0.nodeEditionRequire - Node require edition configuration
+ * @param {object} root0.nodeEditionImport - Node import edition configuration
+ * @returns {Promise<void>} Promise that resolves when root entry is written
+ */
 async function writeRootEntry({
 	entry = 'index',
 	autoloader = false,
 	always = false,
-	exportDefault = false,
+	exportDefault = false, // eslint-disable-line
 	sourceEdition,
 	typesEdition,
 	nodeEditionRequire,
@@ -137,16 +163,16 @@ class Edition {
 				const edition = this
 				const browserSupport = edition.engines && edition.engines.browsers
 				const nodeSupport = edition.engines && edition.engines.node
-				const esSupport = edition.targets && edition.targets.es
+				const ecmascriptSupport = edition.targets && edition.targets.ecmascript
 				const description = [
 					languageNames[state.answers.language] || state.answers.language,
 					edition.directory === state.answers.sourceDirectory
 						? 'source code'
 						: 'compiled',
 				]
-				if (esSupport && typeof esSupport === 'string') {
+				if (ecmascriptSupport && typeof ecmascriptSupport === 'string') {
 					// what the typescript compiler targets
-					description.push(`against ${esSupport}`)
+					description.push(`against ${ecmascriptSupport}`)
 				}
 				if (browserSupport) {
 					description.push(`for web browsers`)
@@ -206,15 +232,9 @@ class Edition {
 			writable: true,
 		})
 
-		Object.defineProperty(this, 'babel', {
-			enumerable: false,
-			writable: true,
-		})
+		Object.defineProperty(this, 'babel', { enumerable: false, writable: true })
 
-		Object.defineProperty(this, 'active', {
-			enumerable: false,
-			writable: true,
-		})
+		Object.defineProperty(this, 'active', { enumerable: false, writable: true })
 
 		Object.defineProperty(this, 'entry', {
 			enumerable: false,
@@ -229,30 +249,18 @@ class Edition {
 			},
 		})
 
-		Object.defineProperty(this, 'index', {
-			enumerable: false,
-			writable: true,
-		})
+		Object.defineProperty(this, 'index', { enumerable: false, writable: true })
 
-		Object.defineProperty(this, 'node', {
-			enumerable: false,
-			writable: true,
-		})
+		Object.defineProperty(this, 'node', { enumerable: false, writable: true })
 
 		Object.defineProperty(this, 'browser', {
 			enumerable: false,
 			writable: true,
 		})
 
-		Object.defineProperty(this, 'test', {
-			enumerable: false,
-			writable: true,
-		})
+		Object.defineProperty(this, 'test', { enumerable: false, writable: true })
 
-		Object.defineProperty(this, 'bin', {
-			enumerable: false,
-			writable: true,
-		})
+		Object.defineProperty(this, 'bin', { enumerable: false, writable: true })
 
 		Object.defineProperty(this, 'indexPath', {
 			enumerable: false,
@@ -312,7 +320,11 @@ class Edition {
 	}
 }
 
-// Actions
+/**
+ * Generate editions configuration and files for the project
+ * @param {object} state - Application state containing packageData and answers
+ * @returns {Promise<void>} Promise that resolves when editions are generated
+ */
 export async function generateEditions(state) {
 	const { answers, packageData } = state
 
@@ -337,7 +349,7 @@ export async function generateEditions(state) {
 		const editions = new Map()
 
 		// Generate source edition based on language
-		if (answers.language === 'es5') {
+		if (answers.language === 'javascript') {
 			const edition = new Edition({
 				directory: answers.sourceDirectory,
 				index: addExtension(answers.indexEntry, `js`),
@@ -348,32 +360,7 @@ export async function generateEditions(state) {
 				tags: [
 					'source',
 					'javascript',
-					'es5',
-					answers.sourceModule ? 'import' : 'require',
-				],
-				engines: {
-					node: true,
-					browsers: answers.browsersTargeted,
-				},
-			})
-
-			if (answers.flowtype) {
-				add(edition.tags, 'flow type comments')
-			}
-
-			editions.set('source', edition)
-		} else if (answers.language === 'esnext') {
-			const edition = new Edition({
-				directory: answers.sourceDirectory,
-				index: addExtension(answers.indexEntry, `js`),
-				node: addExtension(answers.nodeEntry, `js`),
-				browser: addExtension(answers.browserEntry, `js`),
-				test: addExtension(answers.testEntry, `js`),
-				bin: addExtension(answers.binEntry, `js`),
-				tags: [
-					'source',
-					'javascript',
-					'esnext',
+					answers.ecmascriptVersion,
 					answers.sourceModule ? 'import' : 'require',
 				],
 				engines: {
@@ -397,7 +384,7 @@ export async function generateEditions(state) {
 					browser: addExtension(answers.browserEntry, `ts`),
 					test: addExtension(answers.testEntry, `ts`),
 					bin: addExtension(answers.binEntry, `js`),
-					tags: ['source', 'typescript', 'import'],
+					tags: ['source', 'typescript', answers.ecmascriptVersion, 'import'],
 					engines: false,
 				}),
 			)
@@ -454,8 +441,8 @@ export async function generateEditions(state) {
 						answers.sourceModule ? 'import' : 'require',
 					],
 					targets: {
-						es: defaultBrowserTarget,
-						browsers: answers.browsersTargeted,
+						browsers: answers.browsersTargeted, // babel compiler uses this
+						ecmascript: defaultBrowsersEcmascriptTarget, // typescript compiler uses this
 					},
 					engines: {
 						node: false,
@@ -467,8 +454,7 @@ export async function generateEditions(state) {
 
 		// add coffeescript edition
 		if (answers.compilerNode === 'coffeescript') {
-			const esVersionTargetLower = defaultCoffeeEcmascriptTarget.toLowerCase()
-			const directory = `edition-${esVersionTargetLower}`
+			const directory = `edition-${defaultCoffeeEcmascriptTarget}`
 			editions.set(
 				'coffeescript',
 				new Edition({
@@ -479,7 +465,12 @@ export async function generateEditions(state) {
 					browser: addExtension(answers.browserEntry, `js`),
 					test: addExtension(answers.testEntry, `js`),
 					bin: addExtension(answers.binEntry, `js`),
-					tags: ['compiled', 'javascript', esVersionTargetLower, 'require'],
+					tags: [
+						'compiled',
+						'javascript',
+						defaultCoffeeEcmascriptTarget,
+						'require',
+					],
 					engines: {
 						node: true,
 						browsers: answers.browsersTargeted,
@@ -510,14 +501,12 @@ export async function generateEditions(state) {
 					.reverse() // reverse modifies the actual array, hence need for slice
 				if (answers.compilerNode === 'babel') {
 					for (const nodeVersionTarget of nodeVersionsTargets) {
-						// fetch es version which is essential for accurate prettier configuration for node v6 which is es5
-						const esVersionTargetLower = (
+						// fetch ecmascript version which is essential for accurate: compilation, prettier/eslint configuration, and ode v6 which is es5
+						const ecmascriptVersionTarget = toLowerCase(
 							await fetchAllCompatibleESVersionsForNodeVersions([
 								nodeVersionTarget,
-							])
-						)
-							.reverse()[0]
-							.toLowerCase()
+							]),
+						).reverse()[0]
 						const directory =
 							`edition-node-${nodeVersionTarget}` +
 							(targetModule === 'import' ? '-esm' : '')
@@ -534,11 +523,12 @@ export async function generateEditions(state) {
 								tags: [
 									'compiled',
 									'javascript',
-									esVersionTargetLower,
+									ecmascriptVersionTarget,
 									targetModule,
 								],
 								targets: {
 									node: nodeVersionTarget,
+									ecmascript: ecmascriptVersionTarget,
 								},
 								engines: {
 									node: true,
@@ -548,28 +538,41 @@ export async function generateEditions(state) {
 						)
 					}
 				} else if (answers.compilerNode === 'typescript') {
-					const esVersionsTargets = new Set()
+					const ecmascriptVersionTargetToEdition = new Map()
 					for (const nodeVersionTarget of nodeVersionsTargets) {
-						// fetch the latest es version for the node.js version target that typescript supports
-						const esVersionTarget = intersect(
-							allTypescriptEcmascriptTargets,
-							await fetchAllCompatibleESVersionsForNodeVersions([
-								nodeVersionTarget,
-							]),
-						)[0]
+						// fetch the latest ecmascript version for the node.js version target that typescript supports
+						const ecmascriptVersionTarget =
+							first(
+								intersect(
+									allTypescriptEcmascriptVersions,
+									toLowerCase(
+										await fetchAllCompatibleESVersionsForNodeVersions([
+											nodeVersionTarget,
+										]),
+									),
+								),
+							) || ''
 						// check that typescript supported it
-						if (!esVersionTarget) continue
-						// check that we haven't already generated an edition for this es verison target target
-						if (esVersionsTargets.has(esVersionTarget)) continue
-						esVersionsTargets.add(esVersionTarget)
-						// generate the edition
-						const esVersionTargetLower = esVersionTarget.toLowerCase()
+						if (!ecmascriptVersionTarget) continue
+						// prepare
 						const directory =
-							`edition-${esVersionTargetLower}` +
+							`edition-${ecmascriptVersionTarget}` +
 							(targetModule === 'import' ? '-esm' : '')
-						editions.set(
-							directory,
-							new Edition({
+						// check that we haven't already generated an edition for this ecmascript version target target
+						const existingEdition = ecmascriptVersionTargetToEdition.get(
+							ecmascriptVersionTarget,
+						)
+						if (existingEdition) {
+							existingEdition.targets.node += ` || ${nodeVersionTarget}`
+							// the existingEdition is happening via ecmascriptVersionTarget, so there is no point modifying: existingEdition.targets.ecmascript
+							console.info(
+								'merge',
+								existingEdition.directory,
+								existingEdition.targets.node,
+								existingEdition.targets.ecmascript,
+							)
+						} else {
+							const edition = new Edition({
 								compiler: 'typescript',
 								directory,
 								index: addExtension(answers.indexEntry, `js`),
@@ -580,19 +583,30 @@ export async function generateEditions(state) {
 								tags: [
 									'compiled',
 									'javascript',
-									esVersionTargetLower,
+									ecmascriptVersionTarget,
 									targetModule,
 								],
 								targets: {
 									node: nodeVersionTarget,
-									es: esVersionTarget,
+									ecmascript: ecmascriptVersionTarget,
 								},
 								engines: {
 									node: true,
 									browsers: false,
 								},
-							}),
-						)
+							})
+							editions.set(directory, edition)
+							ecmascriptVersionTargetToEdition.set(
+								ecmascriptVersionTarget,
+								edition,
+							)
+							console.info(
+								'added',
+								directory,
+								nodeVersionTarget,
+								ecmascriptVersionTarget,
+							)
+						}
 					}
 				} else {
 					throw new Error(`invalid target for the compiler`)
@@ -652,13 +666,18 @@ export async function generateEditions(state) {
 	}
 
 	// log
-	console.log(
+	console.info(
 		'editions:',
 		state.editions.map((edition) => edition.directory).join(', '),
 	)
 	status('...updated editions')
 }
 
+/**
+ * Update edition-specific fields and compilation scripts
+ * @param {object} state - Application state containing answers and editions
+ * @returns {void}
+ */
 export function updateEditionFields(state) {
 	const { answers, editions } = state
 
@@ -685,8 +704,8 @@ export function updateEditionFields(state) {
 		} else if (edition.compiler === 'typescript') {
 			edition.scripts[compileScriptName] = [
 				'tsc',
-				has(edition.tags, 'require') ? '--module commonjs' : '--module ESNext',
-				`--target ${edition.targets.es}`,
+				has(edition.tags, 'require') ? '--module commonjs' : '--module esnext',
+				`--target ${edition.targets.ecmascript}`,
 				`--outDir ./${edition.directory}`,
 				`--project ${answers.tsconfig}`,
 				...fixTsc(edition.directory, answers.sourceDirectory),
@@ -723,9 +742,14 @@ export function updateEditionFields(state) {
 				sourceType: answers.sourceModule ? 'module' : 'script',
 				presets: [
 					[
+						// https://babeljs.io/docs/babel-preset-env
+						// https://babeljs.io/docs/options#targets
+						// https://babeljs.io/docs/options#targetsbrowsers
+						// https://babeljs.io/docs/options#targetsnode
+						// https://babeljs.io/docs/options#targetsdeno
 						'@babel/preset-env',
 						{
-							targets: strip(edition.targets, 'es'),
+							targets: strip(edition.targets, 'ecmascript'),
 							modules: has(edition.tags, 'import')
 								? answers.sourceModule
 									? false
@@ -775,7 +799,11 @@ export function updateEditionFields(state) {
 	})
 }
 
-// Helpers
+/**
+ * Update package.json entry points and exports based on edition configurations
+ * @param {object} state - Application state containing edition data and packageData
+ * @returns {void}
+ */
 export function updateEditionEntries(state) {
 	const {
 		typesEdition,
@@ -864,6 +892,11 @@ export function updateEditionEntries(state) {
 	if (!nodeImportPath) delete packageData.exports
 }
 
+/**
+ * Scaffold edition files and directories, creating entry points and test files
+ * @param {object} state - Application state containing editions, packageData, and answers
+ * @returns {Promise<void>} Promise that resolves when editions are scaffolded
+ */
 export async function scaffoldEditions(state) {
 	// fetch
 	const {
@@ -901,7 +934,7 @@ export async function scaffoldEditions(state) {
 			await exec(`cat ${sourceEdition.indexPath} | grep 'export default'`)
 			exportDefault = true
 			answers.keywords.add('export-default')
-		} catch (err) {}
+		} catch {}
 	}
 
 	// handle
@@ -937,7 +970,7 @@ export async function scaffoldEditions(state) {
 					)
 				}
 				// edition index entry doesn't exist, so create an empty file
-				else
+				else {
 					await write(
 						sourceEdition.indexPath,
 						[
@@ -946,6 +979,7 @@ export async function scaffoldEditions(state) {
 							'',
 						].join('\n'),
 					)
+				}
 			}
 		}
 
