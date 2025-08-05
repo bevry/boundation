@@ -38,41 +38,41 @@ It will ask you several questions about your project, then initialise or upgrade
 
 ## Features
 
--   Supports JavaScript, TypeScript, CoffeeScript, and Website projects
--   Automatic [Editions](https://github.com/bevry/editions) setup and upgrades for automatic selection of the best edition for the environment, allowing you to develop for the latest environment with the latest technology, then automatically test on and support older environments
-    -   Automated edition generation so the one package can be used between Node.js, Web Browsers, and Deno where applicable
-    -   Automated ES6 Import and CJS Require compatibility generation
-    -   Automated compatible editions generated for Web Browsers, Node.js, Deno
-    -   Each generated edition is targeted specifically for each version of each target that you intend to support, with each edition compatibility tested by [Testen](https://github.com/bevry/testen) and trimmed if redundant overlaps are present
--   Uses [Projectz](https://github.com/bevry/projectz) to automatically generate and maintain your readme, license, badges, and the contributing file
--   Automatically configures sensible defaults based on the features that your project is using, while maintaining support for your extensions and customisations, supports
-    -   TSConfig for JavaScript and TypeScript projects
-    -   ESLint for JavaScript and TypeScript projects
-    -   Flow for JavaScript projects
-    -   CoffeeLint for CoffeeSCript projects
-    -   Zeit's Now and Next.js
-    -   DocPad Plugins
--   Automatically gives you documentation generation and publishing for the following:
-    -   TypeDoc for TypeScript projects
-    -   JSDoc for JavaScript projects
-    -   YUIDoc for new CoffeeScript projects, and Biscotto for older projects
--   Automated GitHub Actions setup and configuration for a variety of projects
--   Automated package dependency upgrades and migrations to compatible versions
--   Powerful NPM Scripts
-    -   `npm run our:setup` for setting up the project for development
-        -   automatic addition of your `my:setup:*` scripts
-    -   `npm run our:compile` for compiling the project
-        -   automatic addition of your `my:compile:*` scripts
-    -   `npm run our:deploy` for linting
-        -   automatic addition of your `my:deploy:*` scripts
-    -   `npm run our:meta` for compiling the meta files
-        -   automatic addition of your `my:meta:*` scripts
-    -   `npm run our:verify` for linting and tests
-        -   automatic addition of your `my:verify:*` scripts
-    -   `npm run our:release` for for releasing your project
-        -   on code projects, it will run verify, check for uncommitted changes, a changelog entry, performing the git tag automatically, and the git push
-        -   on website projects, it will run verify and git push
-        -   automatic addition of your `my:release:*` scripts
+- Supports JavaScript, TypeScript, CoffeeScript, and Website projects
+- Automatic [Editions](https://github.com/bevry/editions) setup and upgrades for automatic selection of the best edition for the environment, allowing you to develop for the latest environment with the latest technology, then automatically test on and support older environments
+    - Automated edition generation so the one package can be used between Node.js, Web Browsers, and Deno where applicable
+    - Automated ES6 Import and CJS Require compatibility generation
+    - Automated compatible editions generated for Web Browsers, Node.js, Deno
+    - Each generated edition is targeted specifically for each version of each target that you intend to support, with each edition compatibility tested by [Testen](https://github.com/bevry/testen) and trimmed if redundant overlaps are present
+- Uses [Projectz](https://github.com/bevry/projectz) to automatically generate and maintain your readme, license, badges, and the contributing file
+- Automatically configures sensible defaults based on the features that your project is using, while maintaining support for your extensions and customisations, supports
+    - TSConfig for JavaScript and TypeScript projects
+    - ESLint for JavaScript and TypeScript projects
+    - Flow for JavaScript projects
+    - CoffeeLint for CoffeeScript projects
+    - Zeit's Now and Next.js
+    - DocPad Plugins
+- Automatically gives you documentation generation and publishing for the following:
+    - TypeDoc for TypeScript projects
+    - JSDoc for JavaScript projects
+    - YUIDoc for new CoffeeScript projects, and Biscotto for older projects
+- Automated GitHub Actions setup and configuration for a variety of projects
+- Automated package dependency upgrades and migrations to compatible versions
+- Powerful NPM Scripts
+    - `npm run our:setup` for setting up the project for development
+        - automatic addition of your `my:setup:*` scripts
+    - `npm run our:compile` for compiling the project
+        - automatic addition of your `my:compile:*` scripts
+    - `npm run our:deploy` for linting
+        - automatic addition of your `my:deploy:*` scripts
+    - `npm run our:meta` for compiling the meta files
+        - automatic addition of your `my:meta:*` scripts
+    - `npm run our:verify` for linting and tests
+        - automatic addition of your `my:verify:*` scripts
+    - `npm run our:release` for for releasing your project
+        - on code projects, it will run verify, check for uncommitted changes, a changelog entry, performing the git tag automatically, and the git push
+        - on website projects, it will run verify and git push
+        - automatic addition of your `my:release:*` scripts
 
 <!-- INSTALL/ -->
 
@@ -96,7 +96,7 @@ It will ask you several questions about your project, then initialise or upgrade
 
 This package is published with the following editions:
 -   `boundation` aliases `boundation/source/index.js`
--   `boundation/source/index.js` is [ESNext](https://en.wikipedia.org/wiki/ECMAScript#ES.Next "ECMAScript Next") source code for [Node.js](https://nodejs.org "Node.js is a JavaScript runtime built on Chrome's V8 JavaScript engine") 18 || 20 || 21 with [Import](https://babeljs.io/docs/learn-es2015/#modules "ECMAScript Modules") for modules
+-   `boundation/source/index.js` is javascript source code for [Node.js](https://nodejs.org "Node.js is a JavaScript runtime built on Chrome's V8 JavaScript engine") 22 || 24 with [Import](https://babeljs.io/docs/learn-es2015/#modules "ECMAScript Modules") for modules
 
 <!-- /INSTALL -->
 

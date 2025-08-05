@@ -1,30 +1,29 @@
 // external
 import sortObject from 'sortobject'
 import versionCompare from 'version-compare'
-import { unique, toggle, intersect } from '@bevry/list'
+import { toggle } from '@bevry/list'
 import { isAccessible } from '@bevry/fs-accessible'
 import unlink from '@bevry/fs-unlink'
 import write from '@bevry/fs-write'
-import { fetchExclusiveCompatibleESVersionsForNodeVersions } from '@bevry/nodejs-ecmascript-compatibility'
-import trimEmptyKeys from 'trim-empty-keys'
+import { trimEmptyKeys } from 'trim-empty-keys'
 
 // local
+import { updateEngines } from './versions.js'
 import { status } from './log.js'
+import { languageNames, bustedVersions, possibleTargets } from './data.js'
+import { parse, exec, spawn, unlinkIfContains, echoExists } from './fs.js'
 import {
-	bustedVersions,
-	allLanguages,
-	allTypescriptEcmascriptTargets,
-	allEcmascriptVersions,
-} from './data.js'
-import { parse, exec, spawn } from './fs.js'
-import { getPreviousVersion, getDuplicateDeps } from './util.js'
+	getTypedocTypescriptVersion,
+	getPreviousVersion,
+	getDuplicateDeps,
+	importOrRequire,
+} from './util.js'
 import { readPackage, writePackage, getPackageBinEntry } from './package.js'
 import {
 	scaffoldEditions,
 	updateEditionEntries,
 	updateEditionFields,
 } from './editions.js'
-import { updateEngines } from './versions.js'
 
 // Consts
 const commands = {
@@ -43,19 +42,47 @@ const commands = {
 	},
 }
 
+/**
+ * Check if a version is exact (not 'latest')
+ * @param {string} value - Version string to check
+ * @returns {boolean} True if the version is exact (not 'latest')
+ */
 function isExact(value) {
 	return value && value !== 'latest'
 }
+
+/**
+ * Get latest dependencies from an array, filtering out exact versions
+ * @param {string[]} array - Array of dependency names
+ * @param {object} versions - Object mapping dependency names to versions
+ * @returns {string[]} Array of dependency specifications for latest versions
+ */
 function latestDependencies(array, versions) {
 	return array
 		.filter((item) => !isExact(versions[item]))
 		.map((item) => `${item}@latest`)
 }
+
+/**
+ * Get exact dependencies from an array, filtering out 'latest' versions
+ * @param {string[]} array - Array of dependency names
+ * @param {object} versions - Object mapping dependency names to versions
+ * @returns {string[]} Array of dependency specifications with exact versions
+ */
 function exactDependencies(array, versions) {
 	return array
 		.filter((item) => isExact(versions[item]))
 		.map((item) => `${item}@${versions[item]}`)
 }
+
+/**
+ * Uninstall dependencies that are currently installed
+ * @param {object} root0 - Configuration object
+ * @param {string} root0.packageManager - Package manager to use
+ * @param {object} root0.packageData - Package.json data
+ * @param {string[]} root0.dependencies - Array of dependency names to uninstall
+ * @returns {Promise<void>}
+ */
 function uninstallRaw({ packageManager, packageData, dependencies }) {
 	// only uninstall installed deps
 	// for yarn this is necessary: https://github.com/yarnpkg/yarn/issues/6919
@@ -65,7 +92,7 @@ function uninstallRaw({ packageManager, packageData, dependencies }) {
 			packageData.dependencies[dependency] ||
 			packageData.devDependencies[dependency],
 	)
-	if (!dependencies.length) return
+	if (!dependencies.length) return Promise.resolve()
 	// continue
 	const command = []
 	const args = []
@@ -78,14 +105,33 @@ function uninstallRaw({ packageManager, packageData, dependencies }) {
 		throw new Error('unsupported package manager')
 	}
 	command.push(...args, ...dependencies)
-	console.log(command.join(' '))
+	console.info(command.join(' '))
 	return spawn(command)
 }
+
+/**
+ * Uninstall dependencies using the specified package manager
+ * @param {object} root0 - Configuration object
+ * @param {string} root0.packageManager - Package manager to use (npm, yarn, etc.)
+ * @param {object} root0.packageData - Package.json data
+ * @param {string[]} root0.dependencies - Array of dependency names to uninstall
+ * @returns {Promise<void>} Promise that resolves when dependencies are uninstalled
+ */
 function uninstall({ packageManager, packageData, dependencies }) {
 	return uninstallRaw({ packageManager, packageData, dependencies })
 }
+
+/**
+ * Install dependencies using the package manager directly without wrapper
+ * @param {object} root0 - Configuration object
+ * @param {string} root0.packageManager - Package manager to use (npm, yarn, etc.)
+ * @param {string[]} root0.dependencies - Array of dependency names/specs to install
+ * @param {string} root0.mode - Installation mode (dev, prod, etc.)
+ * @param {boolean} [root0.exact] - Whether to install exact versions
+ * @returns {Promise<void>} Promise that resolves when dependencies are installed
+ */
 function installRaw({ packageManager, dependencies, mode, exact = false }) {
-	if (!dependencies.length) return
+	if (!dependencies.length) return Promise.resolve()
 	const command = []
 	const args = []
 	if (packageManager === 'yarn') {
@@ -103,9 +149,20 @@ function installRaw({ packageManager, dependencies, mode, exact = false }) {
 		throw new Error('unsupported package manager')
 	}
 	command.push(...args, ...dependencies)
-	console.log(command.join(' '))
+	console.info(command.join(' '))
 	return spawn(command)
 }
+
+/**
+ * Install dependencies using the package manager with version handling
+ * @param {object} root0 - Configuration object
+ * @param {string} root0.packageManager - Package manager to use (npm, yarn, etc.)
+ * @param {object} root0.packageData - Package.json data
+ * @param {string[]} root0.dependencies - Array of dependency names to install
+ * @param {string} root0.mode - Installation mode (development, production)
+ * @param {object} root0.versions - Object mapping dependency names to specific versions
+ * @returns {Promise<void>} Promise that resolves when dependencies are installed
+ */
 async function install({
 	packageManager,
 	packageData,
@@ -114,8 +171,9 @@ async function install({
 	versions,
 }) {
 	// if yarn, uninstall first, workaround for https://github.com/yarnpkg/yarn/issues/5345
-	if (packageManager === 'yarn')
+	if (packageManager === 'yarn') {
 		await uninstall({ packageManager, packageData, dependencies })
+	}
 	// continue
 	await installRaw({
 		packageManager,
@@ -132,17 +190,32 @@ async function install({
 	})
 }
 
+/**
+ * Upgrade package dependencies using npm-check-updates
+ * @param {string[]} [exclude] - Array of package names to exclude from upgrade
+ * @returns {Promise<void>} Promise that resolves when dependencies are upgraded
+ */
 export function upgradePackageDependencies(exclude = []) {
 	const args = ['npx', 'npm-check-updates', '-u']
 	if (exclude.length) args.push('-x', exclude.join(','))
 	return spawn(args)
 }
 
+/**
+ * Determine where to install peer dependencies (dev dependencies or production)
+ * @param {object} packageData - Package.json data object
+ * @param {string} key - Dependency name to check
+ * @returns {string|boolean} 'dev' if should be dev dependency, true otherwise
+ */
 export function peerDepInstallLocation(packageData, key) {
 	return (packageData.peerDependencies || {})[key] ? 'dev' : true
 }
 
-// Update runtime
+/**
+ * Update runtime dependencies and development tools for the project
+ * @param {object} state - State object containing project configuration
+ * @returns {Promise<void>} Promise that resolves when runtime is updated
+ */
 export async function updateRuntime(state) {
 	const { answers, packageData } = state
 
@@ -156,37 +229,9 @@ export async function updateRuntime(state) {
 	const test = [answers.packageManager, 'test']
 	const extension = answers.language === 'typescript' ? '.ts' : '.js'
 
-	// targets
-	const possibleTargets = unique([
-		...allLanguages,
-		...allEcmascriptVersions,
-	]).map((i) => i.toLowerCase())
-	const usedTargets = unique([
-		// answered languages
-		...answers.languages.map((i) => i.toLowerCase()),
-		// ecmascript versions and languages for our editions
-		...state.activeEditions
-			.map((e) =>
-				Array.from(e.tags).find((t) =>
-					possibleTargets.includes(t.toLowerCase()),
-				),
-			)
-			.filter((i) => i)
-			.map((i) => i.toLowerCase()),
-	])
-	/* editions could probably auto-detect their es versions via updating them based on the testen results
-	via something like the following, however at that point we should probably add esversions to engines
-	...(
-		await fetchAllCompatibleESVersionsForNodeVersions(
-			await fetchSupportedNodeVersions({
-				range: getPackageNodeEngine(packageData)
-			}),
-		)
-	).map((i) => i.toLowerCase()) */
-
 	// keywords
 	toggle(answers.keywords, possibleTargets, false)
-	toggle(answers.keywords, usedTargets, true)
+	toggle(answers.keywords, state.usedTargets, true)
 	toggle(answers.keywords, 'website', answers.website)
 	toggle(
 		answers.keywords,
@@ -223,7 +268,7 @@ export async function updateRuntime(state) {
 		packageData.peerDependencies = {}
 	}
 
-	/** @type {Object.<string, boolean | 'dev'>} */
+	/** @type {{[key: string]: boolean | 'dev'}} */
 	const packages = {
 		projectz: false,
 		'make-deno-edition': false,
@@ -264,19 +309,9 @@ export async function updateRuntime(state) {
 		'babel-preset-env': false,
 		'babel-preset-es2015': false,
 		typescript: false,
-		'typescript-eslint-parser': false,
-		'@typescript-eslint/parser': false,
 		prettier: false,
 		eslint: false,
-		'babel-eslint': false,
-		'eslint-config-bevry': false,
-		'eslint-config-prettier': false,
-		'eslint-plugin-flow-vars': false,
-		'eslint-plugin-prettier': false,
-		'eslint-plugin-react-hooks': false,
-		'eslint-plugin-react': false,
-		'eslint-plugin-typescript': false,
-		'@typescript-eslint/eslint-plugin': false,
+		// eslint configs and plugins have been merged into eslint-config-bevry, and handled later
 		'@zeit/next-typescript': false,
 		documentation: false,
 		jsdoc: false,
@@ -307,7 +342,7 @@ export async function updateRuntime(state) {
 	// VERSIONS
 
 	// Override the versions that are installed if these dependencies are needed
-	/** @type {Object.<string, number | string>} */
+	/** @type {{[key: string]: number | string}} */
 	const versions = {}
 
 	// apply busted version fixes
@@ -318,7 +353,7 @@ export async function updateRuntime(state) {
 	// fix deps that are in deps and devDeps
 	let duplicateDepNames = getDuplicateDeps(packageData)
 	if (duplicateDepNames.length) {
-		console.log(
+		console.info(
 			`the following dependencies existed in both deps and devDeps:`,
 			duplicateDepNames,
 		)
@@ -347,13 +382,13 @@ export async function updateRuntime(state) {
 			}
 			const devDeps = JSON.parse(out)
 			packageData.devDependencies = devDeps
-			console.log(`used [${cmd}] to restore devDeps to`, devDeps)
+			console.info(`used [${cmd}] to restore devDeps to`, devDeps)
 			// deps
 			cmd = `npm view --json --no-color ${packageData.name}@${version} dependencies`
 			out = (await exec(cmd)).trim()
 			const deps = JSON.parse(out || '{}')
 			packageData.dependencies = deps
-			console.log(`used [${cmd}] to restore deps to`, deps)
+			console.info(`used [${cmd}] to restore deps to`, deps)
 			// if we solved the problem, then break
 			duplicateDepNames = getDuplicateDeps(packageData)
 			if (duplicateDepNames.length === 0) break
@@ -392,10 +427,7 @@ export async function updateRuntime(state) {
 	// editions: v4 was last to support node <4
 	//           https://github.com/bevry/editions/blob/master/HISTORY.md#v500-2020-october-27
 	if (versionCompare(answers.nodeVersionSupportedMinimum, 8) === -1) {
-		const dependencyCompat = {
-			'cli-spinners': 1,
-			'lazy-require': 2,
-		}
+		const dependencyCompat = { 'cli-spinners': 1, 'lazy-require': 2 }
 		for (const [key, value] of Object.entries(dependencyCompat)) {
 			versions[key] = value
 		}
@@ -406,10 +438,6 @@ export async function updateRuntime(state) {
 	// 		versions[key] = value
 	// 	}
 	// }
-
-	// brand new typescript version workaround for incompat with typedoc version
-	// https://github.com/TypeStrong/typedoc/releases
-	versions.typescript = '~5.3'
 
 	// add user overrides
 	Object.assign(
@@ -484,7 +512,7 @@ export async function updateRuntime(state) {
 	}
 
 	// add our package scripts
-	if (answers.npm)
+	if (answers.npm) {
 		Object.assign(state.scripts, {
 			'our:release:check-changelog': `cat ./HISTORY.md | grep "v$npm_package_version" || (printf '%s\n' "add a changelog entry for v$npm_package_version" && exit -1)`,
 			'our:release:check-dirty': 'git diff --exit-code',
@@ -500,6 +528,7 @@ export async function updateRuntime(state) {
 				.map((i) => i.join(' '))
 				.join(' && '),
 		})
+	}
 
 	// docpad
 	if (answers.name === 'docpad') {
@@ -526,7 +555,7 @@ export async function updateRuntime(state) {
 			state.scripts['our:verify:stylelint'] =
 				"printf '%s\n' 'disabled due to https://spectrum.chat/zeit/general/resolved-deployments-fail-with-enospc-no-space-left-on-device-write~d1b9f61a-65e8-42a3-9042-f9c6a6fae6fd'"
 		} else {
-			packages.stylelint = 'dev'
+			packages.prettier = packages.stylelint = 'dev'
 			packages['stylelint-config-prettier'] = packages[
 				'stylelint-config-standard'
 			] = 'dev'
@@ -556,8 +585,7 @@ export async function updateRuntime(state) {
 
 	// javascript
 	if (
-		answers.languages.includes('es5') ||
-		answers.languages.includes('esnext') ||
+		answers.languages.includes('javascript') ||
 		answers.languages.includes('typescript')
 	) {
 		packages.prettier = packages.eslint = 'dev'
@@ -565,26 +593,81 @@ export async function updateRuntime(state) {
 
 	// eslint
 	if (packages.eslint) {
-		if (packages.prettier) {
-			packages['eslint-config-prettier'] = packages['eslint-plugin-prettier'] =
-				'dev'
-		}
 		if (!packageData.eslintConfig) packageData.eslintConfig = {}
+		// eslintConfig is deprecated, and eslint-config-bevry only supports its rules and ignores
+		Object.keys(packageData.eslintConfig).forEach((key) => {
+			if (key !== 'rules' && key !== 'ignores') {
+				delete packageData.eslintConfig[key]
+			}
+		})
+		const eslintConfigFiles = [
+			'eslint.config.js',
+			'eslint.config.cjs',
+			'eslint.config.mjs',
+		]
+		const eslintConfigLines = [
+			`// auto-generated by boundation, do not update manually`,
+			importOrRequire(
+				'{ defineConfig }',
+				'eslint/config',
+				answers.sourceModule,
+			),
+		]
 		if (answers.name === 'eslint-config-bevry') {
-			packageData.eslintConfig.extends = ['./local.js']
+			eslintConfigLines.push(
+				importOrRequire(
+					'eslintBevry',
+					`./${packageData.main}`,
+					answers.sourceModule,
+				),
+			)
+			state.scripts.test = 'npm run our:verify:eslint'
 		} else {
-			packageData.eslintConfig.extends = ['bevry']
-			packages['eslint-config-bevry'] = 'dev'
+			eslintConfigLines.push(
+				importOrRequire(
+					'eslintBevry',
+					'eslint-config-bevry',
+					answers.sourceModule,
+				),
+			)
 		}
-		state.scripts['our:verify:eslint'] = [
-			'eslint',
-			'--fix',
-			"--ignore-pattern '**/*.d.ts'",
-			"--ignore-pattern '**/vendor/'",
-			"--ignore-pattern '**/node_modules/'",
-			'--ext .mjs,.js,.jsx,.ts,.tsx',
-			sourcePath,
-		].join(' ')
+		eslintConfigLines.push(`export default defineConfig(eslintBevry)`, '')
+		await unlinkIfContains(eslintConfigFiles, 'auto-generated by boundation')
+		const eslintConfigFilesRemaining = await echoExists(...eslintConfigFiles)
+		if (eslintConfigFilesRemaining.length === 0) {
+			status('writing eslint file...')
+			await write('eslint.config.js', eslintConfigLines.join('\n'))
+			status('...wrote eslint file')
+			if (answers.name !== 'eslint-config-bevry') {
+				// if automated configuration and not eslint-config-bevry, then automate our eslint packages
+				Object.assign(packages, {
+					'eslint-config-bevry': 'dev',
+					// disable all other eslint config, as it is now handled by eslint-config-bevry
+					'@babel/eslint-parser': false,
+					'@babel/eslint-plugin': false,
+					'@eslint/eslintrc': false,
+					'@eslint/js': false,
+					'@typescript-eslint/eslint-plugin': false,
+					'@typescript-eslint/parser': false,
+					'babel-eslint': false,
+					'eslint-config-prettier': false,
+					'eslint-plugin-babel': false,
+					'eslint-plugin-baseui': false,
+					'eslint-plugin-fb-flow': false,
+					'eslint-plugin-flow-vars': false,
+					'eslint-plugin-import': false,
+					'eslint-plugin-n': false,
+					'eslint-plugin-prettier': false,
+					'eslint-plugin-react-hooks': false,
+					'eslint-plugin-react': false,
+					'eslint-plugin-typescript': false,
+					'hermes-eslint': false,
+					'typescript-eslint-parser': false,
+					'typescript-eslint': false,
+				})
+			}
+		}
+		state.scripts['our:verify:eslint'] = 'eslint --fix'
 	}
 
 	// prettier
@@ -594,9 +677,7 @@ export async function updateRuntime(state) {
 			singleQuote: true,
 			trailingComma:
 				// Node.js v4 is es5, v6 is es2015, both require es5 commas
-				answers.keywords.has('es5') || answers.keywords.has('es2015')
-					? 'es5'
-					: 'all',
+				['es5', 'es2015'].includes(answers.ecmascriptVersion) ? 'es5' : 'all',
 			endOfLine: 'lf',
 		}
 		state.scripts['our:verify:prettier'] = `prettier --write .`
@@ -621,10 +702,7 @@ export async function updateRuntime(state) {
 	}
 	// partially typescript
 	if (answers.languages.includes('typescript')) {
-		packages.typescript =
-			packages['@typescript-eslint/eslint-plugin'] =
-			packages['@typescript-eslint/parser'] =
-				'dev'
+		packages.typescript = 'dev'
 		if (!packages['@types/node'] && answers.keywords.has('node')) {
 			packages['@types/node'] = 'dev'
 		}
@@ -635,12 +713,13 @@ export async function updateRuntime(state) {
 		// Prepare
 		const tools = []
 
+		// add the documentation tool for the language that is used
 		// typescript
 		if (answers.languages.includes('typescript')) {
 			tools.push('typedoc')
 		}
 		// coffeescript
-		if (answers.languages.includes('coffescript')) {
+		else if (answers.languages.includes('coffeescript')) {
 			// biscotto
 			if (packageData.devDependencies.biscotto) {
 				tools.push('biscotto')
@@ -651,15 +730,16 @@ export async function updateRuntime(state) {
 			}
 		}
 		// esnext
-		if (
+		else if (
 			answers.languages.includes('es5') ||
 			answers.languages.includes('esnext')
 		) {
 			tools.push('jsdoc')
 		}
 
-		// Add the documentation engines
-		tools.forEach(function (tool) {
+		// add the documentation engines
+		// this does support multiple, however in practice, we only want the primary one, which is what the earlier code does
+		for (const tool of tools) {
 			const out = tools.length === 1 ? './docs' : `./docs/${tool}`
 			packages[tool] = 'dev'
 			const parts = [`rm -rf ${out}`, '&&']
@@ -673,6 +753,8 @@ export async function updateRuntime(state) {
 						`--out ${out}`,
 						sourcePath,
 					)
+					// constrict typescript version only to what typedoc supports
+					versions.typescript = await getTypedocTypescriptVersion()
 					break
 				case 'jsdoc':
 					packages.jsdoc = 'dev'
@@ -717,12 +799,12 @@ export async function updateRuntime(state) {
 					throw new Error('unknown documentation tool')
 			}
 			state.scripts[`our:meta:docs:${tool}`] = parts.filter((v) => v).join(' ')
-		})
+		}
 	}
 
 	// flowtype
 	if (answers.flowtype) {
-		packages['eslint-plugin-flow-vars'] = packages['flow-bin'] = 'dev'
+		packages['flow-bin'] = 'dev'
 		state.scripts['our:verify:flow'] = 'flow check'
 	}
 
@@ -773,8 +855,6 @@ export async function updateRuntime(state) {
 			packageData,
 			'react',
 		)
-		packages['eslint-plugin-react-hooks'] = packages['eslint-plugin-react'] =
-			'dev'
 		if (answers.languages.includes('typescript')) {
 			packages['@types/react'] = packages['@types/react-dom'] = packages.react
 		}
@@ -894,13 +974,22 @@ export async function updateRuntime(state) {
 
 		// store lib
 		const lib = new Set()
+
 		// add anything with a dot back to lib
 		tsconfig.compilerOptions.lib
 			.filter((i) => i.includes('.'))
 			.forEach((i) => lib.add(i))
 		if (answers.keywords.has('webworker')) lib.add('WebWorker')
 		if (answers.keywords.has('dom')) lib.add('DOM').add('DOM.Iterable')
-		if (answers.keywords.has('esnext')) lib.add('ESNext')
+
+		// add your desired ecmascript version to lib
+		lib.add(languageNames[answers.ecmascriptVersion])
+
+		// add the target ecmascript version if we know it yet
+		const ecmascriptVersionTarget = state.ecmascriptVersionLowest
+		if (ecmascriptVersionTarget) {
+			tsconfig.compilerOptions.target = ecmascriptVersionTarget
+		}
 
 		// store include
 		const include = new Set()
@@ -911,23 +1000,14 @@ export async function updateRuntime(state) {
 		tsconfig.exclude.forEach((i) => exclude.add(i))
 		if (answers.website) exclude.add('node_modules')
 
-		// target
-		const typescriptTarget = intersect(
-			allTypescriptEcmascriptTargets,
-			await fetchExclusiveCompatibleESVersionsForNodeVersions([
-				answers.desiredNodeVersion,
-			]),
-		)[0]
-
 		// compiler options
 		Object.assign(tsconfig.compilerOptions, {
 			allowJs: true,
-			downlevelIteration: answers.keywords.has('es5') ? true : null,
+			downlevelIteration: true, // set this always, the compiler then determines if it is actually necessary
 			esModuleInterop: true,
 			maxNodeModuleJsDepth: 5,
-			moduleResolution: 'Node',
+			moduleResolution: 'node',
 			strict: true,
-			target: typescriptTarget,
 		})
 		if (answers.website) {
 			// website
@@ -936,7 +1016,7 @@ export async function updateRuntime(state) {
 				forceConsistentCasingInFileNames: true,
 				isolatedModules: true,
 				jsx: 'preserve',
-				module: 'ESNext',
+				module: 'esnext',
 				noEmit: true,
 				resolveJsonModule: true,
 				sourceMap: true,
@@ -952,7 +1032,7 @@ export async function updateRuntime(state) {
 			// package
 			Object.assign(tsconfig.compilerOptions, {
 				isolatedModules: answers.language === 'typescript',
-				module: answers.sourceModule ? 'ESNext' : null,
+				module: answers.sourceModule ? 'esnext' : null,
 			})
 			include.add(answers.sourceDirectory)
 		}

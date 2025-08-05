@@ -1,8 +1,6 @@
-/* eslint-disable camelcase */
-
 // builtin
-import * as pathUtil from 'node:path'
-import * as urlUtil from 'node:url'
+import { basename } from 'node:path'
+import { URL } from 'node:url'
 
 // external
 import Errlop from 'errlop'
@@ -19,13 +17,19 @@ import { trimOrgName } from './util.js'
 import { status } from './log.js'
 import { rename } from './fs.js'
 
+/**
+ * Download a file from a URL and save it locally
+ * @param {string|object} opts - URL string or options object with url and optional file properties
+ * @param {string} [opts.file] - relative file path to save the downloaded content (default: derived from URL)
+ * @param {boolean} [opts.overwrite] - Whether to overwrite the local file if it exists (default: true)
+ * @returns {Promise<void>} Promise that resolves when download and write are complete
+ */
 export async function download(opts) {
 	try {
 		if (typeof opts === 'string') opts = { url: opts }
 		const response = await fetch(opts.url, {})
 		let data = await response.text()
-		const file =
-			opts.file || pathUtil.basename(urlUtil.parse(opts.url).pathname)
+		const file = opts.file || basename(new URL(opts.url).pathname)
 		if (await isAccessible(file)) {
 			if (opts.overwrite === false) {
 				return Promise.resolve()
@@ -52,6 +56,13 @@ export async function download(opts) {
 	}
 }
 
+/**
+ * Update base files for the project, removing outdated files and downloading/updating configuration files
+ * @param {object} root0 - Configuration object
+ * @param {object} root0.answers - User answers from questionnaire
+ * @param {object} root0.packageData - Package.json data
+ * @returns {Promise<void>} Promise that resolves when all base files are updated
+ */
 export async function updateBaseFiles({ answers, packageData }) {
 	// clean
 	status('removing old files...')
@@ -82,8 +93,9 @@ export async function updateBaseFiles({ answers, packageData }) {
 		'.pnp.js',
 		'yarn.lock',
 	].filter((i) => i)
-	if (answers.packageManager !== 'yarn')
+	if (answers.packageManager !== 'yarn') {
 		purgeList.push('./.yarnrc', './.yarnrc.yml', './.yarn/')
+	}
 	await remove(purgeList.filter((i) => `./${i}`))
 	status('...removed old files')
 
@@ -132,7 +144,7 @@ export async function updateBaseFiles({ answers, packageData }) {
 	status('...renamed old files')
 
 	status('downloading files...')
-	/** @type {Array<string | Object<string, any>} */
+	/** @type {Array<string | {url: string, custom?: boolean}>} */
 	const downloads = [
 		'https://raw.githubusercontent.com/bevry/base/HEAD/.editorconfig',
 		{

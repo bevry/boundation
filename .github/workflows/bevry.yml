@@ -11,32 +11,31 @@ jobs:
           - macos-latest
           - windows-latest
         node:
-          - '18'
-          - '20'
-          - '21'
+          - '22'
+          - '24'
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - name: Install desired Node.js version
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
       - name: Verify Node.js Versions
         run: >-
           printf '%s' 'node: ' && node --version && printf '%s' 'npm: ' && npm
-          --version && node -e 'console.log(process.versions)'
+          --version && node -e 'console.info(process.versions)'
       - run: npm run our:setup
       - run: npm run our:compile
       - run: npm run our:verify
       - name: Install targeted Node.js
-        if: ${{ matrix.node != 20 }}
+        if: ${{ matrix.node != 22 }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
       - name: Verify Node.js Versions
         run: >-
           printf '%s' 'node: ' && node --version && printf '%s' 'npm: ' && npm
-          --version && node -e 'console.log(process.versions)'
+          --version && node -e 'console.info(process.versions)'
       - run: npm test
   publish:
     if: ${{ github.event_name == 'push' }}
@@ -47,11 +46,11 @@ jobs:
       - name: Install desired Node.js version
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
       - name: Verify Node.js Versions
         run: >-
           printf '%s' 'node: ' && node --version && printf '%s' 'npm: ' && npm
-          --version && node -e 'console.log(process.versions)'
+          --version && node -e 'console.info(process.versions)'
       - run: npm run our:setup
       - run: npm run our:compile
       - run: npm run our:meta

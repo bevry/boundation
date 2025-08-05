@@ -1,8 +1,12 @@
+// internal
+import { possibleTargets, allEcmascriptVersions } from './data.js'
+import { ensureArray } from './util.js'
+
 // external
-import { has } from '@bevry/list'
+import { first, has, unique, intersect } from '@bevry/list'
 
 // export
-export const state = {
+const state = {
 	cleaned: false,
 	githubWorkflow: 'bevry', // will change if custom was detected
 	answers: null,
@@ -11,7 +15,11 @@ export const state = {
 	vercelConfig: {},
 	editions: [],
 	get useEditionsAutoloader() {
-		return this.nodeEditionsRequire.length >= 2
+		const editionsAutoloader = this.answers?.editionsAutoloader
+		const nodeEditionsRequire = this.nodeEditionsRequire
+		const useEditionsAutoloader =
+			editionsAutoloader && nodeEditionsRequire.length >= 2
+		return useEditionsAutoloader
 	},
 	// active is not loadable, active is only kept
 	get activeEditions() {
@@ -89,6 +97,71 @@ export const state = {
 			throw new Error('source edition had .active=false which is not allowed')
 		}
 		return sourceEdition
+	},
+	get editionTargets() {
+		let editionTargets = new Set()
+		for (const edition of this.activeEditions) {
+			for (const tag of edition.tags) {
+				editionTargets.add(tag)
+			}
+		}
+		editionTargets = intersect(Array.from(editionTargets), possibleTargets)
+		return editionTargets
+	},
+	get usedTargets() {
+		const usedTargets = unique([
+			// answered languages
+			...(this.answers?.languages || []),
+			// answered ecmascript versions
+			...ensureArray(this.answers?.ecmascriptVersion),
+			// ecmascript versions and languages for our editions
+			...this.editionTargets,
+		])
+		return usedTargets
+	},
+	get ecmascriptTargets() {
+		const ecmascriptTargets = intersect(
+			allEcmascriptVersions,
+			this.editionTargets,
+		)
+		return ecmascriptTargets
+		/*
+		If you are after the resultant ecmascript targets, you can use this:
+		Which is way simpler than updating the targets and engines of the editions.
+		And is way simpler than the following, even though it is actually equivalent:
+		await fetchAllCompatibleESVersionsForNodeVersions(
+			await fetchSupportedNodeVersions({
+				range: getPackageNodeEngine(packageData)
+			}),
+		)
+		The reason you would want to do any of this, would be for eslint-config-bevry to adjust ecmascript version support.
+		However, in the end, we just inlined the above.
+		*/
+	},
+	get ecmascriptVersionLowest() {
+		const ecmascriptTargets = this.ecmascriptTargets
+		if (ecmascriptTargets.length) {
+			const ecmascriptVersionLowest = first(ecmascriptTargets.reverse()) || ''
+			return ecmascriptVersionLowest
+		} else {
+			return ''
+		}
+		// return intersect(
+		// 	allTypescriptEcmascriptVersions,
+		// 	toLowerCase(
+		// 		await fetchExclusiveCompatibleESVersionsForNodeVersions([
+		// 			answers.desiredNodeVersion,
+		// 		]),
+		// 	),
+		// )[0]
+	},
+	get ecmascriptVersionRange() {
+		const ecmascriptVersionLowest = this.ecmascriptVersionLowest
+		if (ecmascriptVersionLowest) {
+			return `>= ${ecmascriptVersionLowest}`
+		} else {
+			return ''
+		}
 	},
 	userScripts: {},
 	scripts: {},

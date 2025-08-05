@@ -12,6 +12,11 @@ import { generateEditions } from './editions.js'
 import { readWebsite, updateWebsite } from './website.js'
 import { updateRuntime } from './runtime.js'
 
+/**
+ * Initialize and update all project configuration files and settings
+ * @param {object} state - Application state containing configuration and answers
+ * @returns {Promise<void>} Promise that resolves when initialization is complete
+ */
 export default async function init(state) {
 	await preloadNodeVersions()
 

@@ -1,3 +1,4 @@
-console.log('requiring boundation...')
+console.info('requiring boundation...')
 import boundation from './index.js'
-console.log('...required boundation')
+console.info(boundation)
+console.info('...required boundation')

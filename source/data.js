@@ -9,6 +9,10 @@ import {
 	getDateWithYearOffset,
 } from '@bevry/ecmascript-versions'
 
+import { unique } from '@bevry/list'
+
+import { toLowerCase } from './util.js'
+
 export const pwd = cwd()
 
 export const pastBevrySponsors = [
@@ -76,8 +80,7 @@ export const bustedVersions = {}
 
 export const allLanguages = [
 	'typescript',
-	'esnext',
-	'es5',
+	'javascript',
 	'coffeescript',
 	'json',
 	'react',
@@ -92,25 +95,47 @@ export const allLanguages = [
 const aYearAgo = getDateWithYearOffset(-1)
 
 // we reverse, to make sure it is newest first
-export const allTypescriptEcmascriptTargets = [
-	'ESNext',
-	...getESVersionsByDate(aYearAgo).reverse(),
+export const allTypescriptEcmascriptVersions = [
+	'esnext',
+	...getESVersionsByDate(aYearAgo).reverse().map(toLowerCase),
 ]
 
 // we reverse, to make sure it is newest first
 export const allEcmascriptVersions = [
-	'ESNext',
-	...getESVersionsByNow().reverse(),
+	'esnext',
+	...getESVersionsByNow().reverse().map(toLowerCase),
 ]
 
-export const defaultCoffeeEcmascriptTarget = 'ESNext'
+export const defaultCoffeeEcmascriptTarget = 'esnext'
+
+export const possibleTargets = unique([
+	...allLanguages,
+	...allEcmascriptVersions,
+])
 
 // previous year
-export const defaultBrowserTarget = getESVersionByDate(aYearAgo)
+export const defaultBrowsersEcmascriptTarget = toLowerCase(
+	getESVersionByDate(aYearAgo),
+)
 
 export const languageNames = {
 	typescript: 'TypeScript',
 	esnext: 'ESNext',
 	es5: 'ES5',
+	es2015: 'ES2015',
+	es6: 'ES2015',
+	es2016: 'ES2016',
+	es7: 'ES2016',
+	es2017: 'ES2017',
+	es2018: 'ES2018',
+	es2019: 'ES2019',
+	es2020: 'ES2020',
+	es2021: 'ES2021',
+	es2022: 'ES2022',
+	es2023: 'ES2023',
+	es2024: 'ES2024',
+	es2025: 'ES2025',
+	es2026: 'ES2026',
+	es2027: 'ES2027',
 	coffeescript: 'CoffeeScript',
 }

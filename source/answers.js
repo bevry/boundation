@@ -11,12 +11,23 @@ import { hiddenConfigurationProperties } from './data.js'
 const skipAllArg = '--auto'
 const skipAll = process.argv.includes(skipAllArg)
 
-// Fetch
+/**
+ * Fetch and evaluate dynamic question properties (choices, default values, etc.)
+ * @param {object} q - The question object
+ * @param {any} value - The property value, can be a function or static value
+ * @param {...any} args - Additional arguments to pass to the function if value is a function
+ * @returns {any} The evaluated value
+ */
 function fetch(q, value, ...args) {
 	return typeof value === 'function' ? value.apply(q, args) : value
 }
 
-// Action
+/**
+ * Get answers from user input, handling automation, CLI arguments, and dynamic question logic
+ * @param {object[]} questions - Array of inquirer question objects
+ * @param {object} [user] - User configuration object from package.json
+ * @returns {Promise<object>} Promise that resolves to the collected answers object
+ */
 export default async function getAnswers(questions, user = {}) {
 	try {
 		// dereference user, so our modifications don't apply to it
@@ -27,12 +38,13 @@ export default async function getAnswers(questions, user = {}) {
 			const { name, skip, when, ignore, arg } = question
 			if (typeof question.default === 'function') {
 				const qc = question.choices
-				if (typeof question.choices === 'function')
+				if (typeof question.choices === 'function') {
 					question.choices = function (answers) {
 						const values = Object.assign({}, defaults, answers)
 						const value = fetch(question, qc, values)
 						return value
 					}
+				}
 				const qd = question.default
 				question.default = function (answers) {
 					const values = Object.assign({}, defaults, answers)
@@ -140,7 +152,7 @@ export default async function getAnswers(questions, user = {}) {
 					]
 						.map((v) => color(v))
 						.join(' ')
-					console.log(message)
+					console.info(message)
 				}
 				return !reason
 			}
@@ -154,10 +166,11 @@ export default async function getAnswers(questions, user = {}) {
 
 		// check if we had any unknown properties
 		const unknownProperties = new Set(Object.keys(user))
-		for (const hidden of hiddenConfigurationProperties)
+		for (const hidden of hiddenConfigurationProperties) {
 			unknownProperties.delete(hidden)
+		}
 		if (unknownProperties.size) {
-			console.log(user)
+			console.error(user)
 			throw new Error(
 				`package.json:boundation had unknown properties: ${Array.from(
 					unknownProperties.values(),
