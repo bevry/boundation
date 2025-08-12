@@ -1,5 +1,23 @@
 # History
 
+## v1.92.0 2025 August 13
+
+- Fixed/improved the edition generation and determination by merging targets of the same result edition together, allowing determination to ensure all the intended targets for an edition pass before editions start getting trimmed.
+- JavaScript and TypeScript projects will now ask about your source `ecmascriptVersion`, which is then used to inform the TypeScript library configuration, and updates the source Edition tags accordingly, so that `eslint-config-bevry` can adjust rules accordingly.
+    - As such, language detection has been replaced by a new refined and simpler algorithm.
+- Update the eslint configuration for eslint v9 and `eslint-config-bevry`, as such remove inlined dependencies, and adapt when `prettier` is installed.
+- TypeScript version will now automatically be the latest that TypeDoc supports, no longer manually pinned, which will fix temporal version incompatibilities
+- ECMAScript versions will now be lowercase unless the capitalised version is required, same goes for other `tsconfig` values too
+- ECMAScript range will now be outputted to `package.json:engines:ecmascript` when applicable
+- Fixed `useEditionsAutoloader = false` not being respected under certain conditions
+- Fixed `versionClean` leaving behind padding on versions
+- Update the GitHub Actions workflow for the latest versions
+- Use `console.info` instead of `console.log` for so linting and code searches understand it is intentional
+- Everything now has JSDoc commentary
+- Update internal code for latest ecosystem and convention and API changes
+- Updated dependencies, [base files](https://github.com/bevry/base), and [editions](https://editions.bevry.me) using [boundation](https://github.com/bevry/boundation)
+- Thank you to the sponsors: [Andrew Nesbitt](https://nesbitt.io), [Divinci ™](https://divinci.ai), [Mr. Henry](https://mrhenry.be), [Poonacha Medappa](https://poonachamedappa.com), [Roboflow](https://roboflow.com), [Square](https://github.com/square)
+
 ## v1.91.0 2024 January 10
 
 - Add `gitattributes` file to prevent tests failing on Windows due to git changing line endings without these defaults
