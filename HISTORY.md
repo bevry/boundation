@@ -1,5 +1,10 @@
 # History
 
+## v1.92.1 2025 August 13
+
+- Fix bad publish of prior release
+- Thank you to the sponsors: [Andrew Nesbitt](https://nesbitt.io), [Divinci ™](https://divinci.ai), [Mr. Henry](https://mrhenry.be), [Poonacha Medappa](https://poonachamedappa.com), [Roboflow](https://roboflow.com), [Square](https://github.com/square)
+
 ## v1.92.0 2025 August 13
 
 - Fixed/improved the edition generation and determination by merging targets of the same result edition together, allowing determination to ensure all the intended targets for an edition pass before editions start getting trimmed.
