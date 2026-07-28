@@ -7,6 +7,8 @@ updates:
       day: sunday
       time: '00:00'
       timezone: Australia/Perth
+    cooldown:
+      default-days: 7
   - package-ecosystem: npm
     directory: /
     schedule:
@@ -14,4 +16,6 @@ updates:
       day: sunday
       time: '00:00'
       timezone: Australia/Perth
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 0
